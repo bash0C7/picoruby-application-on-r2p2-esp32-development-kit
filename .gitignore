@@ -65,3 +65,6 @@ build-iPhoneSimulator/
 
 # Claude Code
 .claude/
+
+# Manual verification directory
+manual-test/
