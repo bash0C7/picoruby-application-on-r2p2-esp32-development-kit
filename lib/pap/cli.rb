@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 
 require 'thor'
 require_relative 'version'
@@ -29,19 +28,15 @@ module Pap
     desc 'patch SUBCOMMAND ...ARGS', 'Patch management commands'
     subcommand 'patch', Pap::Commands::Patch
 
-    # R2P2-ESP32タスク委譲（トップレベルコマンド）
-    desc 'flash [ENV_NAME]', 'Flash firmware to ESP32 (delegates to R2P2-ESP32)'
-    option :env, type: :string, default: 'current', aliases: '-e', desc: 'Environment name'
-    def flash(env_name = nil)
-      env_name ||= options[:env]
-      Pap::Commands::R2P2.new.flash(env_name)
-    end
+    # R2P2-ESP32タスク委譲（トップレベルコマンドを動的生成）
+    Pap::Commands::R2P2.tasks.each do |task_name, task|
+      desc "#{task_name} [ENV_NAME]", task.description
+      option :env, type: :string, default: 'current', aliases: '-e', desc: 'Environment name'
 
-    desc 'monitor [ENV_NAME]', 'Monitor ESP32 serial output (delegates to R2P2-ESP32)'
-    option :env, type: :string, default: 'current', aliases: '-e', desc: 'Environment name'
-    def monitor(env_name = nil)
-      env_name ||= options[:env]
-      Pap::Commands::R2P2.new.monitor(env_name)
+      define_method(task_name) do |env_name = nil|
+        env_name ||= options[:env]
+        Pap::Commands::R2P2.new.send(task_name, env_name)
+      end
     end
 
     # バージョン表示

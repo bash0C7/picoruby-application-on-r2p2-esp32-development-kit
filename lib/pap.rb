@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 
 require_relative "pap/version"
 require_relative "pap/cli"
