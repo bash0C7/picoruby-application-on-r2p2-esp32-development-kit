@@ -1,36 +1,40 @@
 # TODO: Project Maintenance Tasks
 
-## Cleanup Tasks (後で実行)
+## Naming Convention Note
 
-### 既存ファイル・ディレクトリの整理
+**Current name**: `pap` = **P**icoRuby **A**pplication **P**latform
+**Desired name**: `pra` = **P**ico**R**uby **A**pplication
 
-- [ ] `src_components/` ディレクトリを削除
-  - `src_components/R2P2-ESP32/storage/home/` は既に `storage/home/` に移行済み
-  - `src_components/pc/` は確認してから削除判断
+The command should be renamed from `pap` to `pra` to better reflect the project's focus on PicoRuby applications.
 
-- [ ] `components/` ディレクトリを削除
-  - `.gitignore` に `/components/` があるため、Gitには入っていない
-  - ビルド時に自動生成されるため、削除しても問題なし
+## High Priority
 
-- [ ] 既存 `Rakefile` を削除
-  - `Rakefile.rb` で置き換わった
-  - 動作確認後に削除
+- [ ] Rename command from `pap` to `pra`
+  - Directory: `lib/pap/` → `lib/pra/`
+  - Executable: `exe/pap` → `exe/pra`
+  - Gemspec: `pap.gemspec` → `pra.gemspec`
+  - Module name: `Pap` → `Pra` (all Ruby files)
+  - Documentation: README.md, SPEC.md, SETUP.md, etc.
+  - Test files: test/pap_test.rb → test/pra_test.rb
 
-## Enhancement Tasks
+- [x] `pap env latest` の実装 (lib/pap/commands/env.rb:71)
+  - ✓ GitHub API または `git ls-remote` で最新コミット取得
+  - ✓ 自動的に .picoruby-env.yml に追記
+  - Note: キャッシュ取得は別コマンドとして実装済み
+  - TODO: ユニットテストの追加
 
-- [ ] `rake env:latest` の完全実装
-  - GitHub API または `git ls-remote` で最新コミット取得
-  - 自動的に .picoruby-env.yml に追記
-  - キャッシュ取得と環境構築を一度に実行
+## Documentation
 
-- [ ] キャッシュ圧縮機能（オプション）
+- [ ] SPEC.md に変更履歴セクション追加
+  - Recent changes セクションを追加
+  - バージョン管理とリリースノートの記載
+
+## Future Enhancements (Optional)
+
+- [ ] キャッシュ圧縮機能
   - `tar.gz` で`.cache/`を圧縮
   - S3/Cloud ストレージへのバックアップ
 
 - [ ] CI/CD 統合
   - GitHub Actions でキャッシュの自動更新
-
-## Documentation Tasks
-
-- [ ] RAKEFILE_SPEC.md に変更履歴セクション拡張
-- [ ] クイックスタートガイド作成（別ファイル）
+  - 自動テストとリリース

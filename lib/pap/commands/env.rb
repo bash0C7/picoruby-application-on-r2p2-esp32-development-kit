@@ -69,8 +69,62 @@ module Pap
 
       desc 'latest', 'Fetch latest versions and switch to them'
       def latest
+        require 'tmpdir'
+
         puts 'Fetching latest commits from GitHub...'
-        raise 'Not yet implemented - use cache fetch ENV_NAME instead'
+
+        # 各リポジトリの最新コミットを取得
+        repos_info = {}
+
+        Pap::Env::REPOS.each do |repo_name, repo_url|
+          puts "  Checking #{repo_name}..."
+
+          # リモートから最新コミットを取得
+          commit = Pap::Env.fetch_remote_commit(repo_url, 'HEAD')
+          raise "Failed to fetch commit for #{repo_name}" if commit.nil?
+
+          # 一時ディレクトリでshallow cloneしてタイムスタンプ取得
+          Dir.mktmpdir do |tmpdir|
+            tmp_repo = File.join(tmpdir, repo_name)
+            puts "    Cloning to get timestamp..."
+
+            # Shallow clone（高速化のため）
+            unless system("git clone --depth 1 --branch HEAD #{Shellwords.escape(repo_url)} #{Shellwords.escape(tmp_repo)} 2>/dev/null")
+              raise "Failed to clone #{repo_name}"
+            end
+
+            # コミットハッシュとタイムスタンプ取得
+            Dir.chdir(tmp_repo) do
+              short_hash = `git rev-parse --short=7 HEAD`.strip
+              timestamp_str = `git show -s --format=%ci HEAD`.strip
+              timestamp = Time.parse(timestamp_str).strftime('%Y%m%d_%H%M%S')
+
+              repos_info[repo_name] = {
+                'commit' => short_hash,
+                'timestamp' => timestamp
+              }
+
+              puts "    ✓ #{repo_name}: #{short_hash} (#{timestamp})"
+            end
+          end
+        end
+
+        # latest環境として保存
+        env_name = 'latest'
+        puts "\nSaving as environment '#{env_name}'..."
+
+        Pap::Env.set_environment(
+          env_name,
+          repos_info['R2P2-ESP32'],
+          repos_info['picoruby-esp32'],
+          repos_info['picoruby'],
+          notes: 'Auto-generated latest versions'
+        )
+
+        puts "✓ Environment '#{env_name}' created successfully"
+        puts "\nNext steps:"
+        puts "  1. pap cache fetch #{env_name}"
+        puts "  2. pap build setup #{env_name}"
       end
     end
   end
