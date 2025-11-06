@@ -63,8 +63,5 @@ build-iPhoneSimulator/
 .cache/
 .picoruby-env.yml
 
-# Claude Code
-.claude/
-
 # Manual verification directory
 manual-test/
