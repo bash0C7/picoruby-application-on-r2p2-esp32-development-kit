@@ -1,4 +1,4 @@
-# PicoRuby Application on [R2P2-ESP32](https://github.com/picoruby/R2P2-ESP32) development kit
+# [PicoRuby](https://github.com/picoruby) Application on [R2P2-ESP32](https://github.com/picoruby/R2P2-ESP32) development kit
 
 Packaged by pra(**P**ico**R**uby **A**pplication) command
 
