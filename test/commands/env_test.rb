@@ -29,8 +29,8 @@ class PraCommandsEnvTest < Test::Unit::TestCase
         Pra::Commands::Env.start(['show'])
       end
 
-      assert_match(/Current environment: \(not set\)/, output)
-      assert_match(/Run 'pra env set ENV_NAME' to set an environment/, output)
+      assert_match(/Current environment definition: \(not set\)/, output)
+      assert_match(/Run 'pra env set ENV_NAME' to set an environment definition/, output)
     end
 
     test "shows error when environment is set but not found in config" do
@@ -57,7 +57,7 @@ class PraCommandsEnvTest < Test::Unit::TestCase
         Pra::Commands::Env.start(['show'])
       end
 
-      assert_match(/Current environment: test-env/, output)
+      assert_match(/Current environment definition: test-env/, output)
       assert_match(/Repo versions:/, output)
       assert_match(/R2P2-ESP32: abc1234 \(20250101_120000\)/, output)
       assert_match(/picoruby-esp32: def5678 \(20250102_120000\)/, output)
@@ -140,8 +140,8 @@ class PraCommandsEnvTest < Test::Unit::TestCase
         Pra::Commands::Env.start(['set', 'test-env'])
       end
 
-      assert_match(/Switching to environment: test-env/, output)
-      assert_match(/✓ Switched to test-env/, output)
+      assert_match(/Switching to environment definition: test-env/, output)
+      assert_match(/✓ Switched to environment definition 'test-env'/, output)
 
       # currentが正しく設定されていることを確認
       assert_equal('test-env', Pra::Env.get_current_env)
@@ -169,8 +169,8 @@ class PraCommandsEnvTest < Test::Unit::TestCase
         assert_match(/✓ R2P2-ESP32: abc1234 \(20250101_120000\)/, output)
         assert_match(/✓ picoruby-esp32: def5678 \(20250102_120000\)/, output)
         assert_match(/✓ picoruby: ghi9012 \(20250103_120000\)/, output)
-        assert_match(/Saving as environment 'latest'/, output)
-        assert_match(/✓ Environment 'latest' created successfully/, output)
+        assert_match(/Saving as environment definition 'latest'/, output)
+        assert_match(/✓ Environment definition 'latest' created successfully/, output)
 
         # 環境が正しく保存されているか確認
         env_config = Pra::Env.get_environment('latest')

@@ -2,6 +2,18 @@
 
 This guide explains how to set up continuous integration and deployment for PicoRuby ESP32 applications using the `pra` gem.
 
+## Terminology
+
+Before proceeding, understand these key terms used throughout this guide:
+
+- **Environment Definition**: Metadata in `.picoruby-env.yml` that specifies commit hashes and timestamps for R2P2-ESP32, picoruby-esp32, and picoruby repositories.
+- **Build Environment**: A working directory (`build/`) containing actual repository files used for building firmware.
+- **Cache**: Immutable repository copies stored in `.cache/` directory.
+
+**Typical Workflow**: Define environment → Fetch to cache → Setup build environment → Build firmware
+
+For more details, see the [Terminology section in README.md](../README.md#terminology).
+
 ## Table of Contents
 
 - [For PicoRuby Application Developers](#for-picoruby-application-developers)
@@ -34,9 +46,9 @@ curl -o .github/workflows/esp32-build.yml \
   https://raw.githubusercontent.com/bash0C7/picoruby-application-on-r2p2-esp32-development-kit/main/docs/github-actions/esp32-build.yml
 ```
 
-#### Step 2: Configure Your Environment
+#### Step 2: Define Your Environment
 
-Edit `.picoruby-env.yml` in your project root to define your R2P2-ESP32 environment:
+Edit `.picoruby-env.yml` in your project root to define your R2P2-ESP32 environment definition:
 
 ```yaml
 environments:
@@ -64,10 +76,10 @@ Edit `.github/workflows/esp32-build.yml` to customize:
     esp_idf_version: v5.1  # Change to v5.2, v5.3, etc.
     target: esp32           # Or esp32s2, esp32s3, esp32c3
 
-# Change environment name
-- name: Fetch PicoRuby environment from cache
+# Change environment definition name
+- name: Fetch PicoRuby repositories to cache
   run: |
-    pra cache fetch stable-2024-11  # Change to your environment name
+    pra cache fetch stable-2024-11  # Change to your environment definition name
 ```
 
 #### Step 4: Commit and Push
@@ -91,8 +103,8 @@ The automated build workflow performs these steps:
 2. **Ruby Setup**: Installs Ruby 3.4 and dependencies
 3. **Install pra**: Installs the pra gem globally
 4. **ESP-IDF Setup**: Configures ESP-IDF toolchain via espressif action
-5. **Environment Fetch**: Downloads R2P2-ESP32 from cache using `pra cache fetch`
-6. **Build Setup**: Runs `pra build setup` to prepare the build environment
+5. **Cache Fetch**: Downloads R2P2-ESP32 repositories to cache using `pra cache fetch`
+6. **Build Environment Setup**: Runs `pra build setup` to create build environment from cache
 7. **Apply Patches**: Applies any custom patches from `patch/` directory
 8. **Firmware Build**: Builds ESP32 firmware using `idf.py build`
 9. **Upload Artifacts**: Saves firmware binaries as downloadable artifacts
@@ -127,7 +139,7 @@ esptool.py --chip esp32 --port /dev/ttyUSB0 --baud 460800 write_flash \
 If you have the `pra` gem installed locally:
 
 ```bash
-# Ensure you're using the same environment
+# Ensure you're using the same environment definition
 bundle exec pra cache fetch stable-2024-11
 bundle exec pra build setup
 
@@ -271,18 +283,18 @@ Follow [Semantic Versioning](https://semver.org/):
 
 ### Common Issues
 
-#### "Environment not found in cache"
+#### "Environment definition not found"
 
-**Problem**: Workflow fails at `pra cache fetch` step
+**Problem**: Workflow fails at `pra cache fetch` step with "Environment definition not found in .picoruby-env.yml"
 
 **Solution**:
 1. Verify `.picoruby-env.yml` exists and is valid
-2. Check environment name matches in workflow
+2. Check environment definition name matches in workflow
 3. Ensure commit hashes are correct
 
 ```bash
 # Locally test cache fetch
-bundle exec pra cache fetch your-environment-name
+bundle exec pra cache fetch your-environment-definition-name
 ```
 
 #### "ESP-IDF not found"
@@ -334,7 +346,7 @@ bundle exec pra cache fetch your-environment-name
 
 ### For Application Developers
 
-1. **Pin Environment Versions**: Use specific commit hashes in `.picoruby-env.yml`
+1. **Pin Environment Definition Versions**: Use specific commit hashes in `.picoruby-env.yml`
 2. **Test Locally First**: Run `pra build setup && rake build` before pushing
 3. **Use Artifacts Expiry**: Set reasonable retention days (30-90)
 4. **Enable Branch Protection**: Require CI to pass before merging

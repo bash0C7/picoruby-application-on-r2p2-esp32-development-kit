@@ -49,9 +49,9 @@ class PraCommandsBuildTest < Test::Unit::TestCase
       end
 
       # 出力を確認
-      assert_match(/Setting up build environment: test-env/, output)
+      assert_match(/Setting up build environment from environment definition: test-env/, output)
       assert_match(/Creating build environment at/, output)
-      assert_match(/✓ Build environment ready for: test-env/, output)
+      assert_match(/✓ Build environment ready for environment definition: test-env/, output)
 
       # ビルドディレクトリが作成されたことを確認
       r2p2_hash = "#{r2p2_info['commit']}-#{r2p2_info['timestamp']}"
@@ -102,7 +102,7 @@ class PraCommandsBuildTest < Test::Unit::TestCase
 
       # 出力を確認
       assert_match(/Build environment already exists/, output)
-      assert_match(/✓ Build environment ready for: test-env/, output)
+      assert_match(/✓ Build environment ready for environment definition: test-env/, output)
     end
   end
 
@@ -175,7 +175,7 @@ class PraCommandsBuildTest < Test::Unit::TestCase
         Pra::Commands::Build.start(['clean', 'test-env'])
       end
 
-      assert_match(/Build environment not found/, output)
+      assert_match(/Build environment directory not found/, output)
     end
 
     test "removes build directory when it exists" do
@@ -200,8 +200,8 @@ class PraCommandsBuildTest < Test::Unit::TestCase
         Pra::Commands::Build.start(['clean', 'test-env'])
       end
 
-      assert_match(/Removing build environment/, output)
-      assert_match(/✓ Build environment removed/, output)
+      assert_match(/Removing build environment for environment definition/, output)
+      assert_match(/✓ Build environment directory removed/, output)
       assert_false(Dir.exist?(build_path))
     end
 
