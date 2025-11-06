@@ -4,7 +4,8 @@
       "Bash(bundle config:*)",
       "Bash(git mv:*)",
       "Bash(find:*)",
-      "Bash(bundle exec rake test:*)"
+      "Bash(bundle exec rake test:*)",
+      "Bash(bundle exec exe/pra version:*)"
     ],
     "deny": [],
     "ask": []

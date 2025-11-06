@@ -26,6 +26,8 @@ ESP32 上の PicoRuby アプリケーション・処理系開発。mrbgems ビ�
 
 **Git Commits**:
 - ⚠️ MUST use `commit` subagent (never raw `git` commands)
+- ⚠️ MUST run `git add` BEFORE committing - do not accumulate uncommitted changes
+- Execute commits incrementally: commit each logical change immediately, not at end of session
 - Forbidden: `git push`, `git push --force`, `git reset --hard`
 
 ## Skills & Auto-Loading
