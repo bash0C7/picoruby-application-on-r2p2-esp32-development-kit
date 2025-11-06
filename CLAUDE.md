@@ -38,6 +38,24 @@ ESP32 上の PicoRuby アプリケーション・処理系開発。mrbgems ビ�
 - **Evidence-Based**: Never speculate. Read files first; use `explore` subagent for investigation.
 - **Parallel Tools**: Read/grep multiple files in parallel when independent. Never use placeholders.
 
+## TODO Management
+
+**Maintain TODO.md with strict discipline**:
+
+- ✅ **Remove completed tasks immediately** — Delete from TODO.md as soon as work is done and committed
+- ✅ **Consolidate duplicates** — Merge similar/overlapping tasks into single, clear entries
+- ✅ **Review before adding** — Check if task already exists or is covered by existing items
+- ✅ **Keep granularity appropriate** — Tasks should be actionable, not too broad or too narrow
+- ✅ **Archive obsolete tasks** — Remove tasks made irrelevant by other changes
+- ✅ **Use clear hierarchy** — Organize with headings and bullet structure for easy scanning
+- ✅ **Add context when needed** — Include brief rationale or dependencies if not obvious
+
+**Workflow**:
+1. Before starting work: Review TODO.md for related tasks
+2. During work: Update tasks if scope changes
+3. After commit: Immediately remove completed tasks
+4. Weekly: Review entire TODO.md for cleanup opportunities
+
 ## Output Style
 
 @import .claude/docs/output-style.md
