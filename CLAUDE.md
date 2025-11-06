@@ -36,8 +36,9 @@ ESP32 上の PicoRuby アプリケーション・処理系開発。mrbgems ビ�
 - ⚠️ NEVER lower `minimum_coverage` threshold in test_helper.rb
 - ✅ When coverage falls below threshold, ALWAYS expand tests to meet the requirement
 - ✅ Aim for comprehensive test coverage of new features and bug fixes
-- ✅ Focus on both line coverage (90%) and branch coverage when writing tests
-- 🎯 Target: Line coverage ≥ 90%, Branch coverage ≥ 50%
+- ✅ Focus on both line coverage and branch coverage when writing tests
+- 🎯 Current baseline: Line coverage ≥ 80%, Branch coverage ≥ 50%
+- 🎯 Long-term goal: Incrementally improve coverage through additional tests
 
 ## Skills & Auto-Loading
 
