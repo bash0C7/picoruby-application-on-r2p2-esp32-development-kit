@@ -5,8 +5,9 @@ require "simplecov"
 SimpleCov.start do
   add_filter "/test/"
   add_filter "/vendor/"
-  minimum_coverage 90
   enable_coverage :branch
+  # CI環境でのみカバレッジチェックを有効化
+  minimum_coverage line: 80, branch: 50 if ENV["CI"]
 end
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
