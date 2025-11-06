@@ -1,8 +1,39 @@
-AllCops:
-  TargetRubyVersion: 3.1
+inherit_from: .rubocop_todo.yml
 
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  Exclude:
+    - "vendor/**/*"
+    - "build/**/*"
+    - ".cache/**/*"
+    - "patch/**/*"
+    - "storage/**/*"
+
+plugins:
+  - rubocop-performance
+  - rubocop-rake
+
+# String style configuration
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
+
+# Allow Japanese comments in code
+Style/AsciiComments:
+  Enabled: false
+
+# Metrics configuration - pragmatic thresholds for this project
+Metrics/MethodLength:
+  Max: 30
+
+Metrics/ClassLength:
+  Max: 300
+
+Metrics/AbcSize:
+  Max: 30
+
+Metrics/ParameterLists:
+  Max: 5

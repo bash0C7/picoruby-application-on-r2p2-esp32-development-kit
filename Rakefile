@@ -16,6 +16,10 @@ RuboCop::RakeTask.new
 # 開発時のデフォルトタスク：クイックにテストのみ実行
 task default: %i[test]
 
-# CI専用タスク：じっくりテスト（カバレッジチェックあり）
-desc "Run tests with coverage checks (for CI)"
-task ci: :test
+# CI専用タスク：テスト + コード品質チェック
+desc "Run tests with coverage checks and RuboCop linting (for CI)"
+task ci: %i[test rubocop]
+
+# 品質チェック統合タスク
+desc "Run all quality checks (tests and linting)"
+task quality: %i[test rubocop]

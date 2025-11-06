@@ -196,10 +196,12 @@ bundle install
 bundle exec rake test
 ```
 
-### 4. Run linter
+### 4. Code Quality: RuboCop
+
+We use RuboCop for code style enforcement:
 
 ```bash
-bundle exec rubocop
+bundle exec rubocop -A
 ```
 
 ### 5. Build the gem

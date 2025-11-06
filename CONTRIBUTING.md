@@ -41,10 +41,13 @@ SimpleCov will fail the build if coverage drops below 90%.
 
 ## Code Style
 
-- Follow standard Ruby style guidelines
-- Use meaningful variable and method names
-- Add comments for complex logic
-- Keep methods focused and small
+We use RuboCop for code style enforcement. Check and auto-fix style issues before submitting:
+
+```bash
+bundle exec rubocop -A
+```
+
+RuboCop runs automatically in CI as part of `bundle exec rake ci`.
 
 ## Submitting Changes
 
