@@ -3,26 +3,28 @@ require 'thor'
 
 module Pra
   module Commands
-    # 環境管理コマンド群
+    # 環境定義管理コマンド群（.picoruby-env.yml）
+    # 注: このコマンドは環境定義（メタデータ）を管理する
+    # 実際のビルド環境（ファイルシステム）は pra build コマンドで管理
     class Env < Thor
       def self.exit_on_failure?
         true
       end
 
-      desc 'show', 'Display current environment configuration'
+      desc 'show', 'Display current environment definition from .picoruby-env.yml'
       def show
         current = Pra::Env.get_current_env
         if current.nil?
-          puts 'Current environment: (not set)'
-          puts "Run 'pra env set ENV_NAME' to set an environment"
+          puts 'Current environment definition: (not set)'
+          puts "Run 'pra env set ENV_NAME' to set an environment definition"
         else
           env_config = Pra::Env.get_environment(current)
           if env_config.nil?
             puts "Error: Environment '#{current}' not found in .picoruby-env.yml"
           else
-            puts "Current environment: #{current}"
+            puts "Current environment definition: #{current}"
 
-            # Symlink情報
+            # Symlink情報（ビルド環境）
             current_link = File.join(Pra::Env::BUILD_DIR, 'current')
             if File.symlink?(current_link)
               target = File.readlink(current_link)
@@ -43,10 +45,10 @@ module Pra
         end
       end
 
-      desc 'set ENV_NAME', 'Switch to specified environment'
+      desc 'set ENV_NAME', 'Switch to specified environment definition (updates build/current symlink)'
       def set(env_name)
         env_config = Pra::Env.get_environment(env_name)
-        raise "Error: Environment '#{env_name}' not found" if env_config.nil?
+        raise "Error: Environment definition '#{env_name}' not found in .picoruby-env.yml" if env_config.nil?
 
         # ビルド環境が存在するか確認
         r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
@@ -56,18 +58,18 @@ module Pra
         build_path = Pra::Env.get_build_path(env_hash)
 
         if Dir.exist?(build_path)
-          puts "Switching to environment: #{env_name}"
+          puts "Switching to environment definition: #{env_name}"
           current_link = File.join(Pra::Env::BUILD_DIR, 'current')
           Pra::Env.create_symlink(File.basename(build_path), current_link)
           Pra::Env.set_current_env(env_name)
-          puts "✓ Switched to #{env_name}"
+          puts "✓ Switched to environment definition '#{env_name}' (build/current symlink updated)"
         else
           puts "Error: Build environment not found at #{build_path}"
           puts "Run 'pra build setup #{env_name}' first"
         end
       end
 
-      desc 'latest', 'Fetch latest versions and switch to them'
+      desc 'latest', 'Fetch latest commit versions and create environment definition'
       def latest
         require 'tmpdir'
 
@@ -111,7 +113,7 @@ module Pra
 
         # latest環境として保存
         env_name = 'latest'
-        puts "\nSaving as environment '#{env_name}'..."
+        puts "\nSaving as environment definition '#{env_name}' in .picoruby-env.yml..."
 
         Pra::Env.set_environment(
           env_name,
@@ -121,10 +123,10 @@ module Pra
           notes: 'Auto-generated latest versions'
         )
 
-        puts "✓ Environment '#{env_name}' created successfully"
+        puts "✓ Environment definition '#{env_name}' created successfully in .picoruby-env.yml"
         puts "\nNext steps:"
-        puts "  1. pap cache fetch #{env_name}"
-        puts "  2. pap build setup #{env_name}"
+        puts "  1. pra cache fetch #{env_name}  # Fetch repositories to cache"
+        puts "  2. pra build setup #{env_name}  # Setup build environment"
       end
     end
   end

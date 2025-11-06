@@ -3,27 +3,29 @@ require 'thor'
 
 module Pra
   module Commands
-    # ビルド環境管理コマンド群
+    # ビルド環境管理コマンド群（build/ディレクトリ）
+    # 注: このコマンドはビルド環境（ファイルシステム上のワーキングディレクトリ）を管理する
+    # 環境定義（メタデータ）は pra env コマンドで管理
     class Build < Thor
       def self.exit_on_failure?
         true
       end
 
-      desc 'setup [ENV_NAME]', 'Setup build environment for specified environment'
+      desc 'setup [ENV_NAME]', 'Setup build environment from environment definition (.picoruby-env.yml)'
       def setup(env_name = 'current')
-        # currentの場合はsymlinkから実環境名を取得
+        # currentの場合はsymlinkから実環境定義名を取得
         if env_name == 'current'
           current_link = File.join(Pra::Env::BUILD_DIR, 'current')
           if File.symlink?(current_link)
             current = Pra::Env.get_current_env
             env_name = current if current
           else
-            raise "Error: No current environment set. Use 'pra env set ENV_NAME' first"
+            raise "Error: No current environment definition set in .picoruby-env.yml. Use 'pra env set ENV_NAME' first"
           end
         end
 
         env_config = Pra::Env.get_environment(env_name)
-        raise "Error: Environment '#{env_name}' not found" if env_config.nil?
+        raise "Error: Environment definition '#{env_name}' not found in .picoruby-env.yml" if env_config.nil?
 
         # env-hashを生成
         r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
@@ -48,7 +50,7 @@ module Pra
           raise "Error: picoruby cache not found. Run 'pra cache fetch #{env_name}' first"
         end
 
-        puts "Setting up build environment: #{env_name}"
+        puts "Setting up build environment from environment definition: #{env_name}"
 
         # ビルドディレクトリを作成
         FileUtils.mkdir_p(Pra::Env::BUILD_DIR)
@@ -91,12 +93,12 @@ module Pra
         Pra::Env.create_symlink(File.basename(build_path), current_link)
         Pra::Env.set_current_env(env_name)
 
-        puts "✓ Build environment ready for: #{env_name}"
+        puts "✓ Build environment ready for environment definition: #{env_name}"
       end
 
-      desc 'clean [ENV_NAME]', 'Delete specified build environment'
+      desc 'clean [ENV_NAME]', 'Delete specified build environment directory'
       def clean(env_name = 'current')
-        # currentの場合はsymlinkから実環境を取得
+        # currentの場合はsymlinkから実環境定義を取得
         if env_name == 'current'
           current_link = File.join(Pra::Env::BUILD_DIR, 'current')
           if File.symlink?(current_link)
@@ -111,7 +113,7 @@ module Pra
           end
         else
           env_config = Pra::Env.get_environment(env_name)
-          raise "Error: Environment '#{env_name}' not found" if env_config.nil?
+          raise "Error: Environment definition '#{env_name}' not found in .picoruby-env.yml" if env_config.nil?
 
           r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
           esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
@@ -120,16 +122,16 @@ module Pra
           build_path = Pra::Env.get_build_path(env_hash)
 
           if Dir.exist?(build_path)
-            puts "Removing build environment: #{env_name}"
+            puts "Removing build environment for environment definition: #{env_name}"
             FileUtils.rm_rf(build_path)
-            puts '✓ Build environment removed'
+            puts '✓ Build environment directory removed'
           else
-            puts "Build environment not found: #{env_name}"
+            puts "Build environment directory not found for environment definition: #{env_name}"
           end
         end
       end
 
-      desc 'list', 'Display list of constructed build environments'
+      desc 'list', 'Display list of constructed build environment directories'
       def list
         puts "=== Build Environments ===\n"
 

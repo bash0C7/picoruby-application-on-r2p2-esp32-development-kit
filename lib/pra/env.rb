@@ -5,7 +5,12 @@ require 'time'
 require 'shellwords'
 
 module Pra
-  # PicoRuby環境管理モジュール
+  # PicoRuby環境定義・ビルド環境管理モジュール
+  #
+  # 用語の定義:
+  # - 環境定義（Environment Definition）: .picoruby-env.yml に保存されたメタデータ（コミットハッシュとタイムスタンプ）
+  # - ビルド環境（Build Environment）: build/ ディレクトリに構築されたワーキングディレクトリ（実ファイル）
+  # - キャッシュ（Cache）: .cache/ ディレクトリに保存された不変のリポジトリコピー
   module Env
     # ルートディレクトリ
     PROJECT_ROOT = Dir.pwd
@@ -29,9 +34,9 @@ module Pra
     }.freeze
 
     class << self
-      # ====== YAML操作 ======
+      # ====== 環境定義（YAML）操作 ======
 
-      # .picoruby-env.yml を読み込み
+      # .picoruby-env.yml を読み込み（環境定義のメタデータ）
       def load_env_file
         return {} unless File.exist?(ENV_FILE)
         YAML.load_file(ENV_FILE) || {}
@@ -43,7 +48,7 @@ module Pra
         File.write(ENV_FILE, YAML.dump(data))
       end
 
-      # 環境定義を読み込み
+      # 指定された名前の環境定義を読み込み（.picoruby-env.yml から）
       def get_environment(env_name)
         data = load_env_file
         environments = data['environments'] || {}
@@ -66,13 +71,13 @@ module Pra
         save_env_file(data)
       end
 
-      # 現在の環境名を取得
+      # 現在の環境定義名を取得（.picoruby-env.yml の 'current' フィールド）
       def get_current_env
         data = load_env_file
         data['current']
       end
 
-      # 現在の環境名を設定
+      # 現在の環境定義名を設定（.picoruby-env.yml の 'current' フィールドを更新）
       def set_current_env(env_name)
         data = load_env_file
         data['current'] = env_name
@@ -180,12 +185,12 @@ module Pra
         "#{r2p2_info}_#{esp32_info}_#{picoruby_info}"
       end
 
-      # キャッシュディレクトリを取得
+      # キャッシュディレクトリパスを取得（不変リポジトリコピーの場所）
       def get_cache_path(repo_name, commit_hash)
         File.join(CACHE_DIR, repo_name, commit_hash)
       end
 
-      # ビルドディレクトリを取得
+      # ビルド環境ディレクトリパスを取得（ワーキングディレクトリの場所）
       def get_build_path(env_hash)
         File.join(BUILD_DIR, env_hash)
       end

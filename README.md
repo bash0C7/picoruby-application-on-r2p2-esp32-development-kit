@@ -12,6 +12,18 @@
 - **Patch Management**: Git-managed changes in the `patch/` directory with automatic application
 - **Task Delegation**: Build/flash/monitor tasks delegated to R2P2-ESP32's Rakefile
 
+## Terminology
+
+This project uses specific terminology to distinguish between different concepts:
+
+- **Environment Definition**: Metadata stored in `.picoruby-env.yml` that defines commit hashes and timestamps for three repositories (R2P2-ESP32, picoruby-esp32, picoruby). Managed by `pra env` commands.
+
+- **Build Environment**: A working directory in `build/` that contains actual repository files for building firmware. Managed by `pra build` commands.
+
+- **Cache**: Immutable repository copies stored in `.cache/` indexed by commit hash and timestamp. These are never modified after creation. Managed by `pra cache` commands.
+
+**Workflow**: First, define an environment in `.picoruby-env.yml` → Then fetch repositories to cache → Finally setup a build environment from the cache.
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -63,11 +75,11 @@ bundle exec pra monitor
 
 ## Commands Reference
 
-### Environment Management
+### Environment Definition Management
 
-- `pra env show` - Display current environment configuration
-- `pra env set ENV_NAME` - Switch to specified environment
-- `pra env latest` - Fetch latest versions and switch to them
+- `pra env show` - Display current environment definition from .picoruby-env.yml
+- `pra env set ENV_NAME` - Switch to specified environment definition (updates build/current symlink)
+- `pra env latest` - Fetch latest commit versions and create environment definition
 
 ### Cache Management
 
@@ -78,9 +90,9 @@ bundle exec pra monitor
 
 ### Build Environment Management
 
-- `pra build setup [ENV_NAME]` - Setup build environment for specified environment
-- `pra build clean [ENV_NAME]` - Delete specified build environment
-- `pra build list` - Display list of constructed build environments
+- `pra build setup [ENV_NAME]` - Setup build environment from environment definition (.picoruby-env.yml)
+- `pra build clean [ENV_NAME]` - Delete specified build environment directory
+- `pra build list` - Display list of constructed build environment directories
 
 ### Patch Management
 

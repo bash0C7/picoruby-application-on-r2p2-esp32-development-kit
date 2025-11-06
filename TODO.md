@@ -13,10 +13,11 @@
 
 ### CLI Command Structure Refactoring
 
-- [ ] Clarify "environment" terminology
-  - [ ] `pra env` → Manages environment definitions (`.picoruby-env.yml`)
-  - [ ] `pra build` → Manages build environments (`.cache/*/r2p2-esp32/`)
-  - [ ] Consider renaming to avoid confusion (e.g., `pra build-env` or `pra workspace`)
+- [x] Clarify "environment" terminology
+  - [x] `pra env` → Manages environment definitions (`.picoruby-env.yml`)
+  - [x] `pra build` → Manages build environments (`build/` directories)
+  - [x] Added terminology documentation and clarified code comments/messages
+  - [ ] Consider renaming commands in future if needed (e.g., `pra build-env` or `pra workspace`)
 
 - [ ] Reorganize R2P2 device tasks under `pra device` namespace
   - [ ] Move `flash`, `monitor` to `pra device flash`, `pra device monitor`
