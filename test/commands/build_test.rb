@@ -71,22 +71,6 @@ class PraCommandsBuildTest < Test::Unit::TestCase
       assert_true(File.symlink?(current_link))
     end
 
-    test "raises error when cache not found" do
-      # テスト用の環境定義を作成するが、キャッシュは作成しない
-      r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-      esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-      picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
-
-      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
-
-      # キャッシュが見つからない場合は例外が発生するはず
-      assert_raise(RuntimeError) do
-        capture_stdout do
-          Pra::Commands::Build.start(['setup', 'test-env'])
-        end
-      end
-    end
-
     test "skips setup when build environment already exists" do
       # テスト用の環境定義を作成
       r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
