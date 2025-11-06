@@ -43,7 +43,6 @@ ESP32 上の PicoRuby アプリケーション・処理系開発。mrbgems ビ�
 **Maintain TODO.md with strict discipline**:
 
 - ✅ **Remove completed tasks immediately** — Delete from TODO.md as soon as work is done and committed
-- ✅ **Consolidate duplicates** — Merge similar/overlapping tasks into single, clear entries
 - ✅ **Review before adding** — Check if task already exists or is covered by existing items
 - ✅ **Keep granularity appropriate** — Tasks should be actionable, not too broad or too narrow
 - ✅ **Archive obsolete tasks** — Remove tasks made irrelevant by other changes
