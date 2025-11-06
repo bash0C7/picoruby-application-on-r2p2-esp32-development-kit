@@ -3,11 +3,11 @@
 require "test_helper"
 require "stringio"
 
-class PapTest < Test::Unit::TestCase
+class PraTest < Test::Unit::TestCase
   # VERSION定数の存在確認
   test "VERSION constant is defined" do
     assert do
-      ::Pap.const_defined?(:VERSION)
+      ::Pra.const_defined?(:VERSION)
     end
   end
 
@@ -16,28 +16,28 @@ class PapTest < Test::Unit::TestCase
     test "outputs version string" do
       # 標準出力をキャプチャ
       output = capture_stdout do
-        Pap::CLI.start(['version'])
+        Pra::CLI.start(['version'])
       end
 
       # バージョン情報が出力されることを確認
-      assert_match(/pap version \d+\.\d+\.\d+/, output)
-      assert_match(/#{Pap::VERSION}/, output)
+      assert_match(/pra version \d+\.\d+\.\d+/, output)
+      assert_match(/#{Pra::VERSION}/, output)
     end
 
     test "outputs version with --version flag" do
       output = capture_stdout do
-        Pap::CLI.start(['--version'])
+        Pra::CLI.start(['--version'])
       end
 
-      assert_match(/pap version #{Pap::VERSION}/, output)
+      assert_match(/pra version #{Pra::VERSION}/, output)
     end
 
     test "outputs version with -v flag" do
       output = capture_stdout do
-        Pap::CLI.start(['-v'])
+        Pra::CLI.start(['-v'])
       end
 
-      assert_match(/pap version #{Pap::VERSION}/, output)
+      assert_match(/pra version #{Pra::VERSION}/, output)
     end
   end
 

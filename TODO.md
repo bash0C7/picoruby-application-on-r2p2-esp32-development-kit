@@ -2,20 +2,20 @@
 
 ## Naming Convention Note
 
-**Current name**: `pap` = **P**icoRuby **A**pplication **P**latform
+**Current name**: `pra` = **P**icoRuby **A**pplication **P**latform
 **Desired name**: `pra` = **P**ico**R**uby **A**pplication
 
-The command should be renamed from `pap` to `pra` to better reflect the project's focus on PicoRuby applications.
+The command should be renamed from `pra` to `pra` to better reflect the project's focus on PicoRuby applications.
 
 ## High Priority
 
-- [ ] Rename command from `pap` to `pra`
-  - Directory: `lib/pap/` → `lib/pra/`
-  - Executable: `exe/pap` → `exe/pra`
-  - Gemspec: `pap.gemspec` → `pra.gemspec`
-  - Module name: `Pap` → `Pra` (all Ruby files)
+- [ ] Rename command from `pra` to `pra`
+  - Directory: `lib/pra/` → `lib/pra/`
+  - Executable: `exe/pra` → `exe/pra`
+  - Gemspec: `pra.gemspec` → `pra.gemspec`
+  - Module name: `Pra` → `Pra` (all Ruby files)
   - Documentation: README.md, SPEC.md, SETUP.md, etc.
-  - Test files: test/pap_test.rb → test/pra_test.rb
+  - Test files: test/pra_test.rb → test/pra_test.rb
 
 - [ ] Add comprehensive unit tests for all commands
   - Progress: 41 tests, 112 assertions, 100% passing

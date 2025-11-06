@@ -1,6 +1,6 @@
-# pap - PicoRuby Application Platform
+# pra - PicoRuby Application Platform
 
-**pap** is a multi-version build system for ESP32 + PicoRuby development that manages multiple versions of R2P2-ESP32 and its nested submodules (picoruby-esp32 → picoruby) in parallel, allowing easy switching and validation across versions.
+**pra** is a multi-version build system for ESP32 + PicoRuby development that manages multiple versions of R2P2-ESP32 and its nested submodules (picoruby-esp32 → picoruby) in parallel, allowing easy switching and validation across versions.
 
 ## Features
 
@@ -14,7 +14,7 @@
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'pap'
+gem 'pra'
 ```
 
 And then execute:
@@ -26,7 +26,7 @@ bundle install
 Or install it yourself as:
 
 ```bash
-gem install pap
+gem install pra
 ```
 
 ## Quick Start
@@ -34,7 +34,7 @@ gem install pap
 ### 1. Check current environment
 
 ```bash
-bundle exec pap env show
+bundle exec pra env show
 ```
 
 ### 2. Fetch environment from cache
@@ -42,57 +42,57 @@ bundle exec pap env show
 If you have a `.picoruby-env.yml` with environment definitions:
 
 ```bash
-bundle exec pap cache fetch stable-2024-11
+bundle exec pra cache fetch stable-2024-11
 ```
 
 ### 3. Setup build environment
 
 ```bash
-bundle exec pap build setup stable-2024-11
+bundle exec pra build setup stable-2024-11
 ```
 
 ### 4. Build, flash, and monitor
 
 ```bash
-bundle exec pap flash
-bundle exec pap monitor
+bundle exec pra flash
+bundle exec pra monitor
 ```
 
 ## Commands Reference
 
 ### Environment Management
 
-- `pap env show` - Display current environment configuration
-- `pap env set ENV_NAME` - Switch to specified environment
-- `pap env latest` - Fetch latest versions and switch to them
+- `pra env show` - Display current environment configuration
+- `pra env set ENV_NAME` - Switch to specified environment
+- `pra env latest` - Fetch latest versions and switch to them
 
 ### Cache Management
 
-- `pap cache list` - Display list of cached repository versions
-- `pap cache fetch [ENV_NAME]` - Fetch specified environment from GitHub and save to cache
-- `pap cache clean REPO` - Delete all caches for specified repo
-- `pap cache prune` - Delete caches not referenced by any environment
+- `pra cache list` - Display list of cached repository versions
+- `pra cache fetch [ENV_NAME]` - Fetch specified environment from GitHub and save to cache
+- `pra cache clean REPO` - Delete all caches for specified repo
+- `pra cache prune` - Delete caches not referenced by any environment
 
 ### Build Environment Management
 
-- `pap build setup [ENV_NAME]` - Setup build environment for specified environment
-- `pap build clean [ENV_NAME]` - Delete specified build environment
-- `pap build list` - Display list of constructed build environments
+- `pra build setup [ENV_NAME]` - Setup build environment for specified environment
+- `pra build clean [ENV_NAME]` - Delete specified build environment
+- `pra build list` - Display list of constructed build environments
 
 ### Patch Management
 
-- `pap patch export [ENV_NAME]` - Export changes from build environment to patch directory
-- `pap patch apply [ENV_NAME]` - Apply patches to build environment
-- `pap patch diff [ENV_NAME]` - Display differences between working changes and stored patches
+- `pra patch export [ENV_NAME]` - Export changes from build environment to patch directory
+- `pra patch apply [ENV_NAME]` - Apply patches to build environment
+- `pra patch diff [ENV_NAME]` - Display differences between working changes and stored patches
 
 ### R2P2-ESP32 Task Delegation
 
-- `pap flash [ENV_NAME]` - Flash firmware to ESP32 (delegates to R2P2-ESP32)
-- `pap monitor [ENV_NAME]` - Monitor ESP32 serial output (delegates to R2P2-ESP32)
+- `pra flash [ENV_NAME]` - Flash firmware to ESP32 (delegates to R2P2-ESP32)
+- `pra monitor [ENV_NAME]` - Monitor ESP32 serial output (delegates to R2P2-ESP32)
 
 ### Other
 
-- `pap version` or `pap -v` - Show pap version
+- `pra version` or `pra -v` - Show pra version
 
 ## Requirements
 
@@ -140,13 +140,13 @@ bundle exec rubocop
 ### 5. Build the gem
 
 ```bash
-bundle exec gem build pap.gemspec
+bundle exec gem build pra.gemspec
 ```
 
 ### 6. Test CLI locally
 
 ```bash
-bundle exec exe/pap --help
+bundle exec exe/pra --help
 ```
 
 ## License

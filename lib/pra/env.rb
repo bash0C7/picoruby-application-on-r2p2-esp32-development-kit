@@ -4,7 +4,7 @@ require 'yaml'
 require 'time'
 require 'shellwords'
 
-module Pap
+module Pra
   # PicoRuby環境管理モジュール
   module Env
     # ルートディレクトリ

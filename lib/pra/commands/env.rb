@@ -1,7 +1,7 @@
 
 require 'thor'
 
-module Pap
+module Pra
   module Commands
     # 環境管理コマンド群
     class Env < Thor
@@ -11,19 +11,19 @@ module Pap
 
       desc 'show', 'Display current environment configuration'
       def show
-        current = Pap::Env.get_current_env
+        current = Pra::Env.get_current_env
         if current.nil?
           puts 'Current environment: (not set)'
-          puts "Run 'pap env set ENV_NAME' to set an environment"
+          puts "Run 'pra env set ENV_NAME' to set an environment"
         else
-          env_config = Pap::Env.get_environment(current)
+          env_config = Pra::Env.get_environment(current)
           if env_config.nil?
             puts "Error: Environment '#{current}' not found in .picoruby-env.yml"
           else
             puts "Current environment: #{current}"
 
             # Symlink情報
-            current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+            current_link = File.join(Pra::Env::BUILD_DIR, 'current')
             if File.symlink?(current_link)
               target = File.readlink(current_link)
               puts "Symlink: #{File.basename(current_link)} -> #{File.basename(target)}/"
@@ -45,25 +45,25 @@ module Pap
 
       desc 'set ENV_NAME', 'Switch to specified environment'
       def set(env_name)
-        env_config = Pap::Env.get_environment(env_name)
+        env_config = Pra::Env.get_environment(env_name)
         raise "Error: Environment '#{env_name}' not found" if env_config.nil?
 
         # ビルド環境が存在するか確認
         r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
         esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
         picoruby_hash = env_config['picoruby']['commit'] + '-' + env_config['picoruby']['timestamp']
-        env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
-        build_path = Pap::Env.get_build_path(env_hash)
+        env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+        build_path = Pra::Env.get_build_path(env_hash)
 
         if Dir.exist?(build_path)
           puts "Switching to environment: #{env_name}"
-          current_link = File.join(Pap::Env::BUILD_DIR, 'current')
-          Pap::Env.create_symlink(File.basename(build_path), current_link)
-          Pap::Env.set_current_env(env_name)
+          current_link = File.join(Pra::Env::BUILD_DIR, 'current')
+          Pra::Env.create_symlink(File.basename(build_path), current_link)
+          Pra::Env.set_current_env(env_name)
           puts "✓ Switched to #{env_name}"
         else
           puts "Error: Build environment not found at #{build_path}"
-          puts "Run 'pap build setup #{env_name}' first"
+          puts "Run 'pra build setup #{env_name}' first"
         end
       end
 
@@ -76,11 +76,11 @@ module Pap
         # 各リポジトリの最新コミットを取得
         repos_info = {}
 
-        Pap::Env::REPOS.each do |repo_name, repo_url|
+        Pra::Env::REPOS.each do |repo_name, repo_url|
           puts "  Checking #{repo_name}..."
 
           # リモートから最新コミットを取得
-          commit = Pap::Env.fetch_remote_commit(repo_url, 'HEAD')
+          commit = Pra::Env.fetch_remote_commit(repo_url, 'HEAD')
           raise "Failed to fetch commit for #{repo_name}" if commit.nil?
 
           # 一時ディレクトリでshallow cloneしてタイムスタンプ取得
@@ -113,7 +113,7 @@ module Pap
         env_name = 'latest'
         puts "\nSaving as environment '#{env_name}'..."
 
-        Pap::Env.set_environment(
+        Pra::Env.set_environment(
           env_name,
           repos_info['R2P2-ESP32'],
           repos_info['picoruby-esp32'],

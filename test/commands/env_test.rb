@@ -5,7 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "stringio"
 
-class PapCommandsEnvTest < Test::Unit::TestCase
+class PraCommandsEnvTest < Test::Unit::TestCase
   # テスト用の一時ディレクトリ
   def setup
     @original_dir = Dir.pwd
@@ -13,8 +13,8 @@ class PapCommandsEnvTest < Test::Unit::TestCase
     Dir.chdir(@tmpdir)
 
     # 各テスト前にENV_FILEとBUILD_DIRをクリーンアップ
-    FileUtils.rm_f(Pap::Env::ENV_FILE) if File.exist?(Pap::Env::ENV_FILE)
-    FileUtils.rm_rf(Pap::Env::BUILD_DIR) if Dir.exist?(Pap::Env::BUILD_DIR)
+    FileUtils.rm_f(Pra::Env::ENV_FILE) if File.exist?(Pra::Env::ENV_FILE)
+    FileUtils.rm_rf(Pra::Env::BUILD_DIR) if Dir.exist?(Pra::Env::BUILD_DIR)
   end
 
   def teardown
@@ -26,19 +26,19 @@ class PapCommandsEnvTest < Test::Unit::TestCase
   sub_test_case "env show command" do
     test "shows '(not set)' when no environment is configured" do
       output = capture_stdout do
-        Pap::Commands::Env.start(['show'])
+        Pra::Commands::Env.start(['show'])
       end
 
       assert_match(/Current environment: \(not set\)/, output)
-      assert_match(/Run 'pap env set ENV_NAME' to set an environment/, output)
+      assert_match(/Run 'pra env set ENV_NAME' to set an environment/, output)
     end
 
     test "shows error when environment is set but not found in config" do
       # current環境を設定するが、定義は作成しない
-      Pap::Env.set_current_env('missing-env')
+      Pra::Env.set_current_env('missing-env')
 
       output = capture_stdout do
-        Pap::Commands::Env.start(['show'])
+        Pra::Commands::Env.start(['show'])
       end
 
       assert_match(/Error: Environment 'missing-env' not found/, output)
@@ -50,11 +50,11 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info, notes: 'Test environment')
-      Pap::Env.set_current_env('test-env')
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info, notes: 'Test environment')
+      Pra::Env.set_current_env('test-env')
 
       output = capture_stdout do
-        Pap::Commands::Env.start(['show'])
+        Pra::Commands::Env.start(['show'])
       end
 
       assert_match(/Current environment: test-env/, output)
@@ -71,23 +71,23 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250101_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250101_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
-      Pap::Env.set_current_env('test-env')
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+      Pra::Env.set_current_env('test-env')
 
       # BUILD_DIRとcurrentシンボリックリンクを作成（正しいenv_hashを使用）
       r2p2_hash = "#{r2p2_info['commit']}-#{r2p2_info['timestamp']}"
       esp32_hash = "#{esp32_info['commit']}-#{esp32_info['timestamp']}"
       picoruby_hash = "#{picoruby_info['commit']}-#{picoruby_info['timestamp']}"
-      env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+      env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
 
-      FileUtils.mkdir_p(Pap::Env::BUILD_DIR)
-      target = File.join(Pap::Env::BUILD_DIR, env_hash)
+      FileUtils.mkdir_p(Pra::Env::BUILD_DIR)
+      target = File.join(Pra::Env::BUILD_DIR, env_hash)
       FileUtils.mkdir_p(target)
-      current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+      current_link = File.join(Pra::Env::BUILD_DIR, 'current')
       FileUtils.ln_s(env_hash, current_link)
 
       output = capture_stdout do
-        Pap::Commands::Env.start(['show'])
+        Pra::Commands::Env.start(['show'])
       end
 
       assert_match(/Symlink: current -> #{Regexp.escape(env_hash)}\//, output)
@@ -99,7 +99,7 @@ class PapCommandsEnvTest < Test::Unit::TestCase
     test "raises error when environment does not exist" do
       assert_raise(RuntimeError) do
         capture_stdout do
-          Pap::Commands::Env.start(['set', 'non-existent'])
+          Pra::Commands::Env.start(['set', 'non-existent'])
         end
       end
     end
@@ -110,14 +110,14 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250101_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250101_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
 
       output = capture_stdout do
-        Pap::Commands::Env.start(['set', 'test-env'])
+        Pra::Commands::Env.start(['set', 'test-env'])
       end
 
       assert_match(/Error: Build environment not found/, output)
-      assert_match(/Run 'pap build setup test-env' first/, output)
+      assert_match(/Run 'pra build setup test-env' first/, output)
     end
 
     test "successfully switches environment when build exists" do
@@ -126,28 +126,28 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250101_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250101_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
 
       # ビルドディレクトリを作成
       r2p2_hash = "#{r2p2_info['commit']}-#{r2p2_info['timestamp']}"
       esp32_hash = "#{esp32_info['commit']}-#{esp32_info['timestamp']}"
       picoruby_hash = "#{picoruby_info['commit']}-#{picoruby_info['timestamp']}"
-      env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
-      build_path = Pap::Env.get_build_path(env_hash)
+      env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+      build_path = Pra::Env.get_build_path(env_hash)
       FileUtils.mkdir_p(build_path)
 
       output = capture_stdout do
-        Pap::Commands::Env.start(['set', 'test-env'])
+        Pra::Commands::Env.start(['set', 'test-env'])
       end
 
       assert_match(/Switching to environment: test-env/, output)
       assert_match(/✓ Switched to test-env/, output)
 
       # currentが正しく設定されていることを確認
-      assert_equal('test-env', Pap::Env.get_current_env)
+      assert_equal('test-env', Pra::Env.get_current_env)
 
       # シンボリックリンクが作成されていることを確認
-      current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+      current_link = File.join(Pra::Env::BUILD_DIR, 'current')
       assert_true(File.symlink?(current_link))
     end
   end
@@ -158,7 +158,7 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       # Git操作をモック化
       stub_git_operations do |stubs|
         output = capture_stdout do
-          Pap::Commands::Env.start(['latest'])
+          Pra::Commands::Env.start(['latest'])
         end
 
         # 出力確認
@@ -173,7 +173,7 @@ class PapCommandsEnvTest < Test::Unit::TestCase
         assert_match(/✓ Environment 'latest' created successfully/, output)
 
         # 環境が正しく保存されているか確認
-        env_config = Pap::Env.get_environment('latest')
+        env_config = Pra::Env.get_environment('latest')
         assert_not_nil(env_config)
         assert_equal('abc1234', env_config['R2P2-ESP32']['commit'])
         assert_equal('20250101_120000', env_config['R2P2-ESP32']['timestamp'])
@@ -190,7 +190,7 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       stub_git_operations(fail_fetch: true) do |stubs|
         assert_raise(RuntimeError) do
           capture_stdout do
-            Pap::Commands::Env.start(['latest'])
+            Pra::Commands::Env.start(['latest'])
           end
         end
       end
@@ -201,7 +201,7 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       stub_git_operations(fail_clone: true) do |stubs|
         assert_raise(RuntimeError) do
           capture_stdout do
-            Pap::Commands::Env.start(['latest'])
+            Pra::Commands::Env.start(['latest'])
           end
         end
       end
@@ -230,16 +230,16 @@ class PapCommandsEnvTest < Test::Unit::TestCase
     }
 
     # 元のメソッドを保存
-    original_fetch = Pap::Env.method(:fetch_remote_commit)
+    original_fetch = Pra::Env.method(:fetch_remote_commit)
     call_count = { fetch: 0, clone: 0 }
 
     # fetch_remote_commitをスタブ化
-    Pap::Env.define_singleton_method(:fetch_remote_commit) do |repo_url, ref = 'HEAD'|
+    Pra::Env.define_singleton_method(:fetch_remote_commit) do |repo_url, ref = 'HEAD'|
       call_count[:fetch] += 1
       return nil if fail_fetch
 
       # リポジトリURLから名前を取得
-      repo_name = Pap::Env::REPOS.key(repo_url)
+      repo_name = Pra::Env::REPOS.key(repo_url)
       test_commits[repo_name][:commit]
     end
 
@@ -274,15 +274,15 @@ class PapCommandsEnvTest < Test::Unit::TestCase
         if cmd.include?('git rev-parse --short=7 HEAD')
           # 現在の作業ディレクトリからリポジトリ名を推測
           pwd = Dir.pwd
-          repo_name = Pap::Env::REPOS.keys.find { |name| pwd.include?(name) }
+          repo_name = Pra::Env::REPOS.keys.find { |name| pwd.include?(name) }
           test_commits[repo_name][:commit] + "\n"
         elsif cmd.include?('git show -s --format=%ci HEAD')
           # タイムスタンプを返す
           pwd = Dir.pwd
-          repo_name = Pap::Env::REPOS.keys.find { |name| pwd.include?(name) }
+          repo_name = Pra::Env::REPOS.keys.find { |name| pwd.include?(name) }
           timestamp = test_commits[repo_name][:timestamp]
           # タイムスタンプを日付形式に変換
-          "2025-01-0#{Pap::Env::REPOS.keys.index(repo_name) + 1} 12:00:00 +0900\n"
+          "2025-01-0#{Pra::Env::REPOS.keys.index(repo_name) + 1} 12:00:00 +0900\n"
         else
           original_backtick.bind(self).call(cmd)
         end
@@ -293,7 +293,7 @@ class PapCommandsEnvTest < Test::Unit::TestCase
       yield({ commits: test_commits, call_count: call_count })
     ensure
       # 元のメソッドを復元
-      Pap::Env.define_singleton_method(:fetch_remote_commit, original_fetch)
+      Pra::Env.define_singleton_method(:fetch_remote_commit, original_fetch)
       Kernel.module_eval do
         define_method(:system, original_system)
         define_method(:`, original_backtick)

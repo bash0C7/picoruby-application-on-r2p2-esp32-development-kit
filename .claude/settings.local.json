@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bundle config:*)"
+      "Bash(bundle config:*)",
+      "Bash(git mv:*)",
+      "Bash(find:*)",
+      "Bash(bundle exec rake test:*)"
     ],
     "deny": [],
     "ask": []

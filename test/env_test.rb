@@ -4,7 +4,7 @@ require "test_helper"
 require "tmpdir"
 require "fileutils"
 
-class PapEnvTest < Test::Unit::TestCase
+class PraEnvTest < Test::Unit::TestCase
   # テスト用の一時ディレクトリ
   def setup
     @original_dir = Dir.pwd
@@ -12,7 +12,7 @@ class PapEnvTest < Test::Unit::TestCase
     Dir.chdir(@tmpdir)
 
     # 各テスト前にENV_FILEをクリーンアップ
-    FileUtils.rm_f(Pap::Env::ENV_FILE) if File.exist?(Pap::Env::ENV_FILE)
+    FileUtils.rm_f(Pra::Env::ENV_FILE) if File.exist?(Pra::Env::ENV_FILE)
   end
 
   def teardown
@@ -23,7 +23,7 @@ class PapEnvTest < Test::Unit::TestCase
   # YAML操作のテスト
   sub_test_case "YAML operations" do
     test "load_env_file returns empty hash when file does not exist" do
-      result = Pap::Env.load_env_file
+      result = Pra::Env.load_env_file
       assert_equal({}, result)
     end
 
@@ -40,8 +40,8 @@ class PapEnvTest < Test::Unit::TestCase
         }
       }
 
-      Pap::Env.save_env_file(data)
-      loaded = Pap::Env.load_env_file
+      Pra::Env.save_env_file(data)
+      loaded = Pra::Env.load_env_file
 
       assert_equal(data, loaded)
       assert_equal('test-env', loaded['current'])
@@ -52,7 +52,7 @@ class PapEnvTest < Test::Unit::TestCase
   # 環境管理のテスト
   sub_test_case "Environment management" do
     test "get_environment returns nil for non-existent environment" do
-      result = Pap::Env.get_environment('non-existent')
+      result = Pra::Env.get_environment('non-existent')
       assert_nil(result)
     end
 
@@ -61,9 +61,9 @@ class PapEnvTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250101_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250101_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info, notes: 'Test notes')
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info, notes: 'Test notes')
 
-      env = Pap::Env.get_environment('test-env')
+      env = Pra::Env.get_environment('test-env')
       assert_not_nil(env)
       assert_equal(r2p2_info, env['R2P2-ESP32'])
       assert_equal(esp32_info, env['picoruby-esp32'])
@@ -76,23 +76,23 @@ class PapEnvTest < Test::Unit::TestCase
   # カレント環境のテスト
   sub_test_case "Current environment" do
     test "get_current_env returns nil when not set" do
-      result = Pap::Env.get_current_env
+      result = Pra::Env.get_current_env
       assert_nil(result)
     end
 
     test "set_current_env and get_current_env work together" do
-      Pap::Env.set_current_env('my-env')
+      Pra::Env.set_current_env('my-env')
 
-      current = Pap::Env.get_current_env
+      current = Pra::Env.get_current_env
       assert_equal('my-env', current)
     end
 
     test "set_current_env updates existing current value" do
-      Pap::Env.set_current_env('env1')
-      assert_equal('env1', Pap::Env.get_current_env)
+      Pra::Env.set_current_env('env1')
+      assert_equal('env1', Pra::Env.get_current_env)
 
-      Pap::Env.set_current_env('env2')
-      assert_equal('env2', Pap::Env.get_current_env)
+      Pra::Env.set_current_env('env2')
+      assert_equal('env2', Pra::Env.get_current_env)
     end
   end
 
@@ -103,23 +103,23 @@ class PapEnvTest < Test::Unit::TestCase
       esp32 = 'def5678-20250101_120000'
       picoruby = 'ghi9012-20250101_120000'
 
-      result = Pap::Env.generate_env_hash(r2p2, esp32, picoruby)
+      result = Pra::Env.generate_env_hash(r2p2, esp32, picoruby)
       expected = "#{r2p2}_#{esp32}_#{picoruby}"
 
       assert_equal(expected, result)
     end
 
     test "get_cache_path returns correct path" do
-      result = Pap::Env.get_cache_path('R2P2-ESP32', 'abc1234-20250101_120000')
-      expected = File.join(Pap::Env::CACHE_DIR, 'R2P2-ESP32', 'abc1234-20250101_120000')
+      result = Pra::Env.get_cache_path('R2P2-ESP32', 'abc1234-20250101_120000')
+      expected = File.join(Pra::Env::CACHE_DIR, 'R2P2-ESP32', 'abc1234-20250101_120000')
 
       assert_equal(expected, result)
     end
 
     test "get_build_path returns correct path" do
       env_hash = 'abc1234-20250101_120000_def5678-20250101_120000_ghi9012-20250101_120000'
-      result = Pap::Env.get_build_path(env_hash)
-      expected = File.join(Pap::Env::BUILD_DIR, env_hash)
+      result = Pra::Env.get_build_path(env_hash)
+      expected = File.join(Pra::Env::BUILD_DIR, env_hash)
 
       assert_equal(expected, result)
     end
@@ -134,7 +134,7 @@ class PapEnvTest < Test::Unit::TestCase
       # targetディレクトリを作成
       FileUtils.mkdir_p(File.join(@tmpdir, target))
 
-      Pap::Env.create_symlink(target, link)
+      Pra::Env.create_symlink(target, link)
 
       assert_true(File.symlink?(link))
       assert_equal(target, File.readlink(link))
@@ -148,15 +148,15 @@ class PapEnvTest < Test::Unit::TestCase
       FileUtils.mkdir_p(File.join(@tmpdir, target1))
       FileUtils.mkdir_p(File.join(@tmpdir, target2))
 
-      Pap::Env.create_symlink(target1, link)
+      Pra::Env.create_symlink(target1, link)
       assert_equal(target1, File.readlink(link))
 
-      Pap::Env.create_symlink(target2, link)
+      Pra::Env.create_symlink(target2, link)
       assert_equal(target2, File.readlink(link))
     end
 
     test "read_symlink returns nil for non-existent symlink" do
-      result = Pap::Env.read_symlink('/non/existent/path')
+      result = Pra::Env.read_symlink('/non/existent/path')
       assert_nil(result)
     end
 
@@ -165,9 +165,9 @@ class PapEnvTest < Test::Unit::TestCase
       link = File.join(@tmpdir, 'link')
 
       FileUtils.mkdir_p(File.join(@tmpdir, target))
-      Pap::Env.create_symlink(target, link)
+      Pra::Env.create_symlink(target, link)
 
-      result = Pap::Env.read_symlink(link)
+      result = Pra::Env.read_symlink(link)
       assert_equal(target, result)
     end
   end

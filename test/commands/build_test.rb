@@ -5,7 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "stringio"
 
-class PapCommandsBuildTest < Test::Unit::TestCase
+class PraCommandsBuildTest < Test::Unit::TestCase
   # テスト用の一時ディレクトリ
   def setup
     @original_dir = Dir.pwd
@@ -13,8 +13,8 @@ class PapCommandsBuildTest < Test::Unit::TestCase
     Dir.chdir(@tmpdir)
 
     # 各テスト前にENV_FILEとBUILD_DIRをクリーンアップ
-    FileUtils.rm_f(Pap::Env::ENV_FILE) if File.exist?(Pap::Env::ENV_FILE)
-    FileUtils.rm_rf(Pap::Env::BUILD_DIR) if Dir.exist?(Pap::Env::BUILD_DIR)
+    FileUtils.rm_f(Pra::Env::ENV_FILE) if File.exist?(Pra::Env::ENV_FILE)
+    FileUtils.rm_rf(Pra::Env::BUILD_DIR) if Dir.exist?(Pra::Env::BUILD_DIR)
   end
 
   def teardown
@@ -26,7 +26,7 @@ class PapCommandsBuildTest < Test::Unit::TestCase
   sub_test_case "build list command" do
     test "shows 'No build environments found' when build directory is empty" do
       output = capture_stdout do
-        Pap::Commands::Build.start(['list'])
+        Pra::Commands::Build.start(['list'])
       end
 
       assert_match(/=== Build Environments ===/, output)
@@ -36,12 +36,12 @@ class PapCommandsBuildTest < Test::Unit::TestCase
 
     test "lists build environments when they exist" do
       # テスト用のビルド環境を作成
-      FileUtils.mkdir_p(Pap::Env::BUILD_DIR)
-      FileUtils.mkdir_p(File.join(Pap::Env::BUILD_DIR, 'env1-hash'))
-      FileUtils.mkdir_p(File.join(Pap::Env::BUILD_DIR, 'env2-hash'))
+      FileUtils.mkdir_p(Pra::Env::BUILD_DIR)
+      FileUtils.mkdir_p(File.join(Pra::Env::BUILD_DIR, 'env1-hash'))
+      FileUtils.mkdir_p(File.join(Pra::Env::BUILD_DIR, 'env2-hash'))
 
       output = capture_stdout do
-        Pap::Commands::Build.start(['list'])
+        Pra::Commands::Build.start(['list'])
       end
 
       assert_match(/=== Build Environments ===/, output)
@@ -52,15 +52,15 @@ class PapCommandsBuildTest < Test::Unit::TestCase
 
     test "shows current symlink when it exists" do
       # ビルド環境とシンボリックリンクを作成
-      FileUtils.mkdir_p(Pap::Env::BUILD_DIR)
+      FileUtils.mkdir_p(Pra::Env::BUILD_DIR)
       target_dir = 'test-env-hash'
-      FileUtils.mkdir_p(File.join(Pap::Env::BUILD_DIR, target_dir))
+      FileUtils.mkdir_p(File.join(Pra::Env::BUILD_DIR, target_dir))
 
-      current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+      current_link = File.join(Pra::Env::BUILD_DIR, 'current')
       FileUtils.ln_s(target_dir, current_link)
 
       output = capture_stdout do
-        Pap::Commands::Build.start(['list'])
+        Pra::Commands::Build.start(['list'])
       end
 
       assert_match(/=== Build Environments ===/, output)
@@ -74,7 +74,7 @@ class PapCommandsBuildTest < Test::Unit::TestCase
     test "shows error when no environment is configured" do
       assert_raise(RuntimeError) do
         capture_stdout do
-          Pap::Commands::Build.start(['clean', 'non-existent'])
+          Pra::Commands::Build.start(['clean', 'non-existent'])
         end
       end
     end
@@ -85,10 +85,10 @@ class PapCommandsBuildTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250101_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250101_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
 
       output = capture_stdout do
-        Pap::Commands::Build.start(['clean', 'test-env'])
+        Pra::Commands::Build.start(['clean', 'test-env'])
       end
 
       assert_match(/Build environment not found/, output)
@@ -100,20 +100,20 @@ class PapCommandsBuildTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250101_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250101_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
 
       # ビルドディレクトリを作成
       r2p2_hash = "#{r2p2_info['commit']}-#{r2p2_info['timestamp']}"
       esp32_hash = "#{esp32_info['commit']}-#{esp32_info['timestamp']}"
       picoruby_hash = "#{picoruby_info['commit']}-#{picoruby_info['timestamp']}"
-      env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
-      build_path = Pap::Env.get_build_path(env_hash)
+      env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+      build_path = Pra::Env.get_build_path(env_hash)
       FileUtils.mkdir_p(build_path)
 
       assert_true(Dir.exist?(build_path))
 
       output = capture_stdout do
-        Pap::Commands::Build.start(['clean', 'test-env'])
+        Pra::Commands::Build.start(['clean', 'test-env'])
       end
 
       assert_match(/Removing build environment/, output)
@@ -127,24 +127,24 @@ class PapCommandsBuildTest < Test::Unit::TestCase
       esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250101_120000' }
       picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250101_120000' }
 
-      Pap::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
-      Pap::Env.set_current_env('test-env')
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+      Pra::Env.set_current_env('test-env')
 
       # ビルドディレクトリとシンボリックリンクを作成
       r2p2_hash = "#{r2p2_info['commit']}-#{r2p2_info['timestamp']}"
       esp32_hash = "#{esp32_info['commit']}-#{esp32_info['timestamp']}"
       picoruby_hash = "#{picoruby_info['commit']}-#{picoruby_info['timestamp']}"
-      env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
-      build_path = Pap::Env.get_build_path(env_hash)
+      env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+      build_path = Pra::Env.get_build_path(env_hash)
       FileUtils.mkdir_p(build_path)
 
-      current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+      current_link = File.join(Pra::Env::BUILD_DIR, 'current')
       FileUtils.ln_s(env_hash, current_link)
 
       assert_true(File.symlink?(current_link))
 
       output = capture_stdout do
-        Pap::Commands::Build.start(['clean', 'current'])
+        Pra::Commands::Build.start(['clean', 'current'])
       end
 
       assert_match(/✓ Current build environment removed/, output)

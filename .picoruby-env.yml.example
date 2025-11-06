@@ -5,10 +5,10 @@
 #   cp .picoruby-env.yml.example .picoruby-env.yml
 #
 # Usage:
-#   pap env show              - Display current environment
-#   pap env set ENV_NAME      - Switch to specified environment
-#   pap env latest            - Fetch latest versions and switch to them
-#   pap cache fetch ENV_NAME  - Fetch environment from GitHub
+#   pra env show              - Display current environment
+#   pra env set ENV_NAME      - Switch to specified environment
+#   pra env latest            - Fetch latest versions and switch to them
+#   pra cache fetch ENV_NAME  - Fetch environment from GitHub
 
 current: stable-2024-11
 

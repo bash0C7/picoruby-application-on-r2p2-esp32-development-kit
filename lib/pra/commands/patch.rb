@@ -1,7 +1,7 @@
 
 require 'thor'
 
-module Pap
+module Pra
   module Commands
     # パッチ管理コマンド群
     class Patch < Thor
@@ -13,24 +13,24 @@ module Pap
       def export(env_name = 'current')
         # currentの場合はsymlinkから実環境名を取得
         if env_name == 'current'
-          current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+          current_link = File.join(Pra::Env::BUILD_DIR, 'current')
           if File.symlink?(current_link)
-            current = Pap::Env.get_current_env
+            current = Pra::Env.get_current_env
             env_name = current if current
           else
             raise 'Error: No current environment set'
           end
         end
 
-        env_config = Pap::Env.get_environment(env_name)
+        env_config = Pra::Env.get_environment(env_name)
         raise "Error: Environment '#{env_name}' not found" if env_config.nil?
 
         r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
         esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
         picoruby_hash = env_config['picoruby']['commit'] + '-' + env_config['picoruby']['timestamp']
-        env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+        env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
 
-        build_path = Pap::Env.get_build_path(env_hash)
+        build_path = Pra::Env.get_build_path(env_hash)
         raise "Error: Build environment not found: #{env_name}" unless Dir.exist?(build_path)
 
         puts "Exporting patches from: #{env_name}"
@@ -59,7 +59,7 @@ module Pap
             puts "  #{repo}: #{changed_files.size} file(s)"
 
             changed_files.each do |file|
-              patch_dir = File.join(Pap::Env::PATCH_DIR, repo)
+              patch_dir = File.join(Pra::Env::PATCH_DIR, repo)
               FileUtils.mkdir_p(patch_dir) unless Dir.exist?(patch_dir)
 
               # ディレクトリ構造を作成
@@ -90,9 +90,9 @@ module Pap
       def apply(env_name = 'current')
         # currentの場合はsymlinkから実環境名を取得
         if env_name == 'current'
-          current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+          current_link = File.join(Pra::Env::BUILD_DIR, 'current')
           if File.symlink?(current_link)
-            current = Pap::Env.get_current_env
+            current = Pra::Env.get_current_env
             env_name = current if current
           else
             # currentが設定されていない場合は、パッチ適用をスキップ
@@ -101,21 +101,21 @@ module Pap
           end
         end
 
-        env_config = Pap::Env.get_environment(env_name)
+        env_config = Pra::Env.get_environment(env_name)
         raise "Error: Environment '#{env_name}' not found" if env_config.nil?
 
         r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
         esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
         picoruby_hash = env_config['picoruby']['commit'] + '-' + env_config['picoruby']['timestamp']
-        env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+        env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
 
-        build_path = Pap::Env.get_build_path(env_hash)
+        build_path = Pra::Env.get_build_path(env_hash)
         raise "Error: Build environment not found: #{env_name}" unless Dir.exist?(build_path)
 
         puts '  Applying patches...'
 
         %w[R2P2-ESP32 picoruby-esp32 picoruby].each do |repo|
-          patch_repo_dir = File.join(Pap::Env::PATCH_DIR, repo)
+          patch_repo_dir = File.join(Pra::Env::PATCH_DIR, repo)
           next unless Dir.exist?(patch_repo_dir)
 
           case repo
@@ -151,30 +151,30 @@ module Pap
       def diff(env_name = 'current')
         # currentの場合はsymlinkから実環境名を取得
         if env_name == 'current'
-          current_link = File.join(Pap::Env::BUILD_DIR, 'current')
+          current_link = File.join(Pra::Env::BUILD_DIR, 'current')
           if File.symlink?(current_link)
-            current = Pap::Env.get_current_env
+            current = Pra::Env.get_current_env
             env_name = current if current
           else
             raise 'Error: No current environment set'
           end
         end
 
-        env_config = Pap::Env.get_environment(env_name)
+        env_config = Pra::Env.get_environment(env_name)
         raise "Error: Environment '#{env_name}' not found" if env_config.nil?
 
         r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
         esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
         picoruby_hash = env_config['picoruby']['commit'] + '-' + env_config['picoruby']['timestamp']
-        env_hash = Pap::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+        env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
 
-        build_path = Pap::Env.get_build_path(env_hash)
+        build_path = Pra::Env.get_build_path(env_hash)
         raise "Error: Build environment not found: #{env_name}" unless Dir.exist?(build_path)
 
         puts "=== Patch Differences ===\n"
 
         %w[R2P2-ESP32 picoruby-esp32 picoruby].each do |repo|
-          patch_repo_dir = File.join(Pap::Env::PATCH_DIR, repo)
+          patch_repo_dir = File.join(Pra::Env::PATCH_DIR, repo)
 
           case repo
           when 'R2P2-ESP32'

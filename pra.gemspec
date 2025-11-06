@@ -1,14 +1,14 @@
 
-require_relative "lib/pap/version"
+require_relative "lib/pra/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "pap"
-  spec.version = Pap::VERSION
+  spec.name = "pra"
+  spec.version = Pra::VERSION
   spec.authors = ["bash0C7"]
   spec.email = ["ksb.4038.nullpointer+github@gmail.com"]
 
   spec.summary = "Multi-version build system for ESP32 + PicoRuby development"
-  spec.description = "pap is a multi-version build system for ESP32 + PicoRuby development that manages multiple versions of R2P2-ESP32 and its nested submodules in parallel, allowing easy switching and validation across versions."
+  spec.description = "pra is a multi-version build system for ESP32 + PicoRuby development that manages multiple versions of R2P2-ESP32 and its nested submodules in parallel, allowing easy switching and validation across versions."
   spec.homepage = "https://github.com/bash0C7/picoruby-application-on-r2p2-esp32-development-kit"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"

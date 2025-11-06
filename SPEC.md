@@ -13,7 +13,7 @@ A build system for ESP32 + PicoRuby development that manages multiple versions o
 - Repositories saved in `.cache/` are **never modified**
 - Uniquely identified by commit hash + timestamp
 - New cache is always created when versions change
-- Old caches can be removed via `pap cache prune` when no longer needed
+- Old caches can be removed via `pra cache prune` when no longer needed
 
 ### 2. Environment Isolation
 
@@ -176,7 +176,7 @@ environments:
 
 ### 🔍 Environment Inspection Commands
 
-#### `pap env show`
+#### `pra env show`
 
 **Description**: Display current environment configuration
 
@@ -192,7 +192,7 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 ---
 
-#### `pap env set ENV_NAME`
+#### `pra env set ENV_NAME`
 
 **Description**: Switch to specified environment
 
@@ -207,29 +207,29 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 **Example**:
 ```bash
-pap env set development
+pra env set development
 # => Switching to development
 #    build/current -> build/34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/
 ```
 
 ---
 
-#### `pap env latest`
+#### `pra env latest`
 
 **Description**: Fetch latest versions and switch to them
 
 **Operation**:
 1. Fetch HEAD commits from each repo via GitHub API or `git ls-remote`
 2. Generate new environment name (e.g., `latest-20241105-143500`)
-3. Save to `.cache` via `pap cache fetch`
-4. Setup environment via `pap build setup`
-5. Switch via `pap env set`
+3. Save to `.cache` via `pra cache fetch`
+4. Setup environment via `pra build setup`
+5. Switch via `pra env set`
 
 ---
 
 ### 📦 Cache Management Commands
 
-#### `pap cache list`
+#### `pra cache list`
 
 **Description**: Display list of cached repository versions
 
@@ -252,7 +252,7 @@ Total cache size: 1.2GB
 
 ---
 
-#### `pap cache fetch [ENV_NAME]`
+#### `pra cache fetch [ENV_NAME]`
 
 **Description**: Fetch specified environment from GitHub and save to `.cache`
 
@@ -297,7 +297,7 @@ Total cache size: 1.2GB
 
 **Example**:
 ```bash
-pap cache fetch latest
+pra cache fetch latest
 # => Fetching R2P2-ESP32 HEAD...
 #    Cloning to .cache/R2P2-ESP32/34a1c23-20241104_120000/
 #    Updating submodule: components/picoruby-esp32
@@ -308,7 +308,7 @@ pap cache fetch latest
 
 ---
 
-#### `pap cache clean REPO`
+#### `pra cache clean REPO`
 
 **Description**: Delete all caches for specified repo
 
@@ -321,13 +321,13 @@ pap cache fetch latest
 
 **Example**:
 ```bash
-pap cache clean picoruby-esp32
+pra cache clean picoruby-esp32
 # => Removing .cache/picoruby-esp32/...
 ```
 
 ---
 
-#### `pap cache prune`
+#### `pra cache prune`
 
 **Description**: Delete caches not referenced by any environment
 
@@ -338,7 +338,7 @@ pap cache clean picoruby-esp32
 
 **Example**:
 ```bash
-pap cache prune
+pra cache prune
 # => Unused .cache/R2P2-ESP32/old-hash-20240101_000000/ - removing
 #    Freed: 500MB
 ```
@@ -347,7 +347,7 @@ pap cache prune
 
 ### 🔨 Build Environment Management Commands
 
-#### `pap build setup [ENV_NAME]`
+#### `pra build setup [ENV_NAME]`
 
 **Description**: Setup `build/{env-hash}/` for specified environment
 
@@ -368,7 +368,7 @@ pap cache prune
 
 **Example**:
 ```bash
-pap build setup stable-2024-11
+pra build setup stable-2024-11
 # => Setting up build environment: stable-2024-11
 #    Creating build/f500652-20241105_143022_6a6da3a-20241105_142015_e57c370-20241105_141030/
 #    Copying .cache/R2P2-ESP32/f500652-20241105_143022/
@@ -382,7 +382,7 @@ pap build setup stable-2024-11
 
 ---
 
-#### `pap build clean [ENV_NAME]`
+#### `pra build clean [ENV_NAME]`
 
 **Description**: Delete specified build environment
 
@@ -396,13 +396,13 @@ pap build setup stable-2024-11
 
 **Example**:
 ```bash
-pap build clean development
+pra build clean development
 # => Removing build/34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/
 ```
 
 ---
 
-#### `pap build list`
+#### `pra build list`
 
 **Description**: Display list of constructed environments under `build/`
 
@@ -423,7 +423,7 @@ Total build storage: 4.8GB
 
 ### 🔀 Patch Management Commands
 
-#### `pap patch export [ENV_NAME]`
+#### `pra patch export [ENV_NAME]`
 
 **Description**: Export changes from `build/{env}/` to `patch/`
 
@@ -441,7 +441,7 @@ Total build storage: 4.8GB
 ```bash
 # After editing build/current/R2P2-ESP32/storage/home/custom.rb
 
-pap patch export
+pra patch export
 # => Exporting changes from build/current/
 #    patch/R2P2-ESP32/storage/home/custom.rb (created)
 #    patch/picoruby-esp32/ (no changes)
@@ -451,7 +451,7 @@ pap patch export
 
 ---
 
-#### `pap patch apply [ENV_NAME]`
+#### `pra patch apply [ENV_NAME]`
 
 **Description**: Apply `patch/` to `build/{env}/`
 
@@ -466,7 +466,7 @@ pap patch export
 
 ---
 
-#### `pap patch diff [ENV_NAME]`
+#### `pra patch diff [ENV_NAME]`
 
 **Description**: Display diff between current changes in `build/{env}/` and existing patches
 
@@ -489,9 +489,9 @@ diff --git a/storage/home/custom.rb (working) vs (patch/)
 
 ### 🚀 R2P2-ESP32 Task Delegation Commands
 
-**Note**: The `pap build` command has been removed to avoid conflict with Build Environment Management commands. Use `rake build` directly in the R2P2-ESP32 directory instead.
+**Note**: The `pra build` command has been removed to avoid conflict with Build Environment Management commands. Use `rake build` directly in the R2P2-ESP32 directory instead.
 
-#### `pap flash [ENV_NAME]`
+#### `pra flash [ENV_NAME]`
 
 **Description**: Flash built firmware to ESP32
 
@@ -505,7 +505,7 @@ diff --git a/storage/home/custom.rb (working) vs (patch/)
 
 ---
 
-#### `pap monitor [ENV_NAME]`
+#### `pra monitor [ENV_NAME]`
 
 **Description**: Monitor ESP32 serial output
 
@@ -525,7 +525,7 @@ diff --git a/storage/home/custom.rb (working) vs (patch/)
 
 ```bash
 # 1. Check environment
-pap env show
+pra env show
 
 # 2. Build (via R2P2-ESP32's Rakefile directly)
 cd build/current/R2P2-ESP32
@@ -533,8 +533,8 @@ rake build
 cd ../../..
 
 # 3. Flash and monitor
-pap flash
-pap monitor
+pra flash
+pra monitor
 
 # Ctrl+C to exit
 ```
@@ -543,7 +543,7 @@ pap monitor
 
 ```bash
 # 1. Fetch latest version
-pap env latest
+pra env latest
 # => Fetching latest from GitHub...
 #    Created environment: latest-20241105-143500
 #    Setting up environment...
@@ -555,7 +555,7 @@ rake build
 cd ../../..
 
 # 3. If issues found, revert to stable
-pap env set stable-2024-11
+pra env set stable-2024-11
 cd build/current/R2P2-ESP32
 rake build
 cd ../../..
@@ -568,15 +568,15 @@ cd ../../..
 # (edit files)
 
 # 2. Export changes to patch
-pap patch export
+pra patch export
 
 # 3. Git commit
 git add patch/ storage/home/
 git commit -m "Update patches and storage"
 
 # 4. Test application in another environment
-pap env set development
-pap build setup  # patches auto-applied
+pra env set development
+pra build setup  # patches auto-applied
 cd build/current/R2P2-ESP32
 rake build
 cd ../../..
@@ -593,29 +593,29 @@ cd ../../..
 git ls-remote https://github.com/picoruby/R2P2-ESP32.git HEAD
 
 # Clean cache and re-fetch
-pap cache clean R2P2-ESP32
-pap cache fetch latest
+pra cache clean R2P2-ESP32
+pra cache fetch latest
 ```
 
 ### Build Environment Missing
 
 ```bash
 # Check cache
-pap cache list
+pra cache list
 
 # Setup environment
-pap build setup ENV_NAME
+pra build setup ENV_NAME
 ```
 
 ### Patches Not Applied
 
 ```bash
 # Check diff
-pap patch diff
+pra patch diff
 
 # Re-apply
-pap build clean
-pap build setup ENV_NAME
+pra build clean
+pra build setup ENV_NAME
 ```
 
 ---
