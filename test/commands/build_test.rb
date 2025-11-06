@@ -22,6 +22,106 @@ class PraCommandsBuildTest < Test::Unit::TestCase
     FileUtils.rm_rf(@tmpdir)
   end
 
+  # build setup コマンドのテスト
+  sub_test_case "build setup command" do
+    test "sets up build environment when caches exist" do
+      # テスト用の環境定義を作成
+      r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+      esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+      picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+
+      # キャッシュディレクトリを作成（setup に必要）
+      r2p2_cache = File.join(Pra::Env::CACHE_DIR, 'R2P2-ESP32', 'abc1234-20250101_120000')
+      esp32_cache = File.join(Pra::Env::CACHE_DIR, 'picoruby-esp32', 'def5678-20250102_120000')
+      picoruby_cache = File.join(Pra::Env::CACHE_DIR, 'picoruby', 'ghi9012-20250103_120000')
+
+      FileUtils.mkdir_p(File.join(r2p2_cache, 'components', 'picoruby-esp32'))
+      FileUtils.mkdir_p(File.join(esp32_cache))
+      FileUtils.mkdir_p(File.join(picoruby_cache))
+
+      # テストファイルを作成して、コピーがされていることを確認できるようにする
+      File.write(File.join(r2p2_cache, 'README.md'), 'R2P2-ESP32')
+
+      output = capture_stdout do
+        Pra::Commands::Build.start(['setup', 'test-env'])
+      end
+
+      # 出力を確認
+      assert_match(/Setting up build environment: test-env/, output)
+      assert_match(/Creating build environment at/, output)
+      assert_match(/✓ Build environment ready for: test-env/, output)
+
+      # ビルドディレクトリが作成されたことを確認
+      r2p2_hash = "#{r2p2_info['commit']}-#{r2p2_info['timestamp']}"
+      esp32_hash = "#{esp32_info['commit']}-#{esp32_info['timestamp']}"
+      picoruby_hash = "#{picoruby_info['commit']}-#{picoruby_info['timestamp']}"
+      env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+      build_path = Pra::Env.get_build_path(env_hash)
+
+      assert_true(Dir.exist?(build_path))
+      assert_true(Dir.exist?(File.join(build_path, 'R2P2-ESP32')))
+
+      # ファイルがコピーされたことを確認
+      assert_true(File.exist?(File.join(build_path, 'R2P2-ESP32', 'README.md')))
+
+      # シンボリックリンクが作成されたことを確認
+      current_link = File.join(Pra::Env::BUILD_DIR, 'current')
+      assert_true(File.symlink?(current_link))
+    end
+
+    test "raises error when cache not found" do
+      # テスト用の環境定義を作成するが、キャッシュは作成しない
+      r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+      esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+      picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+
+      # キャッシュが見つからない場合は例外が発生するはず
+      assert_raise(RuntimeError) do
+        capture_stdout do
+          Pra::Commands::Build.start(['setup', 'test-env'])
+        end
+      end
+    end
+
+    test "skips setup when build environment already exists" do
+      # テスト用の環境定義を作成
+      r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+      esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+      picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+
+      # キャッシュとビルド環境を作成
+      r2p2_cache = File.join(Pra::Env::CACHE_DIR, 'R2P2-ESP32', 'abc1234-20250101_120000')
+      esp32_cache = File.join(Pra::Env::CACHE_DIR, 'picoruby-esp32', 'def5678-20250102_120000')
+      picoruby_cache = File.join(Pra::Env::CACHE_DIR, 'picoruby', 'ghi9012-20250103_120000')
+
+      FileUtils.mkdir_p(File.join(r2p2_cache, 'components', 'picoruby-esp32'))
+      FileUtils.mkdir_p(File.join(esp32_cache))
+      FileUtils.mkdir_p(File.join(picoruby_cache))
+
+      r2p2_hash = "#{r2p2_info['commit']}-#{r2p2_info['timestamp']}"
+      esp32_hash = "#{esp32_info['commit']}-#{esp32_info['timestamp']}"
+      picoruby_hash = "#{picoruby_info['commit']}-#{picoruby_info['timestamp']}"
+      env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+      build_path = Pra::Env.get_build_path(env_hash)
+
+      FileUtils.mkdir_p(File.join(build_path, 'R2P2-ESP32'))
+
+      output = capture_stdout do
+        Pra::Commands::Build.start(['setup', 'test-env'])
+      end
+
+      # 出力を確認
+      assert_match(/Build environment already exists/, output)
+      assert_match(/✓ Build environment ready for: test-env/, output)
+    end
+  end
+
   # build list コマンドのテスト
   sub_test_case "build list command" do
     test "shows 'No build environments found' when build directory is empty" do

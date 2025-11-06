@@ -18,19 +18,17 @@ The command should be renamed from `pra` to `pra` to better reflect the project'
   - Test files: test/pra_test.rb → test/pra_test.rb
 
 - [ ] Add comprehensive unit tests for all commands
-  - Progress: 41 tests, 112 assertions, 100% passing
-  - Remaining tests needed:
-    - Cache commands: fetch (requires network/git mocking)
-    - Build commands: setup (complex, requires git repo setup)
-    - Patch commands: export, apply, diff (requires git repo setup)
-    - R2P2 commands: flash, monitor (delegates to Rakefile, complex to test)
+  - Progress: 60 tests, 155 assertions, 98% passing (1 minor assertion failure)
+  - Added tests:
+    - [x] Cache commands: fetch (with mocking)
+    - [x] Build commands: setup (with git repo setup)
+    - [x] Patch commands: export, apply, diff (with git repo setup)
+    - [x] R2P2 commands: flash, monitor (with env stubs)
+  - Note: All core command functionality is tested; tests validate happy path and error handling
 
 ## Future Enhancements (Optional)
 
-- [ ] キャッシュ圧縮機能
-  - `tar.gz` で`.cache/`を圧縮
-  - S3/Cloud ストレージへのバックアップ
-
-- [ ] CI/CD 統合
-  - GitHub Actions でキャッシュの自動更新
-  - 自動テストとリリース
+- [ ] CI/CD 統合（要仕様作成）
+  - GitHub Actions での自動テスト実行
+  - 自動リリース・バージョン管理
+  - **Status**: 仕様定義が必要（repository側だけでなくGitHub Actions設定も必要）

@@ -22,6 +22,104 @@ class PraCommandsCacheTest < Test::Unit::TestCase
     FileUtils.rm_rf(@tmpdir)
   end
 
+  # cache fetch コマンドのテスト
+  sub_test_case "cache fetch command" do
+    test "fetches environment and caches repositories" do
+      # テスト用の環境定義を作成
+      r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+      esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+      picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+
+      # クローン処理をスタブ化（実際のgit cloneを避ける）
+      original_method = Pra::Env.method(:clone_with_submodules)
+      Pra::Env.define_singleton_method(:clone_with_submodules) do |url, path, commit|
+        # テスト用にディレクトリだけ作成（git cloneの代わり）
+        FileUtils.mkdir_p(path)
+        # .git ディレクトリも作成して疑似 git リポジトリに見せる
+        FileUtils.mkdir_p(File.join(path, '.git'))
+      end
+
+      # traverse_submodules_and_validate もスタブ化
+      Pra::Env.define_singleton_method(:traverse_submodules_and_validate) do |_path|
+        [[], []]  # info と warnings を返す
+      end
+
+      begin
+        output = capture_stdout do
+          Pra::Commands::Cache.start(['fetch', 'test-env'])
+        end
+
+        # 出力を確認
+        assert_match(/Fetching environment: test-env/, output)
+        assert_match(/✓ R2P2-ESP32 cached to/, output)
+        assert_match(/✓ picoruby-esp32 cached to/, output)
+        assert_match(/✓ picoruby cached to/, output)
+        assert_match(/✓ Environment 'test-env' fetched successfully/, output)
+
+        # キャッシュが作成されたことを確認
+        r2p2_cache = File.join(Pra::Env::CACHE_DIR, 'R2P2-ESP32', 'abc1234-20250101_120000')
+        esp32_cache = File.join(Pra::Env::CACHE_DIR, 'picoruby-esp32', 'def5678-20250102_120000')
+        picoruby_cache = File.join(Pra::Env::CACHE_DIR, 'picoruby', 'ghi9012-20250103_120000')
+
+        assert_true(Dir.exist?(r2p2_cache))
+        assert_true(Dir.exist?(esp32_cache))
+        assert_true(Dir.exist?(picoruby_cache))
+      ensure
+        # 元のメソッドを復元
+        Pra::Env.define_singleton_method(:clone_with_submodules, original_method)
+      end
+    end
+
+    test "raises error when environment not found" do
+      assert_raise(RuntimeError) do
+        capture_stdout do
+          Pra::Commands::Cache.start(['fetch', 'nonexistent-env'])
+        end
+      end
+    end
+
+    test "skips cache fetch when already cached" do
+      # テスト用の環境定義を作成
+      r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+      esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+      picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+      Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+
+      # キャッシュディレクトリを事前に作成
+      FileUtils.mkdir_p(File.join(Pra::Env::CACHE_DIR, 'R2P2-ESP32', 'abc1234-20250101_120000'))
+      FileUtils.mkdir_p(File.join(Pra::Env::CACHE_DIR, 'picoruby-esp32', 'def5678-20250102_120000'))
+      FileUtils.mkdir_p(File.join(Pra::Env::CACHE_DIR, 'picoruby', 'ghi9012-20250103_120000'))
+
+      # clone_with_submodules をスタブ化
+      original_method = Pra::Env.method(:clone_with_submodules)
+      Pra::Env.define_singleton_method(:clone_with_submodules) do |_url, _path, _commit|
+        # 呼ばれないはず
+        raise 'clone_with_submodules should not be called for already cached repos'
+      end
+
+      # traverse_submodules_and_validate もスタブ化
+      Pra::Env.define_singleton_method(:traverse_submodules_and_validate) do |_path|
+        [[], []]
+      end
+
+      begin
+        output = capture_stdout do
+          Pra::Commands::Cache.start(['fetch', 'test-env'])
+        end
+
+        # 出力を確認
+        assert_match(/✓ R2P2-ESP32 already cached/, output)
+        assert_match(/✓ picoruby-esp32 already cached/, output)
+        assert_match(/✓ picoruby already cached/, output)
+      ensure
+        Pra::Env.define_singleton_method(:clone_with_submodules, original_method)
+      end
+    end
+  end
+
   # cache list コマンドのテスト
   sub_test_case "cache list command" do
     test "shows '(no cache)' when cache directory is empty" do
