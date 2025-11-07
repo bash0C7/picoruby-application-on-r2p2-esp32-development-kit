@@ -14,21 +14,6 @@
   - [ ] Update documentation to reflect `pra build setup` capabilities
   - **Status**: `pra build setup` already implemented in `lib/pra/commands/build.rb`, but may need PicoRuby build step integration
 
-- [ ] Update esp32-build.yml template for correct pra command flow
-  - [ ] Ensure workflow uses: `pra cache fetch` → `pra build setup` → `pra device build`
-  - [ ] Remove internal path exposure (incorrect `.cache/*/r2p2-esp32` → should use `pra device build`)
-  - [ ] Remove redundant `pra patch apply` (already done in `pra build setup`)
-  - [ ] Update flash instructions to use `pra device flash` instead of manual commands
-  - [ ] Validate workflow aligns with local development workflow
-  - **Status**: Template exists at `docs/github-actions/esp32-build.yml` (135 lines)
-  - **Current Issues**:
-    - Uses `idf.py build` directly (line 74-76) instead of `pra device build`
-    - Redundant `pra patch apply` call (line 67-71)
-    - Internal path exposed with incorrect path (`.cache/*/r2p2-esp32` → actual: `build/current/R2P2-ESP32`)
-    - Artifact paths also expose internal structure (line 86-90)
-  - **Solution**: Update template to use `pra device build` and remove redundant steps
-  - **Implementation Ready**: ✅ `pra device build` is already implemented in `lib/pra/commands/device.rb`
-
 ---
 
 ### ⚠️ pra ci コマンド実装禁止 (Implementation Forbidden)
