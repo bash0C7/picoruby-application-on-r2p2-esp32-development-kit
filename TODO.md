@@ -8,30 +8,6 @@
 
 - [ ] Consider renaming commands in future if needed (e.g., `pra build-env` or `pra workspace`)
 
-### Follow-up: PicoRuby Build Setup Implementation
-
-- [ ] ESP-IDF 環境での動作確認
-  - キャッシュを用意: `pra cache fetch <env_name>`
-  - ビルド環境構築: `pra build setup <env_name>`
-  - 出力に "Setting up PicoRuby build environment..." と "✓ PicoRuby build environment ready" が表示されることを確認
-  - 失敗した場合は "✗ Warning: Failed to run rake setup_esp32" が表示されることを確認
-
-- [ ] README.md コマンド形式の修正
-  - **必須修正** (コマンド形式の誤り):
-    - 行 74-75: `pra flash` / `pra monitor` → `pra device flash` / `pra device monitor` に修正
-    - 行 107-108: Commands Reference セクションも同様に修正
-    - 行 162: `pra r2p2 flash` を `pra device flash` に修正（または該当行を削除）
-  - **機能追加の説明**:
-    - `pra build setup` のセクション（行 95 付近）に以下を追加:
-      ```
-      - Automatically runs `rake setup_esp32` to prepare PicoRuby build environment
-      - Sets up all pre-build requirements (submodules, dependencies, etc.)
-      - Displays warnings if ESP-IDF environment setup fails
-      ```
-  - **オプション**: `pra device` コマンド群の説明セクションを追加
-    - 明示的なサブコマンド: `flash`, `monitor`, `build`, `setup_esp32`
-    - 動的 Rake 委譲機能の説明（`lib/pra/commands/device.rb:41-51` の method_missing）
-
 ---
 
 ### ⚠️ pra ci コマンド実装禁止 (Implementation Forbidden)
@@ -175,17 +151,19 @@
 
 ---
 
-## 🔴 High Priority (Documentation & Testing)
-
-### README.md コマンド説明の修正
-
-- [ ] README.md のコマンド形式を正しい CLI サブコマンドに統一 **→ CLI Command Structure Refactoring に統合**
-  - **Note**: この項目は「CLI Command Structure Refactoring」セクション（行 11-28）に詳細が記載されています
-  - **次のセッションで実施**: 上記セクションの指示に従って README.md を更新してください
-
----
-
 ## 🟡 Medium Priority (Code Quality & Documentation)
+
+### README.md コマンド説明の更新
+
+- [ ] README.md のコマンド形式を正しい CLI サブコマンドに統一
+  - **必須修正** (コマンド形式の誤り):
+    - 行 74-75: `pra flash` / `pra monitor` → `pra device flash` / `pra device monitor` に修正
+    - 行 107-108: Commands Reference セクションも同様に修正
+    - 行 162: `pra r2p2 flash` を `pra device flash` に修正（または該当行を削除）
+  - **`pra device` コマンド群の説明セクションを追加**:
+    - 明示的なサブコマンド: `flash`, `monitor`, `build`, `setup_esp32`
+    - 動的 Rake 委譲機能の説明（`lib/pra/commands/device.rb:41-51` の method_missing を使った透過的 Rake タスク実行）
+    - 使用例: `pra device <custom_rake_task>` など
 
 ### コード重複の排除（パッチ適用ロジック）
 
