@@ -117,6 +117,9 @@
     - Explicit subcommands: `flash`, `monitor`, `build`, `setup_esp32`
     - Dynamic Rake task delegation via method_missing
     - Examples: `pra device <custom_rake_task>`
+    - **Implement `pra device help` command**: Execute `rake -T` in R2P2-ESP32 directory and display available tasks
+      - **Files to Update**: `lib/pra/commands/device.rb`, `test/commands/device_test.rb`
+      - **Implementation**: Add `help` method that resolves environment, builds R2P2-ESP32 path, executes `Pra::Env.execute_with_esp_env("rake -T", r2p2_path)`, and displays output
 
 ### Refactor Duplicate Patch Application Logic
 
