@@ -1,10 +1,13 @@
 
 require 'thor'
+require_relative '../patch_applier'
 
 module Pra
   module Commands
     # パッチ管理コマンド群
     class Patch < Thor
+      include Pra::PatchApplier
+
       def self.exit_on_failure?
         true
       end
@@ -112,39 +115,7 @@ module Pra
         build_path = Pra::Env.get_build_path(env_hash)
         raise "Error: Build environment not found: #{env_name}" unless Dir.exist?(build_path)
 
-        puts '  Applying patches...'
-
-        %w[R2P2-ESP32 picoruby-esp32 picoruby].each do |repo|
-          patch_repo_dir = File.join(Pra::Env::PATCH_DIR, repo)
-          next unless Dir.exist?(patch_repo_dir)
-
-          case repo
-          when 'R2P2-ESP32'
-            work_path = File.join(build_path, 'R2P2-ESP32')
-          when 'picoruby-esp32'
-            work_path = File.join(build_path, 'R2P2-ESP32', 'components', 'picoruby-esp32')
-          when 'picoruby'
-            work_path = File.join(build_path, 'R2P2-ESP32', 'components', 'picoruby-esp32', 'picoruby')
-          end
-
-          next unless Dir.exist?(work_path)
-
-          # patch/repo配下のファイルをrecursiveに適用
-          Dir.glob("#{patch_repo_dir}/**/*").sort.each do |patch_file|
-            next if File.directory?(patch_file)
-            next if File.basename(patch_file) == '.keep'
-
-            rel_path = patch_file.sub("#{patch_repo_dir}/", '')
-            dest_file = File.join(work_path, rel_path)
-
-            FileUtils.mkdir_p(File.dirname(dest_file))
-            FileUtils.cp(patch_file, dest_file)
-          end
-
-          puts "    Applied #{repo}"
-        end
-
-        puts '  ✓ Patches applied'
+        apply_patches(build_path)
       end
 
       desc 'diff [ENV_NAME]', 'Display differences between working changes and stored patches'
