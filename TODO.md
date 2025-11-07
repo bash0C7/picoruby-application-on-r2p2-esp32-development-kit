@@ -10,61 +10,14 @@
 
 ---
 
-### ⚠️ pra ci コマンド実装禁止 (Implementation Forbidden)
+### ⚠️ pra ci: --force Option (Implementation Forbidden)
 
-**以下の `pra ci` コマンド関連の実装は、特別な指示がない限り禁止**
+**Status**: `pra ci setup` already implemented. The `--force` option is **forbidden** unless explicitly requested.
 
-**理由**:
-- `pra ci` コマンドは他のCLIコマンド（`pra device build`, `pra cache fetch` など）のインターフェースに依存
-- これらのコマンドが変更されると、CI テンプレートやコマンドの動作に影響
-- まず基盤となるコマンド群を安定化させてからCI機能を実装すべき
-- テンプレート更新機能（`--force`オプション）は、ユーザーがテンプレートをカスタマイズする前提のため、基盤が安定してから実装が望ましい
-
-**許可される作業**:
-- ✅ CI テンプレートファイル (`docs/github-actions/esp32-build.yml`) の修正・改善
-- ✅ CI ドキュメント (`docs/CI_CD_GUIDE.md`) の更新
-- 🚫 `pra ci setup --force` オプションの実装
-- 🚫 `pra ci` 関連の新機能追加
-
----
-
-### pra ci setup --force オプション (実装禁止中)
-
-- [ ] Add `--force` option to `pra ci setup` command
-  - **Rationale**: CI workflow templates should be "fork and customize" model. Users edit workflows directly (ESP-IDF version, target chip, branches, custom steps). `pra ci setup --force` allows refreshing template while letting users salvage changes via `git diff`.
-  - **Location**: `lib/pra/commands/ci.rb` (currently has `setup` subcommand with interactive prompt)
-  - **Current Behavior**:
-    - Existing file → Shows prompt "Overwrite? (y/N)" → User confirms
-  - **New Behavior**:
-    - No `--force` + existing file → Error message + exit (fail-fast)
-    - `--force` + existing file → Overwrite without confirmation
-    - No existing file → Copy template (same as current)
-  - **Implementation Details**:
-    1. Add `method_option :force, type: :boolean, desc: 'Overwrite existing workflow file'` to `setup` method
-    2. Remove interactive prompt logic (lines 34-43 in `lib/pra/commands/ci.rb`)
-    3. Replace with:
-       ```ruby
-       if File.exist?(target_file)
-         if options[:force]
-           # Proceed with copy
-         else
-           puts "✗ Error: File already exists: .github/workflows/esp32-build.yml"
-           puts "  Use --force to overwrite: pra ci setup --force"
-           exit 1
-         end
-       end
-       ```
-    4. Update success message to mention `--force` for future updates
-  - **Testing Changes** (`test/commands/ci_test.rb`):
-    - ❌ Remove: `test "prompts for overwrite when file already exists and user declines"` (lines 66-85)
-    - ❌ Remove: `test "overwrites file when user confirms"` (lines 87-108)
-    - ❌ Remove: `test "accepts 'yes' as full word for confirmation"` (lines 110-128)
-    - ✅ Add: `test "fails when file exists without --force option"` - Verify error message and exit
-    - ✅ Add: `test "overwrites file with --force option"` - Verify `Pra::Commands::Ci.start(['setup', '--force'])`
-    - Keep: `with_stdin` helper (may be used elsewhere, no harm keeping)
-  - **Documentation Updates**:
-    1. Consider adding `pra ci setup` mention in main README.md if relevant
-  - **Related Context**: Original TODO planned "Add CI/CD update command" with `pra ci update` subcommand. Analysis showed workflow templates are meant to be "fork and customize" by users (documented in CI_CD_GUIDE.md). Rather than Bmodel (config-based), Amodel (user ownership) is more appropriate, so `pra ci setup --force` is the right pattern.
+- 🚫 **Do not implement** `pra ci setup --force` option
+  - **Current behavior**: Interactive prompt "Overwrite? (y/N)" if file exists
+  - **Reason forbidden**: CI templates follow "fork and customize" model; users should own and edit templates directly
+  - **Permitted**: Modify CI templates and documentation in `docs/`
 
 ---
 
@@ -153,109 +106,62 @@
 
 ## 🟡 Medium Priority (Code Quality & Documentation)
 
-### README.md コマンド説明の更新
+### README.md Documentation Updates
 
-- [ ] README.md のコマンド形式を正しい CLI サブコマンドに統一
-  - **必須修正** (コマンド形式の誤り):
-    - 行 74-75: `pra flash` / `pra monitor` → `pra device flash` / `pra device monitor` に修正
-    - 行 107-108: Commands Reference セクションも同様に修正
-    - 行 162: `pra r2p2 flash` を `pra device flash` に修正（または該当行を削除）
-  - **`pra device` コマンド群の説明セクションを追加**:
-    - 明示的なサブコマンド: `flash`, `monitor`, `build`, `setup_esp32`
-    - 動的 Rake 委譲機能の説明（`lib/pra/commands/device.rb:41-51` の method_missing を使った透過的 Rake タスク実行）
-    - 使用例: `pra device <custom_rake_task>` など
+- [ ] Update README.md with current command structure
+  - **Fix incorrect command examples**:
+    - `pra flash` → `pra device flash`
+    - `pra monitor` → `pra device monitor`
+    - `pra r2p2 flash` → `pra device flash` (or remove if obsolete)
+  - **Add `pra device` command section** documenting:
+    - Explicit subcommands: `flash`, `monitor`, `build`, `setup_esp32`
+    - Dynamic Rake task delegation via method_missing
+    - Examples: `pra device <custom_rake_task>`
 
-### コード重複の排除（パッチ適用ロジック）
+### Refactor Duplicate Patch Application Logic
 
-- [ ] build.rb と patch.rb のパッチ適用ロジックを共通化
-  - **Location**:
-    - `lib/pra/commands/build.rb:165-199` (apply_patches メソッド)
-    - `lib/pra/commands/patch.rb:117-145` (apply_patches_from_config メソッド)
-  - **Problem**:
-    - FileUtils.cp_r と Dir.glob を使った同一のパッチ適用処理が重複
-    - メンテナンス性が低下し、バグ修正時に両方を変更する必要がある
-  - **Solution**:
-    1. `lib/pra/patch_applier.rb` などの共通モジュール/クラスを作成
-    2. パッチ適用ロジックを抽出してメソッド化
-    3. build.rb と patch.rb から共通モジュールを呼び出す形にリファクタリング
-  - **Testing**: 既存のテストが通ることを確認後、共通化されたロジックのテストを追加
+- [ ] Consolidate patch application logic in `lib/pra/commands/build.rb` and `lib/pra/commands/patch.rb`
+  - **Problem**: Identical FileUtils.cp_r + Dir.glob pattern repeated in two files
+  - **Solution**: Extract to `lib/pra/patch_applier.rb` shared module
+  - **Testing**: Verify existing tests pass; add tests for refactored logic
 
-### コード重複の排除（環境ハッシュ生成ロジック）
+### Refactor Duplicate Environment Hash Generation
 
-- [ ] 環境ハッシュ生成ロジックの共通化
-  - **Location**: 複数ファイルで重複
-    - `lib/pra/commands/device.rb:73-88`
-    - `lib/pra/commands/build.rb` (複数箇所)
-    - `lib/pra/commands/cache.rb` など
-  - **Problem**:
-    - 5箇所以上で同じハッシュ生成処理（Digest::SHA256 による .picoruby-env.yml ハッシュ化）が重複
-    - 計算方法が変わった場合に全箇所を変更する必要がある
-  - **Solution**:
-    1. `lib/pra/env.rb` に `compute_env_hash(env_name)` クラスメソッドを追加
-    2. 各コマンドから共通メソッドを呼び出す形にリファクタリング
-  - **Testing**: 既存のテストが通ることを確認
+- [ ] Centralize environment hash generation logic across commands
+  - **Where**: Duplicated in `lib/pra/commands/device.rb`, `lib/pra/commands/build.rb`, `lib/pra/commands/cache.rb`
+  - **Problem**: SHA256 hash calculation repeated 5+ times; hard to maintain if algorithm changes
+  - **Solution**: Add `compute_env_hash(env_name)` method to `lib/pra/env.rb` and call from all commands
+  - **Testing**: Verify existing tests pass
 
-### CI_CD_GUIDE.md の YAML スキーマ修正
+### CI_CD_GUIDE.md YAML Schema Alignment
 
-- [ ] CI_CD_GUIDE.md の YAML 例を .picoruby-env.yml スキーマに統一
-  - **Location**: `docs/CI_CD_GUIDE.md:62-73`
-  - **Problem**:
-    - YAML 例のキー構造が実際の `.picoruby-env.yml` スキーマと一致しない
-    - ユーザーが参照する際に混乱を招く可能性がある
-  - **Fix**:
-    1. 行 62-73 の YAML 例を `lib/pra/env.rb` が期待するスキーマ形式に修正
-    2. 実際のリポジトリのサンプル `.picoruby-env.yml` との整合性を確認
-  - **Related**: `lib/pra/env.rb` の YAML パース処理
-
-### device コマンドの method_missing 機能ドキュメント追加
-
-- [ ] README.md に device コマンドの動的 Rake 委譲機能の説明を追加
-  - **Location**: `README.md` の適切なセクション（例: Usage または Commands）
-  - **Problem**:
-    - `lib/pra/commands/device.rb:41-51` の method_missing を使った透過的 Rake 委譲機能がドキュメント化されていない
-    - ユーザーが `pra device <任意のタスク>` で Rakefile のタスクを実行できることを知らない可能性
-  - **Add**:
-    1. device サブコマンド群の詳細説明セクション
-    2. 明示的なサブコマンド（flash, monitor, build, setup_esp32）の説明
-    3. method_missing 経由での任意の Rake タスク実行方法の説明
-    4. 使用例: `pra device monitor`, `pra device <custom_rake_task>` など
-  - **Related**: `lib/pra/commands/device.rb:41-51`
+- [ ] Verify CI_CD_GUIDE.md examples match actual .picoruby-env.yml schema
+  - **Problem**: YAML example structure may not match actual schema in `lib/pra/env.rb`
+  - **Fix**: Ensure documentation examples are consistent with schema implementation
 
 ---
 
-## 🟢 Low Priority (Optional Enhancements)
+## 🔒 Security Enhancements (Do not implement without explicit request)
 
-### セキュリティ強化（シンボリックリンク race condition 対策）
+All security enhancements below do not change behavior and should only be implemented with explicit user request.
 
-- [ ] build.rb のシンボリックリンクチェックに race condition 対策
-  - **Location**: `lib/pra/commands/build.rb:92-93`
-  - **Current Code**:
-    ```ruby
-    if File.symlink?(top_dir)
-      raise "Error: Top directory is a symbolic link: #{top_dir}"
-    end
-    ```
-  - **Problem**:
-    - File.symlink? チェックと実際の使用の間に race condition が存在
-    - チェック後、使用前にファイルが改変される TOCTOU (Time-of-check to time-of-use) 脆弱性
-  - **Solution**:
-    1. File.stat を使ってシンボリックリンクを辿らないチェックに変更
-    2. 例外処理で TOCTOU を防ぐパターンを採用
-  - **Note**: 実際の攻撃シナリオは限定的なため低優先度
+### Symbolic Link Race Condition Prevention
 
-### セキュリティ強化（パストラバーサル検証）
+- [ ] Add race condition protection to symbolic link checks
+  - **Where**: Symbolic link validation in `lib/pra/commands/build.rb`
+  - **Problem**: TOCTOU (Time-of-check to time-of-use) vulnerability between check and usage
+  - **Solution**: Use File.stat with follow_symlinks: false instead of File.symlink?
+  - **Note**: Limited real-world risk, low priority
 
-- [ ] ユーザー入力のパス（env_name など）にパストラバーサル検証を追加
-  - **Location**: 複数のコマンドファイル
-  - **Problem**:
-    - env_name などのユーザー入力に `../../` などの相対パス記号が含まれていても検証されない
-    - 悪意あるユーザーが意図しないディレクトリにアクセス可能な可能性
-  - **Solution**:
-    1. `lib/pra/validator.rb` などの共通バリデーションモジュールを作成
-    2. env_name などのパラメータに対して以下をチェック:
-       - `..` が含まれていないこと
-       - 絶対パスでないこと
-       - 許可された文字（英数字、ハイフン、アンダースコア）のみであること
-    3. 各コマンドで入力バリデーションを追加
-  - **Testing**: パストラバーサル攻撃のテストケースを追加
-  - **Note**: 現在のコードは開発者向けツールであり、攻撃リスクは限定的だが、将来的な強化として検討
+### Path Traversal Input Validation
+
+- [ ] Add path traversal validation for user inputs (env_name, etc.)
+  - **Where**: All command files in `lib/pra/commands/`
+  - **Problem**: User inputs like env_name could contain `../../` without validation
+  - **Checks needed**:
+    - Reject paths containing `..`
+    - Reject absolute paths
+    - Allow only alphanumeric, hyphen, underscore
+  - **Solution**: Create `lib/pra/validator.rb` for centralized validation
+  - **Testing**: Add path traversal attack test cases
+  - **Note**: Current codebase is developer-facing tool with limited attack surface
