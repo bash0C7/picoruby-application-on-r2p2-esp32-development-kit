@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:code.claude.com)",
+      "WebFetch(domain:www.claude.com)",
+      "WebFetch(domain:claude.com)"
+    ]
+  }
+}
