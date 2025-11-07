@@ -6,9 +6,9 @@ SimpleCov.start do
   add_filter "/test/"
   add_filter "/vendor/"
   enable_coverage :branch
-  # NOTE: カバレッジチェックは無効化（CI が最小テスト範囲で実行中）
-  # 長期的にはテストを拡張して最小カバレッジを満たすようにする
-  # minimum_coverage line: 80, branch: 50 if ENV["CI"]
+  # NOTE: 最小カバレッジを最小値に設定（CI が最小テスト範囲で実行中）
+  # 長期的には line: 80, branch: 50 に戻す
+  minimum_coverage line: 1, branch: 1 if ENV["CI"]
 end
 
 # Codecov v4対応: Cobertura XML形式で出力
