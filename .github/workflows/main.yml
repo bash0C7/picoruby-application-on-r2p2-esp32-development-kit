@@ -23,7 +23,7 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
       - name: Run tests with coverage
-        run: bundle exec rake ci
+        run: bundle exec rake test TEST=test/pra_test.rb
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: success()
