@@ -50,32 +50,26 @@
 
 ---
 
-## 📌 次のセッション（ローカル）で実施すること
+## 📌 実装完了事項
 
-### ローカル環境
+### ✅ ローカル環境
 
-- [ ] ~/.claude/agents/explore.md を更新
-  - Prism::Pattern 精密探索セクション追加
-  - パターン構文説明追加
-  - 実装スクリプト呼び出し方法の説明
-  - 参考：/tmp/explore-updated.md
+- [x] ~/.claude/agents/explore.md を更新
+  - Prism::Pattern 精密探索セクション完成
+  - パターン構文説明完成
+  - ワンライナーコマンド実装完成
+  - SKILL.md との整合性確保
 
-### プロジェクトリポジトリ
+### ✅ プロジェクトリポジトリ
 
-- [ ] scripts/prism_search.rb を配置
-  - 出典：/tmp/prism_search.rb
+- [x] ワンライナーのみで完結（scripts/ 配置不要）
+  - 実装方針変更：scripts/ を廃止、ruby -r prism -e で直接実行
+  - SKILL.md（Web版）と explore.md（ローカル）で同じワンライナーを使用
+  - 外部ファイル依存ゼロ、Ruby 3.3+ 標準 Prism のみ使用
 
-- [ ] scripts/prism_block_puts_search.rb を配置
-  - 出典：/tmp/prism_block_puts_search_v4.rb
+### ⏳ README.md に記載（オプション・次フェーズ）
 
-- [ ] 実行権限設定
-  ```bash
-  chmod +x scripts/prism_search.rb
-  chmod +x scripts/prism_block_puts_search.rb
-  ```
-
-- [ ] README.md に記載（オプション）
-  - Prism::Pattern セクション追加
+- [ ] Prism::Pattern セクション追加（低優先）
   - 使用例掲載
 
 ---
