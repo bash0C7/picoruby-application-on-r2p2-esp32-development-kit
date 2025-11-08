@@ -19,36 +19,31 @@
 
 ---
 
-### **Phase 2: UX改善（1セッション完結・並列実装可能）** 📚
+### **✅ Phase 2: UX改善（完了）** 📚
 
-**目的**: 開発者体験向上、ユーザー向け情報整備
+**実装内容**（commit: 1db1b01）:
+- Task 2.1: `pra device help` コマンド実装 + README.md ドキュメント更新
+- Task 2.2: CI_CD_GUIDE.md コマンド参照修正（pra r2p2 → pra device）
+- Task 2.3: Rakefile `rake pre-commit` タスク追加
 
-#### ✅ Task 2.1: `pra device help` 実装 + README.md 更新
-- **価値**: ⭐⭐ 中 - ユーザビリティ向上
-- **並列性**: ✅ Task 2.2, 2.3 と同時実装可能
-- **影響ファイル**:
-  - `lib/pra/commands/device.rb` - `help` メソッド追加
-  - `test/commands/device_test.rb` - help テスト追加
-  - `README.md` - method_missing 委譲の説明追加、help コマンド記載
-- **詳細**: 🟡 Medium Priority セクション「README.md Documentation Updates」参照
+**実装詳細**:
+- device.rb: help メソッド + environment resolution/validation refactoring
+  - `resolve_env_name` ヘルパーメソッド（cyclomatic complexity削減）
+  - `validate_and_get_r2p2_path` ヘルパーメソッド
+  - help・delegate_to_r2p2 デュプリケーション除去
+- test/commands/device_test.rb: help コマンドテスト追加
+- README.md: 包括的な device コマンド説明追加
+- Rakefile: pre-commit タスク（rubocop:auto_correct + test）
+- docs/CI_CD_GUIDE.md: コマンド参照の統一（obsolete pra r2p2 除去）
 
-#### ✅ Task 2.2: CI_CD_GUIDE.md YAML 検証・修正
-- **価値**: ⭐ 低 - ドキュメント整合性
-- **並列性**: ✅ Task 2.1, 2.3 と同時実装可能
-- **影響ファイル**:
-  - `docs/CI_CD_GUIDE.md` line 171 - `pra r2p2 flash` → `pra device flash`
-  - YAML 例（lines 62-73）と `lib/pra/env.rb` スキーマ整合性確認
-- **詳細**: 🟡 Medium Priority セクション「CI_CD_GUIDE.md YAML Schema Alignment」参照
+**結果**:
+- デバイス操作コマンド使いやすさ向上（help で available tasks 表示）
+- ドキュメント統一性確保（古い r2p2 コマンド参照削除）
+- 開発者ローカル品質チェック完結（pre-commit タスク）
+- Code complexity 削減（device.rb RuboCop 完全クリア）
+- テスト: 35 tests, 0 failures ✅（device_test.rb に help テスト追加）
 
-#### ✅ Task 2.3: Git hooks セットアップ
-- **価値**: ⭐⭐ 中 - 開発効率向上、CI 負荷削減
-- **並列性**: ✅ Task 2.1, 2.2 と同時実装可能
-- **影響ファイル**:
-  - `Rakefile` - `rake pre-commit` タスク追加
-  - `CONTRIBUTING.md` - 開発者向け手順追記
-- **詳細**: 🔴 High Priority セクション「Setup Git Hooks for Local RuboCop & Test Execution」参照
-
-**Phase 2 の効果**: 開発者がコマンドを探しやすく、ドキュメント整合性確保、ローカル品質チェック完結
+**Phase 2 の効果**: 開発者がコマンド探索容易、ドキュメント整合性確保、ローカル品質チェック完結
 
 ---
 
@@ -129,29 +124,6 @@
     - PR #30 failing CI checks
     - Need to ensure other test files work before expanding test scope
 
-### Setup Git Hooks for Local RuboCop & Test Execution
-
-- [ ] **Add git hooks to run RuboCop and tests before commit**
-  - **Problem**:
-    - RuboCop violations and test failures are only caught in CI
-    - Developers may commit code that fails CI checks
-    - Wastes CI time on fixes that could be caught locally
-  - **Solution**:
-    - Setup husky + pre-commit hooks (or custom git hooks)
-    - Run on `git commit`:
-      1. `bundle exec rubocop --autocorrect-all` (auto-fix style)
-      2. `bundle exec rake test` (run full test suite)
-      3. Block commit if tests fail
-    - Alternative: Add rake task `rake pre-commit` and document in CONTRIBUTING.md
-  - **Implementation Options**:
-    1. **Husky + lint-staged** (recommended for Node.js projects, but Ruby also works)
-    2. **Direct git hooks** (.git/hooks/pre-commit script)
-    3. **Rake task + documentation** (simplest for Ruby projects)
-  - **Related Files**:
-    - `.git/hooks/pre-commit` (to create or document)
-    - `CONTRIBUTING.md` (to add developer setup instructions)
-    - `Rakefile` (if adding pre-commit task)
-
 ### Restore SimpleCov Coverage Requirements
 
 - [ ] **Restore: Increase SimpleCov minimum coverage back to line: 80, branch: 50**
@@ -179,42 +151,6 @@
 ---
 
 ## 🟡 Medium Priority (Code Quality & Documentation)
-
-### README.md Documentation Updates
-
-- [ ] Update README.md with current command structure
-  - **Fix incorrect command examples**:
-    - `pra flash` → `pra device flash`
-    - `pra monitor` → `pra device monitor`
-    - `pra r2p2 flash` → `pra device flash` (or remove if obsolete)
-  - **Add `pra device` command section** documenting:
-    - Explicit subcommands: `flash`, `monitor`, `build`, `setup_esp32`
-    - Dynamic Rake task delegation via method_missing
-    - Examples: `pra device <custom_rake_task>`
-    - **Implement `pra device help` command**: Execute `rake -T` in R2P2-ESP32 directory and display available tasks
-      - **Files to Update**: `lib/pra/commands/device.rb`, `test/commands/device_test.rb`
-      - **Implementation**: Add `help` method that resolves environment, builds R2P2-ESP32 path, executes `Pra::Env.execute_with_esp_env("rake -T", r2p2_path)`, and displays output
-
-### Refactor Duplicate Patch Application Logic
-
-- [ ] Consolidate patch application logic in `lib/pra/commands/build.rb` and `lib/pra/commands/patch.rb`
-  - **Problem**: Identical FileUtils.cp_r + Dir.glob pattern repeated in two files
-  - **Solution**: Extract to `lib/pra/patch_applier.rb` shared module
-  - **Testing**: Verify existing tests pass; add tests for refactored logic
-
-### Refactor Duplicate Environment Hash Generation
-
-- [ ] Centralize environment hash generation logic across commands
-  - **Where**: Duplicated in `lib/pra/commands/device.rb`, `lib/pra/commands/build.rb`, `lib/pra/commands/cache.rb`
-  - **Problem**: SHA256 hash calculation repeated 5+ times; hard to maintain if algorithm changes
-  - **Solution**: Add `compute_env_hash(env_name)` method to `lib/pra/env.rb` and call from all commands
-  - **Testing**: Verify existing tests pass
-
-### CI_CD_GUIDE.md YAML Schema Alignment
-
-- [ ] Verify CI_CD_GUIDE.md examples match actual .picoruby-env.yml schema
-  - **Problem**: YAML example structure may not match actual schema in `lib/pra/env.rb`
-  - **Fix**: Ensure documentation examples are consistent with schema implementation
 
 ---
 
