@@ -1,5 +1,6 @@
 
 require 'thor'
+require 'pra/patch_applier'
 
 module Pra
   module Commands
@@ -28,10 +29,10 @@ module Pra
         raise "Error: Environment definition '#{env_name}' not found in .picoruby-env.yml" if env_config.nil?
 
         # env-hashを生成
-        r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
-        esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
-        picoruby_hash = env_config['picoruby']['commit'] + '-' + env_config['picoruby']['timestamp']
-        env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+        hashes = Pra::Env.compute_env_hash(env_name)
+        raise "Error: Failed to compute environment hash for '#{env_name}'" if hashes.nil?
+
+        r2p2_hash, esp32_hash, picoruby_hash, env_hash = hashes
 
         build_path = Pra::Env.get_build_path(env_hash)
 
@@ -132,10 +133,10 @@ module Pra
           env_config = Pra::Env.get_environment(env_name)
           raise "Error: Environment definition '#{env_name}' not found in .picoruby-env.yml" if env_config.nil?
 
-          r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
-          esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
-          picoruby_hash = env_config['picoruby']['commit'] + '-' + env_config['picoruby']['timestamp']
-          env_hash = Pra::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+          hashes = Pra::Env.compute_env_hash(env_name)
+          raise "Error: Failed to compute environment hash for '#{env_name}'" if hashes.nil?
+
+          _r2p2_hash, _esp32_hash, _picoruby_hash, env_hash = hashes
           build_path = Pra::Env.get_build_path(env_hash)
 
           if Dir.exist?(build_path)
@@ -256,18 +257,8 @@ module Pra
 
           next unless Dir.exist?(work_path)
 
-          # patch/repo配下のファイルをrecursiveに適用
-          Dir.glob("#{patch_repo_dir}/**/*").sort.each do |patch_file|
-            next if File.directory?(patch_file)
-            next if File.basename(patch_file) == '.keep'
-
-            rel_path = patch_file.sub("#{patch_repo_dir}/", '')
-            dest_file = File.join(work_path, rel_path)
-
-            FileUtils.mkdir_p(File.dirname(dest_file))
-            FileUtils.cp(patch_file, dest_file)
-          end
-
+          # パッチを適用
+          Pra::PatchApplier.apply_patches_to_directory(patch_repo_dir, work_path)
           puts "    Applied #{repo}"
         end
 

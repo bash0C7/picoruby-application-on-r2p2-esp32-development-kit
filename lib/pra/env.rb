@@ -185,6 +185,20 @@ module Pra
         "#{r2p2_info}_#{esp32_info}_#{picoruby_info}"
       end
 
+      # 環境名から3つのハッシュとenv_hashを計算
+      # 戻り値: [r2p2_hash, esp32_hash, picoruby_hash, env_hash]
+      def compute_env_hash(env_name)
+        env_config = get_environment(env_name)
+        return nil unless env_config
+
+        r2p2_hash = env_config['R2P2-ESP32']['commit'] + '-' + env_config['R2P2-ESP32']['timestamp']
+        esp32_hash = env_config['picoruby-esp32']['commit'] + '-' + env_config['picoruby-esp32']['timestamp']
+        picoruby_hash = env_config['picoruby']['commit'] + '-' + env_config['picoruby']['timestamp']
+
+        env_hash = generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
+        [r2p2_hash, esp32_hash, picoruby_hash, env_hash]
+      end
+
       # キャッシュディレクトリパスを取得（不変リポジトリコピーの場所）
       def get_cache_path(repo_name, commit_hash)
         File.join(CACHE_DIR, repo_name, commit_hash)
