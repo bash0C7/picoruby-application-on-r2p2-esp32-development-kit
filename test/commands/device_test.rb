@@ -451,12 +451,12 @@ class PraCommandsDeviceTest < Test::Unit::TestCase
       # execute_with_esp_env をスタブ化
       original_method = Pra::Env.method(:execute_with_esp_env)
       begin
-        Pra::Env.define_singleton_method(:execute_with_esp_env) do |command, working_dir|
-          if command == 'rake -T'
-            puts "rake build"
-            puts "rake flash"
-            puts "rake monitor"
-          end
+        Pra::Env.define_singleton_method(:execute_with_esp_env) do |command, _working_dir|
+          return unless command == 'rake -T'
+
+          puts "rake build"
+          puts "rake flash"
+          puts "rake monitor"
         end
 
         output = capture_stdout do
