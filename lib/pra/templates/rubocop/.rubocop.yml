@@ -1,0 +1,27 @@
+require:
+  - ./lib/rubocop/cop/picoruby/unsupported_method.rb
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+    - '.git/**/*'
+
+# PicoRuby-specific cop
+PicoRuby/UnsupportedMethod:
+  Enabled: true
+  Description: 'Detects methods that may not be available in PicoRuby'
+  Severity: warning
+
+# Standard RuboCop rules (optional baseline)
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Layout/LineLength:
+  Max: 100
+  Exclude:
+    - 'Rakefile'
+    - '**/*.rake'
