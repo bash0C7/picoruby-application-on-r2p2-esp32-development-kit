@@ -96,6 +96,13 @@ bundle exec pra monitor
 - `pra build clean [ENV_NAME]` - Delete specified build environment directory
 - `pra build list` - Display list of constructed build environment directories
 
+### Application-Specific mrbgem Management
+
+- `pra mrbgems generate [NAME]` - Generate application-specific mrbgem template (default: App)
+  - Creates `mrbgems/{NAME}/` with Rubyコード and C extension template
+  - Automatically registers mrbgem in build_config and CMakeLists.txt during `pra build setup`
+  - Use `--author` option to specify author name: `pra mrbgems generate --author "Your Name"`
+
 ### Patch Management
 
 - `pra patch export [ENV_NAME]` - Export changes from build environment to patch directory
