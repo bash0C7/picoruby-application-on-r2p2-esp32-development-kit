@@ -61,15 +61,15 @@ Edit `.picoruby-env.yml` in your project root to define your R2P2-ESP32 environm
 ```yaml
 environments:
   stable-2024-11:
-    r2p2-esp32:
-      commit: "abc123..."
-      committed_at: "2024-11-01T12:00:00Z"
+    R2P2-ESP32:
+      commit: "f500652"
+      timestamp: "20241105_143022"
     picoruby-esp32:
       commit: "def456..."
-      committed_at: "2024-11-01T12:00:00Z"
+      timestamp: "20241105_143022"
     picoruby:
       commit: "ghi789..."
-      committed_at: "2024-11-01T12:00:00Z"
+      timestamp: "20241105_143022"
 ```
 
 #### Step 3: Customize the Workflow (Optional)

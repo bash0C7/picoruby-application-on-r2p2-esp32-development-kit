@@ -71,8 +71,8 @@ bundle exec pra build setup stable-2024-11
 ### 4. Build, flash, and monitor
 
 ```bash
-bundle exec pra flash
-bundle exec pra monitor
+bundle exec pra device flash
+bundle exec pra device monitor
 ```
 
 ## Commands Reference
@@ -111,8 +111,8 @@ bundle exec pra monitor
 
 ### R2P2-ESP32 Task Delegation
 
-- `pra flash [ENV_NAME]` - Flash firmware to ESP32 (delegates to R2P2-ESP32)
-- `pra monitor [ENV_NAME]` - Monitor ESP32 serial output (delegates to R2P2-ESP32)
+- `pra device flash [ENV_NAME]` - Flash firmware to ESP32 (delegates to R2P2-ESP32)
+- `pra device monitor [ENV_NAME]` - Monitor ESP32 serial output (delegates to R2P2-ESP32)
 
 ### Other
 
@@ -135,51 +135,9 @@ For detailed specifications, see [SPEC.md](SPEC.md).
 
 ## CI/CD Integration
 
-### For PicoRuby Application Developers
+For PicoRuby application developers using GitHub Actions for automated builds, see [docs/CI_CD_GUIDE.md](docs/CI_CD_GUIDE.md).
 
-If you're developing a PicoRuby application for ESP32, you can automate firmware builds using GitHub Actions.
-
-**Quick Setup:**
-
-1. Copy the example workflow to your project:
-   ```bash
-   mkdir -p .github/workflows
-   cp docs/github-actions/esp32-build.yml .github/workflows/
-   ```
-
-2. Customize the workflow for your environment (edit `.github/workflows/esp32-build.yml`):
-   - Set your target ESP-IDF version
-   - Configure environment name from your `.picoruby-env.yml`
-   - Adjust build steps as needed
-
-3. Commit and push to trigger the build
-
-**Flash Downloaded Artifacts:**
-
-After the workflow completes, download the firmware artifacts and flash:
-
-```bash
-# Using esptool directly
-esptool.py --chip esp32 --port /dev/ttyUSB0 write_flash \
-  0x1000 bootloader.bin \
-  0x8000 partition-table.bin \
-  0x10000 app.bin
-
-# Or using pra command (recommended)
-bundle exec pra r2p2 flash --port /dev/ttyUSB0
-```
-
-For detailed CI/CD setup instructions, see [docs/CI_CD_GUIDE.md](docs/CI_CD_GUIDE.md).
-
-### For Gem Developers
-
-This repository uses automated CI/CD for testing and releases:
-
-- **Continuous Testing**: Ruby 3.1, 3.2, 3.3, 3.4 matrix testing on every push/PR
-- **Coverage Reports**: Automated coverage tracking with 90% threshold via Codecov
-- **Manual Releases**: Workflow-based releases to RubyGems.org
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the release process.
+For gem developers releasing to RubyGems, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Development
 

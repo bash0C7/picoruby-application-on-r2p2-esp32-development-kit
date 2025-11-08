@@ -2,14 +2,6 @@
 
 > **TODO Management Methodology**: See `.claude/skills/project-workflow/SKILL.md` and `CLAUDE.md` ## TODO Management section for task management rules and workflow.
 
-## 🟢 mrbgems Support Feature (Large Feature)
-
-See **[TODO_mrbgems.md](TODO_mrbgems.md)** for comprehensive implementation plan.
-
-**Summary**: Implement `pra mrbgems generate` command and app setup flow to allow users to create application-specific mrbgems (like `App`) with C language code integration. Includes template system, build_config registration, and CMakeLists.txt integration.
-
----
-
 ## Future Enhancements (Optional)
 
 ### CLI Command Structure Refactoring
@@ -57,7 +49,7 @@ See **[TODO_mrbgems.md](TODO_mrbgems.md)** for comprehensive implementation plan
     - Or mock `execute_with_esp_env` at module load time (not in individual tests)
     - Or wrap `execute_with_esp_env` to detect CI environment and skip ESP-IDF execution
   - **Files to Update**:
-    - `.github/workflows/main.yml` (line 26): Change `bundle exec rake ci` to `bundle exec rake test TEST=test/pra_test.rb`
+    - `.github/workflows/main.yml`: Change `bundle exec rake ci` to `bundle exec rake test TEST=test/pra_test.rb`
     - `test/test_helper.rb`: Restore coverage requirements (line: 80, branch: 50) once test scope expands
   - **Related Issues**:
     - PR #30 failing CI checks
@@ -106,8 +98,8 @@ See **[TODO_mrbgems.md](TODO_mrbgems.md)** for comprehensive implementation plan
     - Must fix ESP-IDF dependency issue first (see "CI Test Execution Strategy" above)
     - All test files must pass in CI without ESP-IDF environment
   - **Related Files**:
-    - `test/test_helper.rb` (line 11)
-    - `.github/workflows/main.yml` (line 26) - will change from `TEST=test/pra_test.rb` back to `ci` task
+    - `test/test_helper.rb`
+    - `.github/workflows/main.yml` - will change from `TEST=test/pra_test.rb` back to `ci` task
     - `.codecov.yml` - Change `informational: true` back to `informational: false` when coverage requirements are restored
 
 ---

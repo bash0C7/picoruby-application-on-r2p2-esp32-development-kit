@@ -50,6 +50,7 @@ ESP32 上の PicoRuby アプリケーション・処理系開発。mrbgems ビ�
 - ✅ **Archive obsolete tasks** — Remove tasks made irrelevant by other changes
 - ✅ **Use clear hierarchy** — Organize with headings and bullet structure for easy scanning
 - ✅ **Add context when needed** — Include brief rationale or dependencies if not obvious
+- ✅ **No line number references** — Avoid citing specific line numbers (e.g., "line 26") as they are volatile. Use file paths + keyword/function names instead (e.g., ".github/workflows/main.yml: Change `bundle exec rake ci` command")
 
 **Workflow**:
 1. Before starting work: Review TODO.md for related tasks
