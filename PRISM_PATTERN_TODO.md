@@ -153,316 +153,138 @@
 
 ---
 
-## 📄 scripts/prism_search.rb（基本 CLI ツール）
+## 🎯 ワンライナー実装コマンド
 
-```ruby
-#!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
-# Prism Pattern AST Search CLI
+**Skill と Subagent は ruby コマンドのワンライナーのみで完結。scripts/ は使用しない。**
 
-require 'prism'
-require 'optparse'
+### 📌 基本的なパターン検索（DefNode, ClassNode, CallNode など）
 
-class PrismSearcher
-  def initialize(pattern_str, options = {})
-    @pattern_str = pattern_str
-    @options = options
-    @pattern = Prism::Pattern.new(pattern_str)
+```bash
+ruby -r prism -e '
+pattern = ARGV.shift || "DefNode"
+files = ARGV.empty? ? ["-"] : ARGV
+files.each do |file|
+  code = file == "-" ? $stdin.read : File.read(file)
+  ast = Prism.parse(code)
+  pattern_obj = Prism::Pattern.new(pattern)
+  matches = pattern_obj.scan(ast)
+  lines = code.lines
+  matches.each do |node|
+    line = node.location.start_line
+    node_type = node.class.name.sub(/^Prism::/, "")
+    name_info = node.respond_to?(:name) ? " [#{node.name}]" : ""
+    puts "#{file}:#{line}: #{node_type}#{name_info}"
+    puts "  #{lines[line - 1]&.strip}"
   end
+  puts "[Found #{matches.count}] #{file}" unless matches.empty?
+end
+' DefNode lib/pra/commands/env.rb
+```
 
-  def search_file(filepath)
-    unless File.exist?(filepath)
-      warn "[ERROR] File not found: #{filepath}"
-      return
-    end
+### 📌 ブロック内の puts を検索
 
-    begin
-      code = File.read(filepath)
-      result = Prism.parse(code)
+```bash
+ruby -r prism -e '
+filepath = ARGV[0] || $stdin.read
+code = File.exist?(filepath) ? File.read(filepath) : filepath
+ast = Prism.parse(code)
+lines = code.lines
 
-      if result.failure?
-        warn "[WARNING] Parse error in #{filepath}:"
-        result.errors.each { |e| warn "  #{e}" }
-        return
-      end
-
-      matches = @pattern.scan(result.value)
-      output_matches(filepath, matches, code)
-    rescue => e
-      warn "[ERROR] #{filepath}: #{e.class} - #{e.message}"
-    end
+def collect_nodes(node, type = nil)
+  nodes = []
+  stack = [node]
+  while stack.any?
+    current = stack.shift
+    nodes << current if type.nil? || current.is_a?(type)
+    stack.concat(current.child_nodes.compact) if current.respond_to?(:child_nodes)
   end
-
-  def search_stdin
-    code = $stdin.read
-    begin
-      result = Prism.parse(code)
-      if result.failure?
-        warn "[WARNING] Parse error in stdin"
-        result.errors.each { |e| warn "  #{e}" }
-        return
-      end
-
-      matches = @pattern.scan(result.value)
-      output_matches("<stdin>", matches, code)
-    rescue => e
-      warn "[ERROR] stdin: #{e.class} - #{e.message}"
-    end
-  end
-
-  private
-
-  def output_matches(filepath, matches, code)
-    lines = code.lines
-
-    matches.each_with_index do |node, idx|
-      location = node.location
-      line_num = location.start_line
-      line_content = lines[line_num - 1]&.chomp || "(line not found)"
-
-      if @options[:verbose]
-        puts "[#{idx}] #{filepath}:#{line_num}"
-        puts "  Pattern: #{@pattern_str}"
-        puts "  Node: #{node.class}"
-        puts "  Code: #{line_content}"
-        if node.respond_to?(:name)
-          puts "  Name: #{node.name}"
-        end
-        puts
-      else
-        # Compact output
-        node_type = node.class.name.sub(/^Prism::/, '')
-        name_info = node.respond_to?(:name) ? " [#{node.name}]" : ""
-        puts "#{filepath}:#{line_num}: #{node_type}#{name_info}"
-        puts "  #{line_content}"
-      end
-    end
-
-    if matches.count == 0 && !@options[:quiet]
-      puts "[No matches] #{filepath}"
-    elsif !@options[:quiet]
-      puts "[Found #{matches.count}] #{filepath}"
-      puts
-    end
-  end
+  nodes
 end
 
-# CLI Parsing
-options = {
-  verbose: false,
-  quiet: false
-}
-
-parser = OptionParser.new do |opts|
-  opts.banner = "Usage: prism_search [options] PATTERN [FILES...]"
-  opts.separator ""
-  opts.separator "Examples:"
-  opts.separator "  prism_search 'DefNode' app.rb"
-  opts.separator "  prism_search 'DefNode[name: :foo]' *.rb"
-  opts.separator "  cat file.rb | prism_search 'ClassNode'"
-  opts.separator ""
-  opts.separator "Options:"
-
-  opts.on("-v", "--verbose", "Verbose output") do
-    options[:verbose] = true
-  end
-
-  opts.on("-q", "--quiet", "Quiet mode (only errors)") do
-    options[:quiet] = true
-  end
-
-  opts.on("-h", "--help", "Show help") do
-    puts opts
-    exit
+blocks = collect_nodes(ast, Prism::BlockNode)
+found = 0
+blocks.each do |block|
+  body_nodes = collect_nodes(block.body)
+  puts_calls = body_nodes.select { |n| n.is_a?(Prism::CallNode) && n.message == "puts" }
+  next if puts_calls.empty?
+  found += 1
+  puts "【Block #{found}】 Line #{block.location.start_line}"
+  puts_calls.each do |c|
+    line_num = c.location.start_line
+    puts "    - Line #{line_num}: #{lines[line_num - 1]&.strip}"
   end
 end
+puts "✅ Total: #{found} blocks with puts"
+' target_file.rb
+```
 
-parser.parse!
+### 📌 特定のメソッドを検索
 
-if ARGV.empty?
-  warn "Error: PATTERN required"
-  warn parser
-  exit 1
+```bash
+ruby -r prism -e '
+pattern = ARGV.shift || "DefNode[name: :initialize]"
+file = ARGV[0] || "-"
+code = file == "-" ? $stdin.read : File.read(file)
+ast = Prism.parse(code)
+pattern_obj = Prism::Pattern.new(pattern)
+matches = pattern_obj.scan(ast)
+lines = code.lines
+matches.each do |node|
+  line = node.location.start_line
+  puts "#{file}:#{line}: #{node.class.name.sub(/^Prism::/, "")} [#{node.name}]"
+  puts "  #{lines[line - 1]&.strip}"
 end
+puts "[Found #{matches.count}]"
+' "DefNode[name: :initialize]" app.rb
+```
 
-pattern = ARGV.shift
-files = ARGV
+### 📌 stdin からの検索
 
-searcher = PrismSearcher.new(pattern, options)
-
-if files.any?
-  # ファイル検索
-  files.each { |f| searcher.search_file(f) }
-else
-  # stdin検索
-  searcher.search_stdin
+```bash
+cat file.rb | ruby -r prism -e '
+pattern = ARGV[0] || "DefNode"
+code = $stdin.read
+ast = Prism.parse(code)
+pattern_obj = Prism::Pattern.new(pattern)
+matches = pattern_obj.scan(ast)
+lines = code.lines
+matches.each do |node|
+  line = node.location.start_line
+  puts "<stdin>:#{line}: #{node.class.name.sub(/^Prism::/, "")}"
+  puts "  #{lines[line - 1]&.strip}"
 end
+' "DefNode"
 ```
 
 ---
 
-## 📄 scripts/prism_block_puts_search.rb（ブロック検索応用例）
+## 🔄 Skill（Web版）での利用方法
 
-```ruby
-#!/usr/bin/env ruby
-# -*- coding: utf-8 -*-
-# Prism::Pattern を使用してブロック内の puts を検索（修正版）
+`.claude/skills/prism-search/SKILL.md` では以下のような形式でユーザーにガイダンスを提供：
 
-require 'prism'
+```
+## 基本的な検索
 
-class BlockPutsSearcher
-  def initialize(filepath)
-    @filepath = filepath
-    code = File.read(filepath)
-    @result = Prism.parse(code)
-    @lines = code.lines
-  end
+\`\`\`bash
+ruby -r prism -e '
+pattern = ARGV.shift || "DefNode"
+files = ARGV.empty? ? ["-"] : ARGV
+# ... (上記のワンライナーコード)
+' パターン ファイル
+\`\`\`
 
-  def search
-    unless @result.success?
-      warn "[ERROR] Parse failed"
-      return
-    end
-
-    ast = @result.value
-    puts "=== Prism::Pattern: ブロック内の puts 検索 ==="
-    puts
-
-    # すべての BlockNode を見つける
-    blocks = collect_nodes(ast, Prism::BlockNode)
-    puts "Found #{blocks.count} block(s)"
-    puts
-
-    # 各ブロック内で puts を検索
-    found_count = 0
-    blocks.each_with_index do |block, idx|
-      puts_nodes = find_puts_in_block(block)
-      next if puts_nodes.empty?
-
-      found_count += 1
-      block_location = block.location
-      block_line = block_location.start_line
-
-      # ブロックのパラメータを取得
-      params = get_block_parameters(block)
-
-      puts "【Block #{found_count}】 Line #{block_line}"
-      if params.any?
-        puts "  Parameters: |#{params.join(', ')}|"
-      end
-      puts "  Contains #{puts_nodes.count} puts call(s):"
-
-      puts_nodes.each do |call_node|
-        line_num = call_node.location.start_line
-        line_content = @lines[line_num - 1]&.chomp || "(not found)"
-        puts "    - Line #{line_num}: #{line_content.strip}"
-      end
-      puts
-    end
-
-    if found_count == 0
-      puts "❌ No puts calls found inside blocks"
-    else
-      puts "✅ Total blocks with puts: #{found_count}"
-    end
-  end
-
-  private
-
-  def collect_nodes(node, type = nil)
-    nodes = []
-    stack = [node]
-
-    while stack.any?
-      current = stack.shift
-      nodes << current if type.nil? || current.is_a?(type)
-      stack.concat(current.child_nodes.compact) if current.respond_to?(:child_nodes)
-    end
-
-    nodes
-  end
-
-  def find_puts_in_block(block)
-    # BlockNode の body（StatementsNode）から始める
-    body = block.body
-    return [] unless body
-
-    # body の中のすべてのノードを収集
-    all_nodes = collect_nodes(body)
-
-    # CallNode のみフィルタして puts を検索
-    # NOTE: call.message は文字列（"puts"）であり、シンボルではない
-    all_nodes.select { |node| node.is_a?(Prism::CallNode) && node.message == "puts" }
-  end
-
-  def get_block_parameters(block)
-    params_node = block.parameters
-    return [] unless params_node
-
-    # BlockParametersNode → ParametersNode の構造
-    params = params_node.parameters
-    return [] unless params
-
-    # RequiredParameterNode から名前を抽出
-    params.requireds.map { |p| p.name.to_s }
-  end
-end
-
-if __FILE__ == $0
-  if ARGV.empty?
-    warn "Usage: #{$0} [filepath]"
-    exit 1
-  end
-  searcher = BlockPutsSearcher.new(ARGV[0])
-  searcher.search
-end
+例：
+\`\`\`bash
+ruby -r prism -e '...' DefNode lib/pra/commands/env.rb
+\`\`\`
 ```
 
 ---
 
-## 📋 配置方法
+## 🤖 Subagent（ローカル）での実装
 
-両スクリプトを以下の場所に配置してください：
+`~/.claude/agents/explore.md` の Prism::Pattern セクションでは：
 
-```bash
-# ディレクトリ作成（必要に応じて）
-mkdir -p scripts/
-
-# ファイル配置
-cp /tmp/prism_search.rb scripts/prism_search.rb
-cp /tmp/prism_block_puts_search_v4.rb scripts/prism_block_puts_search.rb
-
-# 実行権限設定
-chmod +x scripts/prism_search.rb
-chmod +x scripts/prism_block_puts_search.rb
-```
-
-## 🚀 使用方法
-
-### 基本的な検索
-
-```bash
-ruby scripts/prism_search.rb 'DefNode' lib/pra/commands/env.rb
-ruby scripts/prism_search.rb 'ClassNode | DefNode' lib/pra/commands/*.rb
-ruby scripts/prism_search.rb 'DefNode[name: :initialize]' app.rb
-```
-
-### ブロック内の puts 検索
-
-```bash
-ruby scripts/prism_block_puts_search.rb target_file.rb
-```
-
-### stdin 入力
-
-```bash
-cat file.rb | ruby scripts/prism_search.rb 'DefNode'
-```
-
-### オプション
-
-```bash
-ruby scripts/prism_search.rb 'DefNode' file.rb -v      # 詳細表示
-ruby scripts/prism_search.rb 'DefNode' file.rb -q      # 静寂モード
-ruby scripts/prism_search.rb 'DefNode' file.rb -h      # ヘルプ表示
-```
+- 上記のワンライナーコマンドを参考に
+- Bash ツールで直接実行
+- 結果を分析して詳細説明を提供
