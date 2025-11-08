@@ -98,6 +98,12 @@ module Pra
           FileUtils.cp_r(home_src, home_dest) if Dir.exist?(home_src)
         end
 
+        # Appのmrbgem雛形を生成（存在しない場合のみ）
+        generate_app_mrbgem
+
+        # Appのmrbgem用パッチを生成
+        generate_app_patches
+
         # Symlinkを更新
         puts '  Updating symlink: build/current'
         current_link = File.join(Pra::Env::BUILD_DIR, 'current')
@@ -171,6 +177,65 @@ module Pra
       end
 
       private
+
+      # Appのmrbgem雛形を生成（存在しない場合のみ）
+      def generate_app_mrbgem
+        app_dir = File.join(Dir.pwd, 'mrbgems', 'App')
+        return if Dir.exist?(app_dir)
+
+        puts '  Generating App mrbgem template...'
+        Pra::Commands::Mrbgems.new.generate('App')
+        puts '  ✓ Generated App mrbgem template'
+      end
+
+      # Appのmrbgem用パッチを生成
+      def generate_app_patches
+        puts '  Generating App mrbgem patches...'
+
+        # build_config パッチを生成
+        generate_build_config_patch
+
+        # CMakeLists.txt パッチを生成
+        generate_cmake_patch
+
+        puts '  ✓ Generated App mrbgem patches'
+      end
+
+      # build_config パッチを生成
+      def generate_build_config_patch
+        patch_file = File.join(Pra::Env::PATCH_DIR, 'picoruby', 'build_config', 'xtensa-esp.rb')
+        FileUtils.mkdir_p(File.dirname(patch_file))
+
+        # 既存パッチを読み込むか新規作成
+        if File.exist?(patch_file)
+          content = File.read(patch_file)
+          # 既に App の記載があるかチェック
+          return if content.include?("conf.gem local: '../../../../mrbgems/App'")
+          # 末尾に追記
+          File.write(patch_file, content + "\n# Application-specific mrbgem\nconf.gem local: '../../../../mrbgems/App'\n")
+        else
+          # 新規作成（最小限の内容）
+          File.write(patch_file, "# Application-specific mrbgem\nconf.gem local: '../../../../mrbgems/App'\n")
+        end
+      end
+
+      # CMakeLists.txt パッチを生成
+      def generate_cmake_patch
+        patch_file = File.join(Pra::Env::PATCH_DIR, 'picoruby-esp32', 'CMakeLists.txt')
+        FileUtils.mkdir_p(File.dirname(patch_file))
+
+        # 既存パッチを読み込むか新規作成
+        if File.exist?(patch_file)
+          content = File.read(patch_file)
+          # 既に App の記載があるかチェック
+          return if content.include?('../../mrbgems/App/src/app.c')
+          # 末尾に追記（簡潔なフォーマット）
+          File.write(patch_file, content + "\n# Application-specific mrbgem (App)\n${COMPONENT_DIR}/../../mrbgems/App/src/app.c\n")
+        else
+          # 新規作成（最小限の内容）
+          File.write(patch_file, "# Application-specific mrbgem (App)\n${COMPONENT_DIR}/../../mrbgems/App/src/app.c\n")
+        end
+      end
 
       # パッチ適用処理
       def apply_patches(env_name, build_path)
