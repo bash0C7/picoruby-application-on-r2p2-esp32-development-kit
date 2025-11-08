@@ -40,6 +40,18 @@
 
 **目的**: 開発者体験向上、ユーザー向け情報整備
 
+#### ✅ Task 2.1: `pra device help` 実装 + README.md 更新
+- **価値**: ⭐⭐ 中 - ユーザビリティ向上
+- **並列性**: ✅ Task 2.3 と同時実装可能
+- **影響ファイル**:
+  - `lib/pra/commands/device.rb` - `help` メソッド追加
+  - `test/commands/device_test.rb` - help テスト追加
+  - `README.md` - method_missing 委譲の説明追加、help コマンド記載
+- **詳細**: 🟡 Medium Priority セクション「README.md Documentation Updates」参照
+
+#### ✅ Task 2.3: Git hooks セットアップ
+- **価値**: ⭐⭐ 中 - 開発効率向上、CI 負荷削減
+- **並列性**: ✅ Task 2.1 と同時実装可能
 
 #### ✅ Task 2.2: CI_CD_GUIDE.md YAML 検証・修正
 - **価値**: ⭐ 低 - ドキュメント整合性
