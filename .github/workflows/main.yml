@@ -9,7 +9,7 @@ on:
 
 jobs:
   test-matrix:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     name: test (${{ matrix.ruby }})
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
         continue-on-error: true
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     name: test
     needs: [test-matrix]
     if: always()
