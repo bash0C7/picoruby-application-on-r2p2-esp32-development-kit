@@ -8,6 +8,7 @@ require_relative 'commands/build'
 require_relative 'commands/patch'
 require_relative 'commands/device'
 require_relative 'commands/ci'
+require_relative 'commands/mrbgems'
 
 module Pra
   # praコマンドのCLIエントリーポイント
@@ -31,6 +32,9 @@ module Pra
 
     desc 'ci SUBCOMMAND ...ARGS', 'CI/CD configuration commands'
     subcommand 'ci', Pra::Commands::Ci
+
+    desc 'mrbgems SUBCOMMAND ...ARGS', 'Application-specific mrbgem management'
+    subcommand 'mrbgems', Pra::Commands::Mrbgems
 
     desc 'device SUBCOMMAND ...ARGS', 'ESP32 device operation commands'
     subcommand 'device', Pra::Commands::Device
