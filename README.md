@@ -103,6 +103,13 @@ bundle exec pra device monitor
   - Automatically registers mrbgem in build_config and CMakeLists.txt during `pra build setup`
   - Use `--author` option to specify author name: `pra mrbgems generate --author "Your Name"`
 
+### PicoRuby RuboCop Configuration
+
+- `pra rubocop setup` - Setup RuboCop configuration for PicoRuby development
+- `pra rubocop update` - Update PicoRuby method database from latest definitions
+
+For detailed guide, see [docs/RUBOCOP_PICORUBY_GUIDE.md](docs/RUBOCOP_PICORUBY_GUIDE.md).
+
 ### Patch Management
 
 - `pra patch export [ENV_NAME]` - Export changes from build environment to patch directory

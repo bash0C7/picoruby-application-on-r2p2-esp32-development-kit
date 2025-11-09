@@ -56,9 +56,6 @@ end
 ```
 Add LED animation feature
 Implement blinking pattern with configurable frequency.
-
-Change-Id: uuid
-Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 **Guidelines**:
@@ -72,3 +69,52 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - ✅ "Refactor IMU data reading for clarity"
 - ❌ "Added new feature"
 - ❌ "Fixed stuff"
+
+## Test Temporary Files Management
+
+### Principle: Block-Based Temp File Creation
+
+**Reasons**:
+- **Security**: Prevent symlink attacks (IPA security guidelines)
+- **Safety**: Guaranteed cleanup on block exit (even on exceptions)
+- **Reference**: Rubyist Magazine 0029, "安全に一時ファイルを作成するのは素人には難しく"
+
+### Pattern A: File Operations (Preferred)
+
+```ruby
+test "file operation" do
+  Tempfile.open('test') do |file|
+    file.write("content")
+    # Assertions
+  end  # Auto-deleted
+end
+```
+
+**Docs**: https://docs.ruby-lang.org/ja/latest/class/Tempfile.html
+
+### Pattern B: Directory Structures (When Needed)
+
+```ruby
+test "directory structure" do
+  Dir.mktmpdir do |tmpdir|
+    Dir.chdir(tmpdir) do
+      FileUtils.mkdir_p("foo/bar")
+      # Assertions
+    end
+  end  # Removed by FileUtils.remove_entry_secure
+end
+```
+
+**Docs**: https://docs.ruby-lang.org/ja/latest/method/Dir/s/mktmpdir.html
+
+### Exception: setup/teardown (Discouraged)
+
+- **Use only when**: Multiple tests must share state
+- **Must**: Implement teardown for guaranteed cleanup (FileUtils.rm_rf)
+- **Risk**: Cleanup failure if teardown not executed
+
+### References
+
+- https://docs.ruby-lang.org/ja/latest/class/Tempfile.html
+- https://docs.ruby-lang.org/ja/latest/method/Dir/s/mktmpdir.html
+- https://magazine.rubyist.net/articles/0029/0029-BundledLibraries.html
