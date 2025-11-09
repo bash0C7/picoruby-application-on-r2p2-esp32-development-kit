@@ -12,6 +12,23 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
 
 ## 🔴 技術的負債（Technical Debt）
 
+### device_test.rb Rake Task Invocation Issue
+
+- [ ] **CRITICAL: device_test.rb fails when running full test suite**
+  - **Issue**: Calling `Pra::Commands::Device.start(['setup_esp32', ...])` triggers "Don't know how to build task 'setup_esp32'" error
+  - **Status**: Temporarily excluded from `rake test` (see Rakefile line 10)
+  - **Root Cause**: Unresolved issue with how mock Rakefile tasks are invoked/stubbed in test environment
+  - **Impact**:
+    - 16 device command tests not executing
+    - Full test coverage impossible (missing device.rb branch coverage)
+    - Current coverage: 65.03% line, 34.45% branch (vs. target 75%+ line, 50%+ branch)
+  - **Investigation Needed**:
+    - How `execute_with_esp_env` stub interacts with Rake task lookup
+    - Why mock `test/fixtures/R2P2-ESP32/Rakefile` task definitions aren't found
+    - Fix requires deep debugging of Rake/Thor task invocation mechanism
+  - **Workaround**: Exclude device_test.rb from test suite until resolved
+  - **Next Steps**: Investigate and fix in Phase 5 (high technical complexity)
+
 ---
 
 ## Future Enhancements (Optional)
