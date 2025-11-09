@@ -22,17 +22,6 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
 
 ---
 
-### ⚠️ pra ci: --force Option (Implementation Forbidden)
-
-**Status**: `pra ci setup` already implemented. The `--force` option is **forbidden** unless explicitly requested.
-
-- 🚫 **Do not implement** `pra ci setup --force` option
-  - **Current behavior**: Interactive prompt "Overwrite? (y/N)" if file exists
-  - **Reason forbidden**: CI templates follow "fork and customize" model; users should own and edit templates directly
-  - **Permitted**: Modify CI templates and documentation in `docs/`
-
----
-
 ## 🔧 Code Quality Improvements
 
 ### Refactor Test Temporary File Handling
