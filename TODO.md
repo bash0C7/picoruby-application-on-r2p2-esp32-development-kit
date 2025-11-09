@@ -4,6 +4,53 @@
 
 ---
 
+## 🚀 Major Refactoring: picotorokko (ptrk)
+
+**Status**: Planning Phase (Specification Complete)
+
+- [ ] **Refactor pra gem → picotorokko, command pra → ptrk**
+  - **Full Specification**: [docs/PICOTOROKKO_REFACTORING_SPEC.md](docs/PICOTOROKKO_REFACTORING_SPEC.md)
+  - **Scope**: Rename gem, simplify commands (8→4), consolidate directory structure (build/.cache/.picoruby-env.yml → ptrk_env/)
+  - **Why**: Improve naming consistency, reduce complexity, strengthen Rails metaphor with torokko (mining cart)
+  - **Breaking changes**: Yes (but no users affected - unreleased gem)
+  - **Estimated effort**: Large (2-3 weeks, 6 phases)
+  - **Key changes**:
+    - Gem name: `pra` → `picotorokko`
+    - Command: `pra` → `ptrk` (4 chars, typable)
+    - Commands: `env`, `device`, `mrbgem`, `rubocop` (down from 8)
+    - Directory: `ptrk_env/` consolidates `.cache/`, `build/`, `.picoruby-env.yml`
+    - Env names: User-defined (no "current" symlink), defaults to `development`
+    - Tests: Use `Dir.mktmpdir` to keep gem root clean
+
+- [ ] **AST-Based Template Engine** ✅ **APPROVED**
+  - **Status**: Approved for Implementation (Post-picotorokko)
+  - **Full Specification**: [docs/PICOTOROKKO_REFACTORING_SPEC.md](docs/PICOTOROKKO_REFACTORING_SPEC.md#template-strategy-ast-based-template-engine)
+  - **Scope**: Replace ERB-based template generation with AST-based approach (Parse → Modify → Dump)
+  - **Timing**: Execute AFTER picotorokko refactoring is complete (independent task)
+  - **Estimated Effort**: 8-12 days
+  - **Key Decisions Made**:
+    - ✅ Ruby templates: Placeholder Constants (e.g., `TEMPLATE_CLASS_NAME`)
+    - ✅ YAML templates: Special placeholder keys (e.g., `__PTRK_TEMPLATE_*__`), comments NOT preserved
+    - ✅ C templates: String replacement (e.g., `TEMPLATE_C_PREFIX`)
+    - ✅ ERB removal: Complete migration, no hybrid period
+    - ✅ **Critical requirement**: All templates MUST be valid code before substitution
+  - **Key Components**:
+    - `Ptrk::Template::Engine` - Unified template interface
+    - `RubyTemplateEngine` - Prism-based (Visitor pattern for ConstantReadNode)
+    - `YamlTemplateEngine` - Psych-based (recursive placeholder replacement)
+    - `CTemplateEngine` - String gsub-based (simple identifier substitution)
+  - **Migration Phases**:
+    1. PoC (2-3 days): ONE template + validation
+    2. Complete Rollout (3-5 days): ALL templates converted
+    3. ERB Removal (1 day): Delete .erb files
+  - **Web Search Required** (before implementation):
+    - Prism unparse/format capabilities
+    - Prism location offset API verification
+    - RuboCop autocorrect patterns for learning
+  - **Priority**: High (approved, post-picotorokko)
+
+---
+
 ## 🔮 Future Enhancements (Phase 5+)
 
 For detailed implementation guide and architecture design of the PicoRuby RuboCop Custom Cop, see [docs/RUBOCOP_PICORUBY_GUIDE.md](docs/RUBOCOP_PICORUBY_GUIDE.md).
