@@ -36,10 +36,19 @@ class PraTestCase < Test::Unit::TestCase
   # Dir.chdir(tmpdir) 後に PROJECT_ROOT をリセットするヘルパー
   def with_fresh_project_root
     original_dir = Dir.pwd
+
+    # 事前状態チェック: build/ が存在していれば前のテストのクリーンアップ失敗を示す
+    build_dir = File.join(original_dir, "build")
+    raise "ERROR: build/ directory exists before test. Previous test teardown incomplete." if Dir.exist?(build_dir)
+
     begin
       yield
     ensure
       Dir.chdir(original_dir)
+
+      # テスト実行中に作成された build/ を必ずクリーンアップ
+      FileUtils.rm_rf(build_dir)
+
       # PROJECT_ROOT をリセット（現在の Dir.pwd を基準に）
       begin
         Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)

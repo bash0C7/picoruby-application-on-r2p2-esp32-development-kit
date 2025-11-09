@@ -11,34 +11,49 @@ module Pra
 
       desc 'flash [ENV_NAME]', 'Flash firmware to ESP32'
       def flash(env_name = 'current')
-        puts "Flashing: #{env_name}"
+        actual_env = resolve_env_name(env_name)
+        validate_and_get_r2p2_path(actual_env)
+
+        puts "Flashing: #{actual_env}"
         delegate_to_r2p2('flash', env_name)
         puts '✓ Flash completed'
       end
 
       desc 'monitor [ENV_NAME]', 'Monitor ESP32 serial output'
       def monitor(env_name = 'current')
-        puts "Monitoring: #{env_name}"
+        actual_env = resolve_env_name(env_name)
+        validate_and_get_r2p2_path(actual_env)
+
+        puts "Monitoring: #{actual_env}"
         puts '(Press Ctrl+C to exit)'
         delegate_to_r2p2('monitor', env_name)
       end
 
       desc 'build [ENV_NAME]', 'Build firmware for ESP32'
       def build(env_name = 'current')
-        puts "Building: #{env_name}"
+        actual_env = resolve_env_name(env_name)
+        validate_and_get_r2p2_path(actual_env)
+
+        puts "Building: #{actual_env}"
         delegate_to_r2p2('build', env_name)
         puts '✓ Build completed'
       end
 
       desc 'setup_esp32 [ENV_NAME]', 'Setup ESP32 build environment'
       def setup_esp32(env_name = 'current')
-        puts "Setting up ESP32: #{env_name}"
+        actual_env = resolve_env_name(env_name)
+        validate_and_get_r2p2_path(actual_env)
+
+        puts "Setting up ESP32: #{actual_env}"
         delegate_to_r2p2('setup_esp32', env_name)
         puts '✓ ESP32 setup completed'
       end
 
       desc 'tasks [ENV_NAME]', 'Show available R2P2-ESP32 tasks'
       def tasks(env_name = 'current')
+        actual_env = resolve_env_name(env_name)
+        validate_and_get_r2p2_path(actual_env)
+
         show_available_tasks(env_name)
       end
 
