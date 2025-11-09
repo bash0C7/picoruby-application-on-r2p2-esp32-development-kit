@@ -18,6 +18,15 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
 - All 130 tests passing, 88.0% line coverage, 60.47% branch coverage
 - See [Phase_5_Prism_Implementation_Guide.md](Phase_5_Prism_Implementation_Guide.md) for details
 
+### Test Infrastructure Issues
+
+- [ ] **Investigate `bundle exec rake test` test count discrepancy**
+  - **Issue**: When running tests via `bundle exec rake test`, test count drops from ~130 (individual test runs) to ~62
+  - **Current Status**: All tests pass individually when run via `bundle exec ruby -I lib:test test/**/*_test.rb`
+  - **Impact**: Test artifacts (build/, patch/, .cache/, .picoruby-env.yml) are properly cleaned up by PraTestCase.teardown
+  - **Action**: Investigate why Rake test loader loads fewer tests; may be related to test discovery or suite filtering
+  - **Priority**: Low (all tests pass, cleanup is working)
+
 ---
 
 ## Future Enhancements (Optional)
