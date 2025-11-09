@@ -81,11 +81,11 @@ class PraTestCase < Test::Unit::TestCase
       ]
 
       dirs_to_cleanup.each do |dir|
-        FileUtils.rm_rf(dir) if Dir.exist?(dir)
+        FileUtils.rm_rf(dir)
       end
 
       files_to_cleanup.each do |file|
-        FileUtils.rm_f(file) if File.exist?(file)
+        FileUtils.rm_f(file)
       end
     rescue StandardError
       # Silently ignore cleanup errors
