@@ -220,3 +220,158 @@ See `.claude/skills/project-workflow/SKILL.md` for macro-cycle:
 - How to loop micro-cycles until task complete
 - When to update TODO.md
 - When to ask for user verification
+
+---
+
+## Coverage Improvement Strategy (Advanced)
+
+### Branch Coverage Gap Analysis
+
+**Critical Finding**: Line coverage and branch coverage are very different metrics:
+- **Line coverage** = Did the line execute? (easier to achieve, ~65%)
+- **Branch coverage** = Did BOTH sides of conditional execute? (harder to achieve, ~35%)
+
+### High-Impact Coverage Gaps
+
+Identify and prioritize untested code paths in this order:
+
+#### 1. **Error Handling Paths (Highest Priority)**
+
+```ruby
+# ❌ Common pattern with 0% branch coverage
+unless Dir.exist?(cache_path)
+  raise "Error: Cache not found"  # ← Branch NOT tested
+end
+```
+
+**Test strategy**: Create scenario where the condition is TRUE
+```ruby
+test "raises error when cache is missing" do
+  # Setup: Don't create cache_path
+  assert_raise(RuntimeError) do
+    Pra::Commands::Build.start(['setup', 'test-env'])
+  end
+end
+```
+
+#### 2. **Conditional File Operations**
+
+```ruby
+# ❌ Only testing the "directory exists" branch
+if File.symlink?(current_link)
+  target = File.readlink(current_link)  # ← Tested
+else
+  puts 'No current environment'  # ← NOT tested
+end
+```
+
+**Test strategy**: Test both branches
+- When symlink EXISTS (true branch)
+- When symlink DOESN'T EXIST (false branch)
+
+#### 3. **Method Delegation and Edge Cases**
+
+```ruby
+# ❌ method_missing with low branch coverage
+def method_missing(method_name, *args)
+  if method_name.to_s.start_with?('_')
+    super  # ← NOT tested (private method handling)
+  else
+    delegate_to_rake(method_name)  # ← Tested
+  end
+end
+```
+
+**Test strategy**: Call with underscore prefix, verify it raises NoMethodError
+
+### Coverage Analysis Workflow
+
+**Before writing tests**, run:
+```bash
+bundle exec rake ci
+grep 'branch-rate="0' coverage/coverage.xml
+```
+
+This shows you exactly which files have 0% branch coverage.
+
+**Example output** (from actual session):
+```
+lib/pra/commands/env.rb: 0% branch coverage
+lib/pra/commands/patch.rb: 0% branch coverage
+lib/pra/commands/rubocop.rb: 0% branch coverage
+```
+
+### Common Patterns to Test Both Branches
+
+| Pattern | True Branch | False Branch |
+|---------|------------|--------------|
+| `if File.exist?(path)` | Path exists | Path doesn't exist |
+| `unless Dir.exist?(dir)` | Dir missing | Dir exists |
+| `if env_name == 'current'` | Env is 'current' | Env is explicit name |
+| `unless condition` | Condition false | Condition true |
+| `if config.nil?` | Config is nil | Config exists |
+
+### Test Template for Branch Coverage
+
+```ruby
+# ❌ Pattern that leaves branches untested
+test "setup works with caches" do
+  setup_caches
+  output = capture_stdout { cmd.start(['setup']) }
+  assert_match(/success/, output)
+end
+
+# ✅ Pattern that tests both branches
+test "setup works when caches exist" do
+  setup_caches
+  output = capture_stdout { cmd.start(['setup']) }
+  assert_match(/success/, output)
+end
+
+test "setup raises error when caches missing" do
+  # Don't setup caches
+  assert_raise(RuntimeError) do
+    capture_stdout { cmd.start(['setup']) }
+  end
+end
+```
+
+### Tracking Coverage Improvements
+
+After adding tests, verify impact:
+```bash
+# Before
+bundle exec rake ci
+# → Line: 65.03%, Branch: 34.45%
+
+# After each test addition
+bundle exec rake ci
+# → Line: 65.10%, Branch: 35.20%
+```
+
+Document progress in commit message:
+```
+Add tests for build.rb cache validation
+
+- Added test for R2P2-ESP32 cache missing (line 44-46)
+- Added test for symlink not existing (line 19-22)
+- Coverage improvement: 65.03% → 65.10% line, 34.45% → 35.20% branch
+- Focused on error handling paths (highest impact)
+```
+
+### Session Insights (Actual Data)
+
+From analyzing 8 command files (November 2024):
+
+| File | Line Coverage | Branch Coverage | Gap Reason |
+|------|---|---|---|
+| `cache.rb` | 98.53% | 94.44% | Nearly complete |
+| `ci.rb` | 94.29% | 83.33% | Missing edge cases |
+| `mrbgems.rb` | 98.33% | 50% | One directory-exists branch |
+| `device.rb` | 94.12% | 71.43% | Error path branches |
+| `build.rb` | 89.12% | 59.38% | Multiple cache checks |
+| `rubocop.rb` | 25% | 0% | Minimal test coverage |
+| `patch.rb` | 10.71% | 0% | Minimal test coverage |
+| `env.rb` | 15.49% | 0% | Minimal test coverage |
+
+**Key insight**: Files with low branch coverage need MORE tests per method, not just any test. Each error condition branch requires a dedicated test case.
