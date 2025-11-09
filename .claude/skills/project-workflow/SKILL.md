@@ -61,11 +61,36 @@ rake buildall     # Combines destructive ops
 - ❌ Never: `git reset --hard`, `git rebase -i`
 - ✅ Safe: `git status`, `git log`, `git diff`
 
-## Session Flow: Tidy First + TDD + RuboCop
+## Session Flow: Tidy First + TDD + RuboCop + TODO Management
+
+### Understanding TODO.md Structure (CRITICAL)
+
+**Important**: TODO.md is NOT just a checklist — it's a **workflow guide** supporting t-wada style TDD.
+
+**Key concepts**:
+- **Each TODO task** = exactly one Micro-Cycle (1-5 minutes)
+- **Phase structure** = Organized chunks of related tasks
+- **[TODO-INFRASTRUCTURE-*] markers** = Cross-phase dependencies that MUST be resolved before proceeding
+- **Test-first architecture** = Phase 0 (Test Infrastructure) comes BEFORE all feature work
+
+**When starting a phase**:
+1. Read the phase description carefully
+2. Look for "⚠️ Check for [TODO-INFRASTRUCTURE-*]" warnings
+3. If any [TODO-INFRASTRUCTURE-*] markers exist from previous phases:
+   - STOP
+   - Review what they mean
+   - Resolve them in TDD cycles BEFORE proceeding
+4. Start first task in the phase
+
+**Example from picotorokko refactoring**:
+- Phase 0 discovers: `[TODO-INFRASTRUCTURE-DEVICE-COMMAND]` (Thor env name parsing)
+- Phase 2 proceeds normally
+- Phase 5 has warning: "Check [TODO-INFRASTRUCTURE-DEVICE-COMMAND] before starting"
+- Must resolve in Phase 5 TDD before moving to documentation
 
 ### Micro-Cycle (1-5 minutes per iteration)
 
-**Goal**: Complete one Red-Green-Refactor cycle with RuboCop integration
+**Goal**: Complete one Red-Green-RuboCop-Refactor-Commit cycle per TODO task
 
 ```
 1. RED: Write one failing test
@@ -84,6 +109,11 @@ rake buildall     # Combines destructive ops
 4. VERIFY & COMMIT: All quality gates must pass
    bundle exec rake ci → Tests + RuboCop + Coverage ✅
    Use `commit` subagent with clear, imperative message
+
+5. UPDATE TODO.md
+   - Immediately mark task complete
+   - Record any [TODO-INFRASTRUCTURE-*] discoveries
+   - Move to next task
 ```
 
 ### Quality Gates (ALL must pass before commit)
@@ -102,23 +132,27 @@ bundle exec rake ci
 ✅ Expected: Line: ≥ 80%, Branch: ≥ 50%
 ```
 
-### Macro-Cycle (Task completion)
+### Macro-Cycle (Phase completion)
 
 ```
-1. Check TODO.md for ongoing tasks and priorities
-   (See CLAUDE.md ## TODO Management for task management rules)
+1. Read TODO.md phase description
+   - Check for [TODO-INFRASTRUCTURE-*] warnings
+   - Understand task granularity (each = 1-5 min)
 
-2. Use explore agent to review relevant code/structure
+2. Check for unresolved [TODO-INFRASTRUCTURE-*] markers
+   - If found: Resolve in TDD cycles BEFORE proceeding
+   - If none: Proceed to first task
 
-3. Repeat Micro-Cycle multiple times until task complete
-   - Each micro-cycle is 1-5 minutes
-   - Keep changes small and meaningful
-   - Commit frequently (small, focused commits)
-   - Never accumulate multiple changes before committing
+3. Repeat Micro-Cycle for each task in phase
+   - Each task is exactly one TDD cycle
+   - Commit after each cycle
+   - Update TODO.md immediately (remove completed tasks)
+   - Record any infrastructure issues with [TODO-INFRASTRUCTURE-*]
 
-4. Update TODO.md
-   - Remove completed task immediately
-   - Add new tasks only if they emerge during implementation
+4. After phase completion
+   - Verify all [TODO-INFRASTRUCTURE-*] markers from this phase resolved
+   - Verify no hanging infrastructure markers
+   - If new [TODO-INFRASTRUCTURE-*] created: Mark which phase will handle it
 
 5. User verifies
    - Full test suite passes: `rake ci`
@@ -127,6 +161,18 @@ bundle exec rake ci
 ```
 
 ### Key Principles
+
+**Test-First Architecture (Phase 0 Priority)**
+- Phase 0: Test Infrastructure (HIGHEST PRIORITY, 3-4 days)
+- Establishes solid test foundation BEFORE any feature work
+- All [TODO-INFRASTRUCTURE-*] issues resolved early
+- Unblocks downstream phases for clean TDD
+
+**[TODO-INFRASTRUCTURE-*] Marker Discipline**
+- 🚨 NEVER skip markers — STOP and resolve immediately
+- 📌 Found in phase descriptions with specific context
+- 📝 Record new ones during implementation
+- ✅ Must be resolved before final verification
 
 **Tidy First (Kent Beck)**
 - Small refactoring steps (1-5 minutes each)
@@ -139,6 +185,7 @@ bundle exec rake ci
 - Minimal code to pass (no gold-plating)
 - Red-Green-Refactor cycle is fast
 - Test is always green after Refactor phase
+- Each TODO task = one complete cycle
 
 **RuboCop as Quality Gate**
 - ✅ Auto-fix violations automatically (`rubocop -A`)
@@ -153,6 +200,8 @@ bundle exec rake ci
 - 🚫 Writing fake/trivial tests
 - 🚫 Lowering coverage thresholds
 - 🚫 Large, multi-function changes per commit
+- 🚫 Skipping [TODO-INFRASTRUCTURE-*] markers — MUST resolve before proceeding
+- 🚫 Batching test problems for later — Record as [TODO-INFRASTRUCTURE-*] and resolve in TDD immediately
 
 ### When to Ask User
 
@@ -161,5 +210,6 @@ bundle exec rake ci
 2. Test strategy controversial (what should we test?)
 3. Trade-off between simplicity and completeness
 4. RuboCop violation needs architectural decision
+5. [TODO-INFRASTRUCTURE-*] marker requires design decision
 
 See `.claude/docs/testing-guidelines.md` for detailed examples.
