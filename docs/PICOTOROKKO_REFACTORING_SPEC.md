@@ -915,6 +915,543 @@ end
 
 ---
 
+## Template Strategy: AST-Based Template Engine
+
+### Current Approach (ERB)
+
+**Implementation**: `lib/pra/commands/mrbgems.rb:65-70`
+
+```ruby
+template_content = File.read(template_path, encoding: "UTF-8")
+erb = ERB.new(template_content, trim_mode: "-")
+rendered_content = erb.result(binding_context)
+File.write(output_path, rendered_content, encoding: "UTF-8")
+```
+
+**Pros**:
+- ✅ Simple, well-known pattern
+- ✅ Works with any text format (Ruby, C, YAML, Markdown)
+- ✅ Standard library (no dependencies)
+
+**Cons**:
+- ❌ String interpolation breaks syntax validity (templates aren't valid Ruby/YAML)
+- ❌ No semantic understanding of code structure
+- ❌ Fragile: whitespace-sensitive, easy to break syntax
+- ❌ No type safety or validation
+- ❌ Hard to maintain: templates look like code but aren't parseable
+- ❌ No IDE support (syntax highlighting breaks)
+
+### Proposed Approach: Parse → Modify → Dump
+
+**Philosophy**: Templates should be valid, parseable code in their target language. Modifications happen at the AST/semantic level, not string level.
+
+**Benefits**:
+- ✅ Templates are valid code (can be syntax-checked, formatted, linted)
+- ✅ IDE support works (syntax highlighting, completion, validation)
+- ✅ Semantic understanding enables powerful transformations
+- ✅ Type-safe modifications (can't accidentally break syntax)
+- ✅ Easier to test (can parse and verify template validity)
+- ✅ Follows Ruby 3.4+ ecosystem direction (Prism as standard parser)
+
+### Architecture Design
+
+#### 1. Template Engine Interface
+
+```ruby
+module Ptrk
+  module Template
+    # Unified template rendering interface
+    class Engine
+      def self.render(template_path, variables)
+        engine = select_engine(template_path)
+        engine.new(template_path, variables).render
+      end
+
+      private
+
+      def self.select_engine(template_path)
+        case File.extname(template_path)
+        when '.rb', '.rake' then RubyTemplateEngine
+        when '.yml', '.yaml' then YamlTemplateEngine
+        when '.c', '.h'      then CTemplateEngine
+        else                      StringTemplateEngine  # Fallback for Markdown, etc.
+        end
+      end
+    end
+  end
+end
+```
+
+#### 2. Ruby Template Engine (Prism-based)
+
+**Template Annotation Strategy**:
+
+Option A: **Placeholder Constants** (Recommended)
+```ruby
+# Template: lib/ptrk/templates/mrbgem_app/mrblib/app.rb
+class TEMPLATE_CLASS_NAME
+  def version
+    TEMPLATE_VERSION
+  end
+end
+```
+
+Option B: **Comment Annotations**
+```ruby
+# Template: lib/ptrk/templates/mrbgem_app/mrblib/app.rb
+# @ptrk_template: class_name
+class TemplateClassName
+  # @ptrk_template: version
+  def version
+    100
+  end
+end
+```
+
+**Implementation** (Option A: Placeholder Constants):
+
+```ruby
+module Ptrk
+  module Template
+    class RubyTemplateEngine
+      def initialize(template_path, variables)
+        @template_path = template_path
+        @variables = variables
+      end
+
+      def render
+        source = File.read(@template_path)
+        result = Prism.parse(source)
+
+        # Find all TEMPLATE_* placeholders and their locations
+        visitor = PlaceholderVisitor.new(@variables)
+        result.value.accept(visitor)
+
+        # Replace placeholders (reverse order to preserve offsets)
+        output = source.dup
+        visitor.replacements.reverse_each do |replacement|
+          output[replacement[:range]] = replacement[:new_value]
+        end
+
+        output
+      end
+    end
+
+    # Visitor to detect TEMPLATE_* placeholders
+    class PlaceholderVisitor < Prism::Visitor
+      attr_reader :replacements
+
+      def initialize(variables)
+        super()
+        @variables = variables
+        @replacements = []
+      end
+
+      def visit_constant_read_node(node)
+        # Match TEMPLATE_* pattern
+        const_name = node.name.to_s
+        if const_name.start_with?('TEMPLATE_')
+          var_name = const_name.sub(/^TEMPLATE_/, '').downcase.to_sym
+
+          if @variables.key?(var_name)
+            @replacements << {
+              range: node.location.start_offset...node.location.end_offset,
+              old_value: const_name,
+              new_value: @variables[var_name].to_s
+            }
+          end
+        end
+
+        super
+      end
+    end
+  end
+end
+```
+
+**Example Usage**:
+
+```ruby
+# Template file: lib/ptrk/templates/mrbgem_app/mrblib/app.rb
+class TEMPLATE_CLASS_NAME
+  def version
+    TEMPLATE_VERSION
+  end
+end
+
+# Rendering:
+variables = { class_name: 'MyApp', version: 100 }
+output = Ptrk::Template::Engine.render('app.rb', variables)
+
+# Output:
+# class MyApp
+#   def version
+#     100
+#   end
+# end
+```
+
+#### 3. YAML Template Engine (Psych-based)
+
+**Challenge**: Psych does NOT preserve comments during round-trip (parse → modify → dump).
+
+**Solution Options**:
+
+**Option A: Special Placeholder Keys** (Recommended for picotorokko)
+```yaml
+# Template: docs/github-actions/esp32-build.yml
+name: __PTRK_TEMPLATE_WORKFLOW_NAME__
+on:
+  push:
+    branches:
+      - __PTRK_TEMPLATE_MAIN_BRANCH__
+```
+
+Implementation:
+```ruby
+class YamlTemplateEngine
+  def render
+    yaml = YAML.load_file(@template_path)
+
+    # Recursively replace __PTRK_TEMPLATE_*__ placeholders
+    replace_placeholders!(yaml, @variables)
+
+    YAML.dump(yaml)
+  end
+
+  private
+
+  def replace_placeholders!(obj, variables)
+    case obj
+    when Hash
+      obj.transform_values! { |v| replace_placeholders!(v, variables) }
+    when Array
+      obj.map! { |v| replace_placeholders!(v, variables) }
+    when String
+      if obj.start_with?('__PTRK_TEMPLATE_') && obj.end_with?('__')
+        var_name = obj[16..-3].downcase.to_sym  # Extract variable name
+        variables.fetch(var_name, obj)
+      else
+        obj
+      end
+    else
+      obj
+    end
+  end
+end
+```
+
+**Option B: External Gem for Comment Preservation**
+
+Research needed (see Web Search Strategy below):
+- `yamllint-rb` - May preserve comments?
+- `ya2yaml` - Alternative YAML library
+- Custom parser using Psych + manual comment tracking
+
+**Option C: Hybrid Approach** (YAML + ERB for comments only)
+- Use Psych for structure
+- Preserve specific comment blocks using ERB-like markers
+- Requires custom parser
+
+#### 4. C Template Engine
+
+**Challenge**: No standard C parser in Ruby stdlib.
+
+**Solution Options**:
+
+**Option A: String Placeholder Replacement** (Recommended)
+```c
+// Template: lib/ptrk/templates/mrbgem_app/src/app.c
+void mrbc_TEMPLATE_C_PREFIX_init(mrbc_vm *vm) {
+  mrbc_class *TEMPLATE_C_PREFIX_class =
+    mrbc_define_class(vm, "TEMPLATE_CLASS_NAME", mrbc_class_object);
+}
+```
+
+Simple regex/string replacement:
+```ruby
+class CTemplateEngine
+  def render
+    source = File.read(@template_path)
+
+    @variables.each do |key, value|
+      placeholder = "TEMPLATE_#{key.to_s.upcase}"
+      source.gsub!(placeholder, value.to_s)
+    end
+
+    source
+  end
+end
+```
+
+**Option B: tree-sitter-c gem** (Advanced, requires dependency)
+- Pros: Full C AST parsing, semantic modifications
+- Cons: Additional gem dependency, complexity
+
+### Migration Strategy
+
+**Phase 1: Proof of Concept** (Non-blocking)
+1. Implement `Ptrk::Template::Engine` module
+2. Create `RubyTemplateEngine` with Prism
+3. Convert ONE template (e.g., `mrblib/app.rb.erb` → `mrblib/app.rb`)
+4. Add tests for template rendering
+5. Keep existing ERB system running in parallel
+
+**Phase 2: Gradual Rollout**
+1. Convert Ruby templates (`.rb.erb` → `.rb`)
+2. Convert Rake templates (`.rake.erb` → `.rake`)
+3. Convert YAML templates (if needed)
+4. Update `lib/ptrk/commands/mrbgems.rb` to use new engine
+
+**Phase 3: Deprecation**
+1. Remove `.erb` files
+2. Remove ERB dependency from codebase
+3. Update documentation
+
+### Web Search Strategy
+
+When implementing this feature, research the following topics:
+
+#### Prism (Ruby AST)
+
+**Search Queries**:
+1. "Prism ruby unparse AST to source code"
+   - Goal: Find if Prism has built-in AST → source code conversion
+   - Alternative: RuboCop's `RuboCop::AST::ProcessedSource`
+
+2. "Prism preserve comments round trip"
+   - Goal: Verify comment preservation during parse → modify → dump
+   - Check: `Prism::ParseResult#comments` API
+
+3. "Ruby 3.4 Prism location offset API"
+   - Goal: Confirm location-based string replacement strategy
+   - Verify: `Prism::Node#location.start_offset`, `end_offset`
+
+4. "Prism AST node replacement Ruby"
+   - Goal: Find examples of AST node modification patterns
+   - Alternative: Learn from RuboCop autocorrect implementation
+
+#### YAML Comment Preservation
+
+**Search Queries**:
+1. "Psych YAML preserve comments round trip Ruby"
+   - Goal: Check if newer Psych versions support comment preservation
+   - Check: Ruby 3.4+ stdlib updates
+
+2. "ya2yaml gem comment preservation"
+   - Goal: Evaluate alternative YAML library
+   - Check: Maintenance status, compatibility
+
+3. "YAML AST manipulation Ruby"
+   - Goal: Find YAML parsing libraries with AST support
+   - Alternative: Custom Psych + comment tracking
+
+4. "yamllint Ruby preserve comments"
+   - Goal: Check if yamllint-rb has parsing capabilities
+   - Evaluate: Performance, API usability
+
+#### C Code Generation
+
+**Search Queries**:
+1. "tree-sitter-c Ruby gem"
+   - Goal: Evaluate C AST parsing option
+   - Check: Installation complexity, dependencies
+
+2. "C code generation template Ruby"
+   - Goal: Find existing C template patterns in Ruby ecosystem
+   - Learn: Best practices from other projects
+
+3. "Ruby C extension code generation"
+   - Goal: Find examples from mruby/mrubyc ecosystem
+   - Learn: Common patterns, pitfalls
+
+#### Alternative Template Engines
+
+**Search Queries**:
+1. "AST-based template engine Ruby"
+   - Goal: Check if similar approaches exist
+   - Avoid: Reinventing the wheel
+
+2. "semantic code generation Ruby"
+   - Goal: Find research on code generation best practices
+   - Learn: Industry patterns
+
+3. "Prism visitor pattern examples Ruby"
+   - Goal: Learn from existing Prism usage in gems
+   - Check: RuboCop, Steep, other static analysis tools
+
+### Implementation Knowledge Base
+
+#### Prism Basics
+
+**AST Node Types** (relevant to templates):
+- `Prism::ConstantReadNode` - Constant references (e.g., `TEMPLATE_CLASS_NAME`)
+- `Prism::StringNode` - String literals
+- `Prism::InterpolatedStringNode` - String interpolation (avoid in templates)
+- `Prism::CallNode` - Method calls
+- `Prism::CommentNode` - Comments (accessed via `parse_result.comments`)
+
+**Location API**:
+```ruby
+result = Prism.parse(source)
+node = result.value  # Root node
+
+# Get source code range
+location = node.location
+start_offset = location.start_offset
+end_offset = location.end_offset
+source_slice = source[start_offset...end_offset]
+
+# Line/column info
+start_line = location.start_line
+start_column = location.start_column
+```
+
+**Visitor Pattern**:
+```ruby
+class MyVisitor < Prism::Visitor
+  def visit_constant_read_node(node)
+    puts "Found constant: #{node.name}"
+    super  # Continue traversal
+  end
+end
+
+result = Prism.parse(source)
+visitor = MyVisitor.new
+result.value.accept(visitor)
+```
+
+#### Psych (YAML) Basics
+
+**Round-trip without comments**:
+```ruby
+yaml = YAML.load_file('template.yml')
+# Modify yaml hash
+yaml['name'] = 'New Value'
+YAML.dump(yaml, File.open('output.yml', 'w'))
+# Comments are LOST
+```
+
+**Preserving structure**:
+```ruby
+# Use specific YAML options
+YAML.dump(yaml,
+  line_width: -1,        # No line wrapping
+  indentation: 2,        # 2-space indent
+  canonical: false       # Don't use canonical form
+)
+```
+
+#### String Replacement Strategy
+
+**Safe offset-based replacement** (for Prism results):
+```ruby
+# Collect all replacements first
+replacements = []
+visitor.replacements.each do |r|
+  replacements << r
+end
+
+# Sort by start offset (descending) to preserve offsets
+replacements.sort_by! { |r| -r[:range].begin }
+
+# Apply replacements
+output = source.dup
+replacements.each do |r|
+  output[r[:range]] = r[:new_value]
+end
+```
+
+### Testing Strategy
+
+**Template Validity Tests**:
+```ruby
+def test_template_is_valid_ruby
+  template_path = 'lib/ptrk/templates/mrbgem_app/mrblib/app.rb'
+  source = File.read(template_path)
+
+  result = Prism.parse(source)
+  assert result.success?, "Template must be valid Ruby code"
+  assert result.errors.empty?, "Template has syntax errors"
+end
+```
+
+**Template Rendering Tests**:
+```ruby
+def test_renders_ruby_template
+  variables = { class_name: 'MyApp', version: 100 }
+  output = Ptrk::Template::Engine.render('app.rb', variables)
+
+  # Verify output is valid Ruby
+  result = Prism.parse(output)
+  assert result.success?
+
+  # Verify placeholders replaced
+  refute output.include?('TEMPLATE_CLASS_NAME')
+  assert output.include?('class MyApp')
+end
+```
+
+**Placeholder Detection Tests**:
+```ruby
+def test_detects_all_placeholders
+  source = <<~RUBY
+    class TEMPLATE_CLASS_NAME
+      TEMPLATE_VERSION
+    end
+  RUBY
+
+  result = Prism.parse(source)
+  visitor = PlaceholderVisitor.new({})
+  result.value.accept(visitor)
+
+  assert_equal 2, visitor.replacements.size
+end
+```
+
+### Benefits Summary
+
+| Aspect | ERB | AST-Based |
+|--------|-----|-----------|
+| Template validity | ❌ Not parseable | ✅ Valid code |
+| IDE support | ❌ Syntax highlighting breaks | ✅ Full IDE support |
+| Type safety | ❌ String manipulation | ✅ Semantic understanding |
+| Maintainability | ❌ Fragile | ✅ Robust |
+| Dependencies | ✅ Stdlib only | ✅ Prism (stdlib in 3.4+) |
+| Learning curve | ✅ Simple | ⚠️ Moderate (Prism API) |
+| Performance | ✅ Fast | ✅ Fast (Prism is optimized) |
+
+### Decision: When to Use Each Approach
+
+**Use AST-Based**:
+- ✅ Ruby templates (`.rb`, `.rake`)
+- ✅ When template validity matters (linting, IDE support)
+- ✅ When semantic modifications needed (rename class, change structure)
+- ✅ For long-term maintainability
+
+**Keep ERB**:
+- ✅ Markdown templates (no parser available)
+- ✅ Simple one-off text files
+- ✅ When migration cost outweighs benefits
+
+**Hybrid for YAML**:
+- ⚠️ Depends on comment preservation requirements
+- ⚠️ If comments not critical: Use Psych + placeholder keys
+- ⚠️ If comments critical: Keep ERB or research ya2yaml gem
+
+### Next Steps (Planning Phase)
+
+1. **Research**: Execute web searches listed above
+2. **Prototype**: Implement `RubyTemplateEngine` for ONE template
+3. **Validate**: Ensure Prism approach works with all Ruby template patterns
+4. **Document**: Update this spec with findings
+5. **Decide**: Go/no-go decision based on prototype results
+6. **Implement**: Full rollout if benefits confirmed
+
+**Status**: ⏸️ Deferred (not blocking picotorokko refactoring)
+
+---
+
 ## Test Strategy
 
 ### Design Principle: Two Project Roots

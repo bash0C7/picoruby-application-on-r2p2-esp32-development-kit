@@ -22,6 +22,30 @@
     - Env names: User-defined (no "current" symlink), defaults to `development`
     - Tests: Use `Dir.mktmpdir` to keep gem root clean
 
+- [ ] **AST-Based Template Engine (Optional Enhancement)**
+  - **Status**: Planning Phase (Deferred, non-blocking)
+  - **Full Specification**: [docs/PICOTOROKKO_REFACTORING_SPEC.md](docs/PICOTOROKKO_REFACTORING_SPEC.md#template-strategy-ast-based-template-engine)
+  - **Scope**: Replace ERB-based template generation with AST-based approach (Parse → Modify → Dump)
+  - **Why**: Enable semantic code generation, maintain template validity, improve IDE support
+  - **Benefits**:
+    - Templates become valid, parseable code (Ruby, YAML)
+    - Full IDE support (syntax highlighting, completion)
+    - Type-safe transformations via AST manipulation
+    - Better maintainability and testability
+  - **Key components**:
+    - `Ptrk::Template::Engine` - Unified template interface
+    - `RubyTemplateEngine` - Prism-based Ruby template processor
+    - `YamlTemplateEngine` - Psych-based YAML template processor
+    - `CTemplateEngine` - String-based C template processor (fallback)
+  - **Research required** (Web search strategy documented in spec):
+    - Prism unparse/format capabilities
+    - YAML comment preservation (Psych limitations, alternative gems)
+    - tree-sitter-c gem evaluation
+    - AST-based template engine patterns
+  - **Migration strategy**: 3-phase (PoC → Gradual rollout → Deprecation)
+  - **Decision criteria**: Benefits vs. migration cost, prototype validation
+  - **Priority**: Low (nice-to-have, not blocking picotorokko refactoring)
+
 ---
 
 ## 🔮 Future Enhancements (Phase 5+)
