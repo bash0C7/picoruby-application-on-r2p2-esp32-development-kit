@@ -40,7 +40,6 @@ build-iPhoneSimulator/
 
 ## Environment normalization:
 /.bundle/*
-!/.bundle/config
 /vendor/bundle
 /lib/bundler/man/
 

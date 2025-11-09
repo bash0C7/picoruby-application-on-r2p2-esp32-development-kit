@@ -14,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bundle install"
+            "command": "bundle config set --local path vendor/bundle && bundle install"
           }
         ]
       }
