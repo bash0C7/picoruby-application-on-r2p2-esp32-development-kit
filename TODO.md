@@ -68,17 +68,14 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
     - This is a quality gate that cannot be bypassed
   - **Priority**: High (blocking CI/CD automation and system reliability)
 
-- [ ] **Prevent tests from modifying git-managed files**
-  - **Issue**: Test execution modifies `.picoruby-env.yml.example` (git-managed template file)
-  - **Root Cause**: Test cleanup may be incomplete; tests interact with .example file during setup/teardown
-  - **Impact**: Git working directory becomes dirty after test runs; violates test isolation principle
-  - **Problem**: This is a fundamental test design failure - tests should never modify repository resources
-  - **Action**:
-    1. Investigate why `.example` file is being modified during test execution
-    2. Ensure test isolation uses temporary directories completely separate from repo
-    3. Add pre-test verification: `git status` must be clean before tests
-    4. Add post-test verification: `git status` must be clean after tests
-  - **Priority**: High (critical for test reliability and CI/CD safety)
+✅ **Prevent tests from modifying git-managed files** — COMPLETED
+  - Implemented git status verification in PraTestCase.setup and teardown methods
+  - Added `verify_git_status_clean!(phase)` helper method to check for unstaged changes
+  - Pre-test verification: Ensures git status is clean before each test
+  - Post-test verification: Ensures git status is clean after each test
+  - All 130 tests pass with git verification enabled
+  - Changes: `test/test_helper.rb` — Added 21 lines of verification code
+  - See commit: "test: Add git status verification to prevent tests from modifying git-managed files"
 
 ### Development Workflow Standardization
 

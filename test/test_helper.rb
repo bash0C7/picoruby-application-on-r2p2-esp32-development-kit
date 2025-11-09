@@ -36,6 +36,9 @@ class PraTestCase < Test::Unit::TestCase
     rescue StandardError
       # Ignore any errors during setup
     end
+
+    # Verify git status is clean before test starts
+    verify_git_status_clean!("before test")
   end
 
   # Dir.chdir(tmpdir) 後に PROJECT_ROOT をリセットするヘルパー
@@ -97,8 +100,26 @@ class PraTestCase < Test::Unit::TestCase
     rescue StandardError
       # Silently ignore cleanup errors
     end
+
+    # Verify git status is clean after test completes
+    verify_git_status_clean!("after test")
   end
 
   # NOTE: after_test cleanup code removed - device_test.rb is excluded from test suite
   # If device_test.rb is re-enabled in the future, implement per-test SystemExit isolation
+  private
+
+  # Helper: Verify git status is clean (no modifications to tracked files)
+  def verify_git_status_clean!(phase)
+    result = `git status --porcelain 2>&1`
+    return if result.empty?
+
+    # Only report non-git-metadata changes (not .git/ entries)
+    git_metadata = result.lines.grep(%r{^.*\.git/})
+    unstaged = result.lines.reject { |line| git_metadata.include?(line) }
+    return if unstaged.empty?
+
+    message = "Git working directory is dirty #{phase}. Unstaged changes:\n#{unstaged.join}"
+    raise StandardError, message
+  end
 end
