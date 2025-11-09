@@ -81,21 +81,72 @@ There are two distinct audiences in this project:
 
 **Project tasks are tracked in `TODO.md` at repository root.**
 
-**Maintain TODO.md with strict discipline**:
+### Core Principles: TDD-First TODO Structure
+
+**Objective**: Organize TODO.md to support t-wada style TDD with small, focused cycles (1-5 min each).
+
+#### Task Granularity = One Red-Green-RuboCop-Refactor-Commit Cycle
+
+- ✅ **Each TODO task = single TDD cycle** — Should take 1-5 minutes to complete
+  - RED: Write one failing test
+  - GREEN: Implement minimal code to pass
+  - RUBOCOP: `bundle exec rubocop -A` (auto-correct)
+  - REFACTOR: Improve code clarity
+  - COMMIT: Push focused change
+
+- ✅ **Test-First Architecture** — Especially for Phase 0 (Test Infrastructure)
+  - Phase 0 is HIGHEST PRIORITY (3-4 days)
+  - Establishes solid foundation before feature work
+  - Unblocks downstream phases
+  - All [TODO-INFRASTRUCTURE-*] issues resolved in TDD cycles, not batched at end
+
+#### [TODO-INFRASTRUCTURE-*] Marker Protocol (CRITICAL)
+
+- 🚨 **NEVER skip [TODO-INFRASTRUCTURE-*] markers** — Found in any phase description
+- 🚨 **STOP and handle immediately** — Before proceeding to next task/phase
+- 📌 **Each phase start** — Must include explicit check: "⚠️ Check for [TODO-INFRASTRUCTURE-*] markers from previous phases"
+- 📌 **Test problems discovered** — Record with [TODO-INFRASTRUCTURE-*] marker and resolve in TDD cycle, NOT batched later
+- 📝 **Reference format**: `[TODO-INFRASTRUCTURE-DEVICE-COMMAND]` — Descriptive, references affected files/components
+
+**Example markers in picotorokko refactoring**:
+- `[TODO-INFRASTRUCTURE-SIMPLECOV-DETAILS]` — SimpleCov exit code issue (Phase 0)
+- `[TODO-INFRASTRUCTURE-DEVICE-COMMAND]` — Thor env name parsing (Phase 0 → Phase 5)
+- `[TODO-INFRASTRUCTURE-ENV-PATHS]` — Path construction verification (Phase 2 → Phase 4)
+
+#### Maintain TODO.md with Strict Discipline
 
 - ✅ **Remove completed tasks immediately** — Delete from TODO.md as soon as work is done and committed
 - ✅ **Review before adding** — Check if task already exists or is covered by existing items
-- ✅ **Keep granularity appropriate** — Tasks should be actionable, not too broad or too narrow
+- ✅ **Keep granularity appropriate** — Tasks should be actionable (1-5 min), not too broad or too narrow
 - ✅ **Archive obsolete tasks** — Remove tasks made irrelevant by other changes
-- ✅ **Use clear hierarchy** — Organize with headings and bullet structure for easy scanning
+- ✅ **Use clear hierarchy** — Phase structure with explicit TDD step labels (RED, GREEN, RUBOCOP, REFACTOR, COMMIT)
 - ✅ **Add context when needed** — Include brief rationale or dependencies if not obvious
 - ✅ **No line number references** — Avoid citing specific line numbers (e.g., "line 26") as they are volatile. Use file paths + keyword/function names instead (e.g., ".github/workflows/main.yml: Change `bundle exec rake ci` command")
+- ✅ **Mark infrastructure issues** — Use [TODO-INFRASTRUCTURE-*] for cross-phase dependencies
 
-**Workflow**:
-1. Before starting work: Review TODO.md for related tasks
-2. During work: Update tasks if scope changes
-3. After commit: Immediately remove completed tasks
-4. Weekly: Review entire TODO.md for cleanup opportunities
+#### Workflow
+
+1. **Before starting work**:
+   - Review TODO.md for ongoing phases and priorities
+   - Check for any unresolved [TODO-INFRASTRUCTURE-*] markers from previous work
+
+2. **During Phase**:
+   - Check phase start warning: "⚠️ Check for [TODO-INFRASTRUCTURE-*]"
+   - Complete each task = 1-5 min TDD cycle
+   - If test problem discovered: Record with [TODO-INFRASTRUCTURE-*] and resolve in TDD, not later
+   - Commit after each cycle (small, focused commits)
+
+3. **After Phase completion**:
+   - Verify all [TODO-INFRASTRUCTURE-*] markers from this phase resolved
+   - Mark phase complete
+
+4. **Task completion**:
+   - Immediately remove from TODO.md (don't batch)
+   - No [TODO-INFRASTRUCTURE-*] markers should be left hanging
+
+5. **Weekly review**:
+   - Scan for obsolete or abandoned tasks
+   - Verify [TODO-INFRASTRUCTURE-*] markers still relevant
 
 ## Output Style
 
