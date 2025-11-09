@@ -52,9 +52,9 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
   - Result: More discoverable for new developers (well-known Ruby pattern)
 
 - [x] **Quality gates passed (all refactoring complete)**
-  - ✅ All 38 tests pass (100%)
+  - ✅ All 40 tests pass (100%) - Phase 3 adds 2 new test cases
   - ✅ RuboCop: 0 offenses (no Lint/NonAtomicFileOperation, Metrics/BlockLength, Metrics/ClassLength)
-  - ✅ Test coverage maintained: 64.9% line, 34.03% branch
+  - ✅ Test coverage improved: 65.03% line, 34.45% branch
 
 ---
 
@@ -63,17 +63,26 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
 ### Test Coverage Improvement
 
 - [ ] **Expand test coverage to reach 75%+ line coverage, 50%+ branch coverage**
-  - **Current metrics** (as of latest CI run):
-    - Line coverage: 64.9% (503/775 lines)
-    - Branch coverage: 34.03% (81/238 branches)
+  - **Current metrics** (as of Phase 3):
+    - Line coverage: 65.03% (504/775 lines)
+    - Branch coverage: 34.45% (82/238 branches)
+    - Gap: 9.97% line, 15.55% branch to reach targets
   - **Target**: 75% line, 50% branch (industry best practices for gem libraries)
-  - **Strategy**: Identify coverage gaps in:
-    - Error handling paths (exception cases)
+  - **Phase 3 Progress**: Added tests for build clean, ci setup
+    - Focus areas: error handling paths, conditional branch coverage
+    - Added test cases targeting previously untested code paths
+  - **Remaining Strategy**: Identify coverage gaps in:
+    - Error handling paths (exception cases) - especially in device.rb, patch.rb
     - Edge cases in command implementations
-    - Conditional branches not yet tested
+    - Conditional branches not yet tested (method_missing, resolve_env_name)
     - Integration between commands
   - **Tools**: Use `bundle exec rake ci` to measure coverage before/after improvements
-  - **Note**: Even with current 64.9% coverage, there is room for expansion (user feedback indicates intentional space for growth)
+  - **Note**: Even with current 65.03% coverage, significant improvements possible by targeting branch coverage
+  - **Recommended Next Steps**:
+    1. Focus on env.rb, patch.rb, rubocop.rb error paths (currently 0% branch coverage)
+    2. Add error case tests for missing caches, invalid configurations
+    3. Test method delegation in device.rb (method_missing paths)
+    4. Add integration tests combining multiple commands
 
 ---
 
