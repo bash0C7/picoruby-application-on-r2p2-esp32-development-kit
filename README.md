@@ -46,15 +46,17 @@ Or install it yourself as:
 gem install picoruby-application-on-r2p2-esp32-development-kit
 ```
 
-## Quick Start
+## For PicoRuby Application Users
 
-### 1. Check current environment
+### Quick Start
+
+#### 1. Check current environment
 
 ```bash
 bundle exec pra env show
 ```
 
-### 2. Fetch environment from cache
+#### 2. Fetch environment from cache
 
 If you have a `.picoruby-env.yml` with environment definitions:
 
@@ -62,63 +64,63 @@ If you have a `.picoruby-env.yml` with environment definitions:
 bundle exec pra cache fetch stable-2024-11
 ```
 
-### 3. Setup build environment
+#### 3. Setup build environment
 
 ```bash
 bundle exec pra build setup stable-2024-11
 ```
 
-### 4. Build, flash, and monitor
+#### 4. Build, flash, and monitor
 
 ```bash
 bundle exec pra device flash
 bundle exec pra device monitor
 ```
 
-## Commands Reference
+### Commands Reference
 
-### Environment Definition Management
+#### Environment Definition Management
 
 - `pra env show` - Display current environment definition from .picoruby-env.yml
 - `pra env set ENV_NAME` - Switch to specified environment definition (updates build/current symlink)
 - `pra env latest` - Fetch latest commit versions and create environment definition
 
-### Cache Management
+#### Cache Management
 
 - `pra cache list` - Display list of cached repository versions
 - `pra cache fetch [ENV_NAME]` - Fetch specified environment from GitHub and save to cache
 - `pra cache clean REPO` - Delete all caches for specified repo
 - `pra cache prune` - Delete caches not referenced by any environment
 
-### Build Environment Management
+#### Build Environment Management
 
 - `pra build setup [ENV_NAME]` - Setup build environment from environment definition (.picoruby-env.yml)
 - `pra build clean [ENV_NAME]` - Delete specified build environment directory
 - `pra build list` - Display list of constructed build environment directories
 
-### Application-Specific mrbgem Management
+#### Application-Specific mrbgem Management
 
 - `pra mrbgems generate [NAME]` - Generate application-specific mrbgem template (default: App)
   - Creates `mrbgems/{NAME}/` with Rubyコード and C extension template
   - Automatically registers mrbgem in build_config and CMakeLists.txt during `pra build setup`
   - Use `--author` option to specify author name: `pra mrbgems generate --author "Your Name"`
 
-### PicoRuby RuboCop Configuration
+#### PicoRuby RuboCop Configuration
 
 - `pra rubocop setup` - Setup RuboCop configuration for PicoRuby development
 - `pra rubocop update` - Update PicoRuby method database from latest definitions
 
 For detailed guide, see [docs/RUBOCOP_PICORUBY_GUIDE.md](docs/RUBOCOP_PICORUBY_GUIDE.md).
 
-### Patch Management
+#### Patch Management
 
 - `pra patch export [ENV_NAME]` - Export changes from build environment to patch directory
 - `pra patch apply [ENV_NAME]` - Apply patches to build environment
 - `pra patch diff [ENV_NAME]` - Display differences between working changes and stored patches
 
-### R2P2-ESP32 Device Operations
+#### R2P2-ESP32 Device Operations
 
-#### Explicit Commands
+##### Explicit Commands
 
 - `pra device flash [ENV_NAME]` - Flash firmware to ESP32 (delegates to R2P2-ESP32's `rake flash`)
 - `pra device monitor [ENV_NAME]` - Monitor ESP32 serial output (delegates to R2P2-ESP32's `rake monitor`)
@@ -126,7 +128,7 @@ For detailed guide, see [docs/RUBOCOP_PICORUBY_GUIDE.md](docs/RUBOCOP_PICORUBY_G
 - `pra device setup_esp32 [ENV_NAME]` - Setup ESP32 build environment (delegates to R2P2-ESP32's `rake setup_esp32`)
 - `pra device help [ENV_NAME]` - Show available R2P2-ESP32 tasks for the environment
 
-#### Dynamic Rake Task Delegation
+##### Dynamic Rake Task Delegation
 
 The `pra device` command uses Ruby's `method_missing` to transparently delegate any undefined subcommand to R2P2-ESP32's Rakefile. This allows you to run any Rake task defined in R2P2-ESP32 without explicit `pra device` commands:
 
@@ -144,48 +146,50 @@ bundle exec pra device build_app my-env
 2. Run any task: `pra device <task_name> my-env`
 3. Default environment: If `[ENV_NAME]` is omitted, uses the current environment (set via `pra env set`)
 
-### Other
+#### Other
 
 - `pra version` or `pra -v` - Show pra version
 
-## Requirements
+### Requirements
 
 - Ruby 3.0 or higher
 - Bundler
 - Git
 - ESP-IDF (for build/flash/monitor tasks)
 
-## Configuration File
+### Configuration File
 
 See `.picoruby-env.yml` for environment configuration examples. Each environment defines commit hashes and timestamps for R2P2-ESP32, picoruby-esp32, and picoruby repositories.
 
-## Documentation
+### Documentation
 
 For detailed specifications, see [SPEC.md](SPEC.md).
 
-## CI/CD Integration
+### CI/CD Integration
 
 For PicoRuby application developers using GitHub Actions for automated builds, see [docs/CI_CD_GUIDE.md](docs/CI_CD_GUIDE.md).
 
-For gem developers releasing to RubyGems, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For pra gem developers releasing to RubyGems, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Development
+## For pra Gem Developers
+
+### Development
 
 After checking out the repo:
 
-### 1. Install dependencies
+#### 1. Install dependencies
 
 ```bash
 bundle install
 ```
 
-### 2. Run tests
+#### 2. Run tests
 
 ```bash
 bundle exec rake test
 ```
 
-### 3. Code Quality: RuboCop
+#### 3. Code Quality: RuboCop
 
 We use RuboCop for code style enforcement:
 
@@ -193,13 +197,13 @@ We use RuboCop for code style enforcement:
 bundle exec rubocop -A
 ```
 
-### 4. Build the gem
+#### 4. Build the gem
 
 ```bash
 bundle exec gem build picoruby-application-on-r2p2-esp32-development-kit.gemspec
 ```
 
-### 5. Test CLI locally
+#### 5. Test CLI locally
 
 ```bash
 bundle exec exe/pra --help

@@ -16,20 +16,55 @@ ESP32 上の PicoRuby アプリケーション・処理系開発。mrbgems ビ�
 
 ## Your Role
 
-**You are the developer of the `pra` gem** — a CLI tool for PicoRuby application development on ESP32.
+**You are the developer of the `picoruby-application-on-r2p2-esp32-development-kit` gem** — a multi-version build system CLI (`pra` command) for PicoRuby application development on ESP32.
 
-- **Primary role**: Implement and maintain the `pra` gem itself
-- **User perspective**: Temporarily adopt when designing user-facing features (commands, templates, documentation)
-- **Key distinction**:
-  - Files in `lib/pra/`, `test/`, gem configuration → You develop these
-  - Files in `docs/github-actions/`, templates → These are for `pra` users (not executed during gem development)
-  - When `pra` commands are incomplete, add to TODO.md — don't rush implementation unless explicitly required
+### Role Clarity: Gem Developer vs. pra User
+
+There are two distinct audiences in this project:
+
+**pra Gem Developer** (Your primary role):
+- You develop the gem itself (the `pra` command and its infrastructure)
+- You read/write: `lib/pra/`, `test/`, gem configuration (gemspec, Gemfile, `.claude/`)
+- You design user-facing features but don't *use* the templates yourself
+- You maintain consistency between specification and implementation
+
+**pra Users** (PicoRuby Application Developers):
+- They install the `pra` gem: `gem install picoruby-application-on-r2p2-esp32-development-kit`
+- They use the `pra` command to develop PicoRuby applications for ESP32
+- They use templates and guides in `docs/`, `docs/github-actions/`, and `SPEC.md`
+- They run: `pra env show`, `pra build setup`, `pra device flash`, etc.
+
+### Documentation Locations
+
+**For gem developers** (you read/write these):
+- `.claude/docs/` — Internal design documents, architecture, implementation guides
+- `.claude/skills/` — Agent workflows for your development process
+- `CLAUDE.md` — Your development guidelines (this file)
+- `lib/pra/` — Source code
+
+**For pra users** (they read these):
+- `README.md` — Installation and quick start (sections: "For PicoRuby Application Users")
+- `SPEC.md` — Complete specification of pra commands and behavior
+- `docs/` — User guides (CI/CD, mrbgems, RuboCop, etc.)
+- `docs/github-actions/` — Workflow templates for GitHub Actions
+
+**Hybrid** (both audiences, but with distinct sections):
+- `README.md` — Sections: "For PicoRuby Application Users" vs "For pra Gem Developers"
+- `docs/CI_CD_GUIDE.md` — Divided: user section + developer release guide
+
+### Key Distinction: Development vs. Usage
+
+- **Gem Development**: Modifying `lib/pra/`, adding commands, fixing bugs
+- **User Template Design**: Creating/updating `docs/github-actions/*.yml` or `docs/*.md`
+  - You *design* these for user consumption
+  - You *understand* user workflows but don't execute them as part of gem development
+  - When a template references an incomplete command, add to TODO.md — don't implement the command unless explicitly asked
 
 **Example thought process**:
-- "I'm implementing `pra ci setup` command" ✅ (gem development)
-- "Users will run this workflow template" ✅ (understanding user needs)
-- "The template uses `pra device build` which doesn't exist yet" → Add to TODO.md ✅
-- "I must implement `pra device build` NOW before proceeding" ❌ (unless explicitly requested)
+- "I'm implementing `pra ci setup` command" ✅ (gem development in `lib/pra/`)
+- "I'm designing a workflow template that uses `pra device build`" ✅ (understanding user needs)
+- "The template uses `pra device build` which doesn't exist yet" → Add to TODO.md ✅ (note the dependency)
+- "I must implement `pra device build` NOW before finishing the template" ❌ (unless explicitly requested)
 
 ## Core Principles
 

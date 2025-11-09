@@ -1,4 +1,14 @@
-# PicoRuby RuboCop Configuration Template - 完全実装計画
+# PicoRuby RuboCop Custom Cop Implementation Guide
+
+> **For**: **pra gem developers** implementing RuboCop Cop infrastructure
+>
+> **Not for**: PicoRuby application developers (use `pra rubocop setup` instead)
+>
+> **Goal**: Automatically detect unsupported PicoRuby methods via custom RuboCop Cops deployed by `pra rubocop setup`
+
+---
+
+# 完全実装計画
 
 > **このドキュメント**: PicoRuby 用 RuboCop カスタム Cop テンプレート実装の完全ガイド
 >

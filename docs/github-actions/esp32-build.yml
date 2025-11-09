@@ -1,4 +1,12 @@
-# ESP32 Firmware Build Workflow for PicoRuby Applications
+# ESP32 Firmware Build Workflow Template for PicoRuby Applications
+#
+# **TARGET AUDIENCE**: PicoRuby application developers
+#
+# This workflow is a TEMPLATE for PicoRuby application developers to automate
+# ESP32 firmware builds using the pra gem.
+#
+# **Users**: Customize environment names, ESP-IDF versions, and build targets for your project.
+# **gem developers**: Do NOT modify this template without coordination.
 #
 # This workflow builds ESP32 firmware for PicoRuby applications using the pra tool.
 # Copy this file to .github/workflows/esp32-build.yml in your project.

@@ -635,3 +635,9 @@ pra build setup ENV_NAME
 | Date | Version | Changes |
 |------|---------|---------|
 | 2024-11-05 | 1.0 | Initial specification |
+
+---
+
+## Implementation Details for Gem Developers
+
+For architectural decisions, implementation strategies, and detailed component specifications backing this user-facing specification, see [`.claude/docs/spec/`](./.claude/docs/spec/).
