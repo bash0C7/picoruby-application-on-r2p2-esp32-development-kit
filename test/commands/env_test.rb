@@ -390,4 +390,11 @@ class PraCommandsEnvTest < Test::Unit::TestCase
       end
     end
   end
+
+  # Env command behavior tests
+  sub_test_case "env command class methods" do
+    test "exit_on_failure? returns true for Env command" do
+      assert_true(Pra::Commands::Env.exit_on_failure?)
+    end
+  end
 end
