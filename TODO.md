@@ -27,6 +27,25 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
   - **Action**: Investigate why Rake test loader loads fewer tests; may be related to test discovery or suite filtering
   - **Priority**: Low (all tests pass, cleanup is working)
 
+- [ ] **Fix SimpleCov exit code issue in CI**
+  - **Issue**: `bundle exec rake test` returns exit code 1 even though all tests pass (0 failures, 0 errors)
+  - **Root Cause**: SimpleCov error: "Stopped processing SimpleCov as a previous error not related to SimpleCov has been detected"
+  - **Impact**: CI pipeline fails due to non-zero exit code despite test success
+  - **Action**: Investigate SimpleCov configuration and fix error handling
+  - **Priority**: Medium (blocking CI/CD automation)
+
+### Development Workflow Standardization
+
+- [ ] **Enforce RuboCop auto-correction in TDD cycle**
+  - **Objective**: Eliminate manual RuboCop violation fixes by making auto-correction a standard step in Red-Green-Refactor cycle
+  - **Implementation**: Update CLAUDE.md development guidelines with strict requirements:
+    1. **After every RED/GREEN transition**: Run `bundle exec rubocop -A` immediately
+    2. **After test code reaches GREEN**: Run `bundle exec rubocop -A` on test files before commit
+    3. **Before every commit**: Verify `bundle exec rubocop` returns 0 violations
+    4. **Rationale**: Prevents violations from accumulating and ensures code style consistency without manual effort
+  - **Success Criteria**: All commits pass RuboCop without violations; no `# rubocop:disable` comments in codebase
+  - **Priority**: Medium (improves code quality and developer workflow)
+
 ---
 
 ## Future Enhancements (Optional)
