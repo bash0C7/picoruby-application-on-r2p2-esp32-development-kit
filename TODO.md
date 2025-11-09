@@ -60,6 +60,21 @@ For detailed implementation guide and architecture design of the PicoRuby RuboCo
 
 ## 🟡 Medium Priority (Code Quality & Documentation)
 
+### Test Coverage Improvement
+
+- [ ] **Expand test coverage to reach 75%+ line coverage, 50%+ branch coverage**
+  - **Current metrics** (as of latest CI run):
+    - Line coverage: 64.9% (503/775 lines)
+    - Branch coverage: 34.03% (81/238 branches)
+  - **Target**: 75% line, 50% branch (industry best practices for gem libraries)
+  - **Strategy**: Identify coverage gaps in:
+    - Error handling paths (exception cases)
+    - Edge cases in command implementations
+    - Conditional branches not yet tested
+    - Integration between commands
+  - **Tools**: Use `bundle exec rake ci` to measure coverage before/after improvements
+  - **Note**: Even with current 64.9% coverage, there is room for expansion (user feedback indicates intentional space for growth)
+
 ---
 
 ## 🔒 Security Enhancements (Do not implement without explicit request)
