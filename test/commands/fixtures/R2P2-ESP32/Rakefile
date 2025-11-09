@@ -1,0 +1,17 @@
+# テスト用 R2P2-ESP32 Rakefile
+
+task :build do
+  puts "Building..."
+end
+
+task :flash do
+  puts "Flashing..."
+end
+
+task :monitor do
+  puts "Monitoring..."
+end
+
+task :custom_task do
+  puts "Custom task executed"
+end

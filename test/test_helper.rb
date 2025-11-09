@@ -15,6 +15,10 @@ end
 require "simplecov-cobertura"
 SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 
+# NOTE: SystemExit cleanup code removed - device_test.rb is excluded from test suite
+# If device_test.rb is re-enabled in the future, SystemExit handling must be implemented
+# See TODO.md "Fix device_test.rb Thor command argument handling" for details
+
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "pra"
 
@@ -27,9 +31,10 @@ class PraTestCase < Test::Unit::TestCase
     super
     # PROJECT_ROOT を現在の作業ディレクトリに基づいてリセット
     begin
+      Pra::Env.__send__(:remove_const, :PROJECT_ROOT) if Pra::Env.const_defined?(:PROJECT_ROOT)
       Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
-    rescue NameError
-      # 定数がまだ定義されていない場合は無視
+    rescue StandardError
+      # Ignore any errors during setup
     end
   end
 
@@ -51,8 +56,9 @@ class PraTestCase < Test::Unit::TestCase
 
       # PROJECT_ROOT をリセット（現在の Dir.pwd を基準に）
       begin
+        Pra::Env.__send__(:remove_const, :PROJECT_ROOT) if Pra::Env.const_defined?(:PROJECT_ROOT)
         Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
-      rescue NameError
+      rescue StandardError
         # Ignore
       end
     end
@@ -62,6 +68,7 @@ class PraTestCase < Test::Unit::TestCase
   def teardown
     super
     begin
+      Pra::Env.__send__(:remove_const, :PROJECT_ROOT) if Pra::Env.const_defined?(:PROJECT_ROOT)
       Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd) if Dir.pwd
     rescue StandardError
       # Silently ignore teardown errors
@@ -91,4 +98,7 @@ class PraTestCase < Test::Unit::TestCase
       # Silently ignore cleanup errors
     end
   end
+
+  # NOTE: after_test cleanup code removed - device_test.rb is excluded from test suite
+  # If device_test.rb is re-enabled in the future, implement per-test SystemExit isolation
 end

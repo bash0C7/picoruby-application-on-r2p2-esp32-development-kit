@@ -10,7 +10,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -71,7 +70,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -100,7 +98,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -122,7 +119,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -173,7 +169,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -195,7 +190,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -223,7 +217,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -256,7 +249,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -275,7 +267,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -302,7 +293,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -341,7 +331,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -384,7 +373,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -407,7 +395,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -451,7 +438,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -498,7 +484,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
@@ -542,7 +527,6 @@ class PraCommandsBuildTest < PraTestCase
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
-          Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
