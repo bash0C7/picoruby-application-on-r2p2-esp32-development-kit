@@ -15,6 +15,10 @@ Rake::TestTask.new(:test) do |t|
   end
 
   t.test_files = test_files
+
+  # Ruby warning suppress: method redefinition warnings in test mocks
+  # See: test/commands/env_test.rb, test/commands/cache_test.rb
+  t.ruby_opts = ["-W1"]
 end
 
 require "rubocop/rake_task"

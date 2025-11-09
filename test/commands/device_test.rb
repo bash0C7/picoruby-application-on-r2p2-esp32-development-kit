@@ -272,6 +272,10 @@ class PraCommandsDeviceTest < Test::Unit::TestCase
     r2p2_path = File.join(build_path, "R2P2-ESP32")
     FileUtils.mkdir_p(r2p2_path)
 
+    # テスト用 Rakefile をコピー
+    mock_rakefile = File.expand_path("../fixtures/R2P2-ESP32/Rakefile", __dir__)
+    FileUtils.cp(mock_rakefile, File.join(r2p2_path, "Rakefile"))
+
     [env_name, r2p2_path]
   end
 

@@ -275,11 +275,9 @@ class PraCommandsEnvTest < Test::Unit::TestCase
           repo_name = Pra::Env::REPOS.keys.find { |name| pwd.include?(name) }
           test_commits[repo_name][:commit] + "\n"
         elsif cmd.include?('git show -s --format=%ci HEAD')
-          # タイムスタンプを返す
+          # タイムスタンプを日付形式で返す
           pwd = Dir.pwd
           repo_name = Pra::Env::REPOS.keys.find { |name| pwd.include?(name) }
-          timestamp = test_commits[repo_name][:timestamp]
-          # タイムスタンプを日付形式に変換
           "2025-01-0#{Pra::Env::REPOS.keys.index(repo_name) + 1} 12:00:00 +0900\n"
         else
           original_backtick.bind(self).call(cmd)

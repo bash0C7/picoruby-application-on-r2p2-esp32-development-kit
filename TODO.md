@@ -104,6 +104,25 @@
 
 ## 🔴 技術的負債（Technical Debt）
 
+### CI テスト警告問題（Method Redefinition Warnings） ✅ 解決
+
+**解決済み**: Commit 774c7c3
+
+- **問題**: CI テスト実行時に大量の warning が出力されていました
+  - `method redefined; discarding old` warnings (test stubs から)
+  - `assigned but unused variable` warnings (env_test.rb から)
+
+- **根本原因**: Test mock/stub 戦略で `define_singleton_method` を使用していたため、Ruby runtime が警告を発生させていました
+
+- **解決策**:
+  1. Rakefile の test task で Ruby warning level を `-W1` に設定
+  2. env_test.rb の未使用変数を削除
+  3. device_test.rb でモック Rakefile をセットアップ処理に追加
+
+- **結果**:
+  - CI テスト実行時のwarning: 0
+  - 全品質ゲート達成: 76 tests, RuboCop 0 offenses, Coverage 83.74%/59.24%
+
 ### CI テスト除外（device_test.rb）
 
 **負債内容**: Phase 3 で `device_test.rb` を CI から除外（`TEST_EXCLUDE=test/commands/device_test.rb`）
