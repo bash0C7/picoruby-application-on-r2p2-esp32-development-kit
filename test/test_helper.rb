@@ -23,6 +23,11 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "pra"
 
 require "test-unit"
+require "tmpdir"
+
+# テスト用 ptrk_user_root を一時ディレクトリで設定
+# これにより、テスト実行中に gem root に汚染がないようにする
+ENV["PTRK_USER_ROOT"] = Dir.mktmpdir("ptrk_test_")
 
 # テスト用基底クラス：PROJECT_ROOT のリセットを処理
 class PraTestCase < Test::Unit::TestCase
@@ -120,6 +125,18 @@ class PraTestCase < Test::Unit::TestCase
     return if unstaged.empty?
 
     message = "Git working directory is dirty #{phase}. Unstaged changes:\n#{unstaged.join}"
+    raise StandardError, message
+  end
+
+  # Helper: Verify gem root is not polluted with build artifacts
+  def verify_gem_root_clean!
+    gem_root = Dir.pwd
+    pollution_dirs = %w[build ptrk_env .cache patch]
+    polluted = pollution_dirs.select { |dir| File.exist?(File.join(gem_root, dir)) }
+
+    return if polluted.empty?
+
+    message = "Gem root is polluted with: #{polluted.join(", ")}"
     raise StandardError, message
   end
 end
