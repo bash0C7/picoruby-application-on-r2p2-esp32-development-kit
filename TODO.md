@@ -1,12 +1,20 @@
 # TODO: Project Maintenance Tasks
 
 > **TODO Management Methodology**: See `.claude/skills/project-workflow/SKILL.md` and `CLAUDE.md` ## TODO Management section for task management rules and workflow.
+>
+> **⚠️ CRITICAL RULE: TDD-First TODO Structure**
+> - Each task = one Red → Green → RuboCop -A → Refactor → Commit cycle (1-5 min)
+> - [TODO-INFRASTRUCTURE-*] markers are NEVER to be skipped
+> - When encountering [TODO-INFRASTRUCTURE-*], STOP and handle before proceeding
+> - Phase start sections ALWAYS include: "⚠️ Check for [TODO-INFRASTRUCTURE-*] from previous phases"
+> - Test failures detected during phase: Record with [TODO-INFRASTRUCTURE-*] marker
+> - Test problems are resolved in TDD cycles, NOT batched at the end
 
 ---
 
 ## 🚀 Core: Major Refactoring - picotorokko (ptrk)
 
-**Status**: Planning Complete, Ready for Implementation
+**Status**: Test Infrastructure First, Then Implementation
 
 **Full Specification**: [docs/PICOTOROKKO_REFACTORING_SPEC.md](docs/PICOTOROKKO_REFACTORING_SPEC.md)
 
@@ -17,7 +25,7 @@
 - Directory: Consolidate into `ptrk_env/` (replaces `.cache/`, `build/`, `.picoruby-env.yml`)
 - Env names: User-defined (no "current" symlink), defaults to `development`
 - Breaking changes: Yes (but no users affected - unreleased gem)
-- Estimated effort: 2-3 weeks, 6 phases
+- Estimated effort: 3-4 weeks, 7 phases (Test Infrastructure prioritized)
 
 **Key Design Decisions**:
 - ✅ Two distinct project roots: Gem development vs. ptrk user
@@ -25,6 +33,72 @@
 - ✅ No implicit state (no `current` symlink)
 - ✅ Tests use `Dir.mktmpdir` to keep gem root clean
 - ✅ All quality gates must pass: Tests + RuboCop + Coverage
+- ✅ **TDD-First approach**: Test infrastructure before any feature implementation
+
+### Phase 0: Test Infrastructure (HIGHEST PRIORITY - 3-4 days)
+
+**Objective**: Establish solid test foundation for all downstream phases. Each task = Red → Green → RuboCop -A → Refactor → Commit.
+
+**Strategy**: Fix infrastructure issues early so Phase 2-6 can focus on feature TDD without blocked tests.
+
+#### 0.1: Update test/test_helper.rb for temp ptrk_user_root
+- [ ] **RED**: Write test expecting temp root (no gem root pollution)
+  - Test file: `test/test_helper_test.rb`
+  - Assertion: `ENV['PTRK_USER_ROOT']` uses `Dir.mktmpdir`
+  - Assertion: `verify_gem_root_clean!` method exists
+- [ ] **GREEN**: Implement in `test/test_helper.rb`
+  - Add `ENV['PTRK_USER_ROOT'] = Dir.mktmpdir` in setup
+  - Add `verify_gem_root_clean!` assertion
+- [ ] **RUBOCOP**: `bundle exec rubocop -A test/test_helper_test.rb test/test_helper.rb`
+- [ ] **REFACTOR**: Ensure clarity and simplicity
+- [ ] **COMMIT**: "test: configure test_helper for isolated ptrk_user_root"
+
+#### 0.2: Verify SimpleCov exit code behavior
+- [ ] **RED**: Write test expecting SimpleCov exit 0 on success
+  - Test file: `test/coverage_test.rb`
+  - Run `bundle exec rake test` and verify exit code is 0
+  - Verify SimpleCov HTML report generated
+- [ ] **GREEN**: Debug SimpleCov config if needed
+  - Check `.SimpleCov.exitstatus` is false or configured correctly
+  - May require Rakefile adjustment
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: Simplify if possible
+- [ ] **COMMIT**: "test: fix SimpleCov exit code on success"
+- [ ] **NOTE**: [TODO-INFRASTRUCTURE-SIMPLECOV-DETAILS] - If issues remain, record specifics for reference
+
+#### 0.3: Verify RuboCop integration with tests
+- [ ] **RED**: Test expects RuboCop 0 violations after `rubocop -A`
+  - Test: `bundle exec rubocop --parallel` succeeds with 0 violations
+  - After running: `bundle exec rubocop -A`
+- [ ] **GREEN**: Run auto-correction and verify
+  - Execute `bundle exec rubocop -A`
+  - Verify `bundle exec rubocop` returns 0 violations
+- [ ] **RUBOCOP**: Check current state
+- [ ] **REFACTOR**: N/A (RuboCop is the refactor tool)
+- [ ] **COMMIT**: "test: verify rubocop integration"
+
+#### 0.4: Three-gate quality check (Tests + RuboCop + Coverage)
+- [ ] **RED**: Write integration test
+  - Test that all three gates pass: `bundle exec rake test`, `bundle exec rubocop`, coverage ≥ 80% line
+- [ ] **GREEN**: Execute all three
+  - `bundle exec rake test` → exit 0
+  - `bundle exec rubocop` → 0 violations
+  - Coverage report → ≥ 80% line, ≥ 50% branch
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "test: establish three-gate quality verification"
+
+#### 0.5: Device command Thor argument handling investigation
+- [ ] **ANALYSIS**: Understand Thor issue without fixing yet
+  - Read: `test/commands/device_test.rb` (currently excluded)
+  - Understand: Why Thor treats env names as subcommands
+  - Record: Exact error behavior, root cause
+- [ ] **MARK**: [TODO-INFRASTRUCTURE-DEVICE-COMMAND]
+  - **Status**: Documented for Phase 5 (device command refactor to `--env` flag)
+  - **Reference**: `lib/ptrk/commands/device.rb`, `test/commands/device_test.rb`, Rakefile
+  - **Not blocking**: Phase 2-4 proceed with other commands; device is Phase 5 focus
+
+---
 
 ### Phase 1: Planning & Documentation ✅ COMPLETED
 - [x] Analyze current command structure
@@ -32,102 +106,301 @@
 - [x] Create detailed refactoring specification
 - [x] Update TODO.md with phased breakdown
 
-### Phase 2: Rename & Constants (2-3 days)
-- [ ] Update `ptrk.gemspec` (name, executables)
-- [ ] Rename `bin/pra` → `bin/ptrk`
-- [ ] Create/update `lib/ptrk/env.rb` with new constants
-- [ ] Add constant reference in `CLAUDE.md`
-- [ ] Update `lib/ptrk/cli.rb` (command registration)
-- [ ] Run RuboCop, fix violations
-- [ ] Commit: "chore: rename pra → picotorokko, command → ptrk"
+---
 
-### Phase 3: Command Structure (4-5 days)
-- [ ] Refactor `lib/ptrk/commands/env.rb`
-  - [ ] Add `set` with commit/branch options
-  - [ ] Enhance `show` with version details
-  - [ ] Add `reset` for environment reconstruction
-  - [ ] Move patch operations: `patch_export`, `patch_apply`, `patch_diff`
-  - [ ] Implement `list` with environment overview
-- [ ] Delete `lib/ptrk/commands/cache.rb`
-- [ ] Delete `lib/ptrk/commands/build.rb`
-- [ ] Delete `lib/ptrk/commands/patch.rb`
-- [ ] Update `lib/ptrk/commands/device.rb` (env names, no implicit current)
-- [ ] Add environment name validation to all commands
-- [ ] Run RuboCop, fix violations
-- [ ] Commit per major logical change
+### Phase 2: Rename & Constants - TDD Approach (2-3 days)
 
-### Phase 4: Directory Structure (3-4 days)
-- [ ] Update `lib/ptrk/env.rb` path logic
-  - [ ] Replace `.cache/` with `ptrk_env/.cache/`
-  - [ ] Replace `build/` with `ptrk_env/{env_name}/`
-  - [ ] Replace `.picoruby-env.yml` with `ptrk_env/.picoruby-env.yml`
-  - [ ] Remove `current` symlink logic
-- [ ] Implement directory initialization in `ptrk env set`
-- [ ] Add validation for env names (regex)
-- [ ] Run full test suite locally
-- [ ] Commit: "refactor: consolidate directories into ptrk_env/"
+**⚠️ Start**: Check for [TODO-INFRASTRUCTURE-*] markers from Phase 0 — Address any blocking issues.
 
-### Phase 5: Test Updates & Infrastructure (5-6 days)
+**Strategy**: Each rename task = Red (test) → Green (impl) → RuboCop -A → Refactor → Commit
 
-**CRITICAL**: This phase solves all Test Infrastructure Issues
+#### 2.1: Rename gemspec and bin/ptrk (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Create test for executable name in gemspec
+  - Test file: `test/gemspec_test.rb`
+  - Assertion: Executable is named `ptrk`, not `pra`
+  - Assertion: Gem name includes "picotorokko"
+- [ ] **GREEN**: Update gemspec
+  - Edit: `picoruby-application-on-r2p2-esp32-development-kit.gemspec`
+  - Change: `spec.name = "picotorokko"`
+  - Change: `spec.executables = ["ptrk"]`
+  - Rename: `bin/pra` → `bin/ptrk`
+- [ ] **RUBOCOP**: `bundle exec rubocop -A picoruby-application-on-r2p2-esp32-development-kit.gemspec bin/ptrk`
+- [ ] **REFACTOR**: Ensure bin/ptrk is clean
+- [ ] **COMMIT**: "chore: rename executable pra → ptrk in gemspec"
 
-- [ ] **Update test infrastructure**
-  - [ ] Update `test/test_helper.rb`
-    - [ ] Change to use temp `ptrk_user_root` (Dir.mktmpdir)
-    - [ ] Add `verify_gem_root_clean!` check
-  - [ ] Verify `bundle exec rake test` counts all tests correctly
-  - [ ] Fix SimpleCov exit code issue (ensure exit 0 on success)
-  - [ ] Ensure ALL THREE pass together:
-    - Tests pass: `bundle exec rake test` (exit 0)
-    - RuboCop clean: `bundle exec rubocop` (0 violations)
-    - Coverage passes: SimpleCov reports without exit code error
+#### 2.2: Update lib/ptrk/env.rb constants (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Create test for new constants
+  - Test file: `test/lib/env_test.rb`
+  - Assertion: `Ptrk::ENV_DIR == "ptrk_env"`
+  - Assertion: `Ptrk::ENV_NAME_PATTERN` matches valid env names
+- [ ] **GREEN**: Update constants in `lib/ptrk/env.rb`
+  - Add/update: `ENV_DIR = "ptrk_env"`
+  - Add/update: `ENV_NAME_PATTERN = /^[a-z0-9_-]+$/`
+  - [TODO-INFRASTRUCTURE-ENV-PATHS] - Path construction logic verified in Phase 4
+- [ ] **RUBOCOP**: `bundle exec rubocop -A lib/ptrk/env.rb test/lib/env_test.rb`
+- [ ] **REFACTOR**: Simplify if needed
+- [ ] **COMMIT**: "refactor: add constants for ptrk env directory"
 
-- [ ] **Fix device_test.rb Thor command argument handling**
-  - **Current Status**: `test/commands/device_test.rb` TEMPORARILY EXCLUDED
-  - **Root Cause**: Thor interprets env names (e.g., `'test-env'`) as subcommands
-  - **Solution Required**: Refactor device command to accept env_name as explicit option (`--env` flag)
-  - **Files**: `test/commands/device_test.rb`, `lib/ptrk/commands/device.rb`, `Rakefile`
-  - **Priority**: High (core feature testing blocked)
+#### 2.3: Update lib/ptrk/cli.rb command registration (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Create test for CLI command registration
+  - Test file: `test/commands/cli_test.rb` (update existing)
+  - Assertion: Commands respond to env, device, mrbgem, rubocop
+  - Assertion: Old commands (cache, build, patch) don't exist
+- [ ] **GREEN**: Update `lib/ptrk/cli.rb`
+  - Ensure: Only env, device, mrbgem, rubocop are registered
+  - Remove: References to cache, build, patch commands
+- [ ] **RUBOCOP**: `bundle exec rubocop -A lib/ptrk/cli.rb test/commands/cli_test.rb`
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "refactor: update cli.rb for new command structure"
 
-- [ ] **Rewrite test suite for new structure**
-  - [ ] Rewrite `test/commands/env_test.rb` (new structure)
-  - [ ] Delete `test/commands/cache_test.rb`
-  - [ ] Delete `test/commands/build_test.rb`
-  - [ ] Delete `test/commands/patch_test.rb`
-  - [ ] Update `test/commands/device_test.rb` (env names required)
+---
 
-- [ ] **Quality gates verification**
-  - [ ] Run `bundle exec rake test` - all passing (exit 0)
-  - [ ] Verify coverage ≥ 80% line, ≥ 50% branch
-  - [ ] Run `bundle exec rubocop` - 0 violations
-  - [ ] Commit: "test: update and consolidate test suite"
+### Phase 3: Command Structure - TDD Approach (5-6 days)
 
-**TDD Cycle Requirements**:
-- Red → Green → `rubocop -A` → Refactor → Commit
-- 1-5 minutes per iteration
-- All quality gates must pass before commit
-- Never add `# rubocop:disable` or fake tests
-- If any test fails or SimpleCov has issues, redesign immediately
+**⚠️ Start**: Check for [TODO-INFRASTRUCTURE-*] markers from Phase 2.
+  - If [TODO-INFRASTRUCTURE-ENV-PATHS] found: Defer path logic to Phase 4, proceed with command structure.
+  - If [TODO-INFRASTRUCTURE-*] blocking test: Resolve immediately in TDD cycle.
 
-### Phase 6: Documentation & Finalization (3-4 days)
-- [ ] Update `README.md`
-  - [ ] Rename all `pra` → `ptrk` references
-  - [ ] Update command examples
-  - [ ] Update installation instructions
-- [ ] Update `.gitignore`
-- [ ] Update `CLAUDE.md` project instructions
-- [ ] Update all docs in `docs/`
-- [ ] Add CHANGELOG entry
-- [ ] Run final test suite: `bundle exec rake ci`
-- [ ] Verify all quality gates pass
-- [ ] Commit: "docs: update for picotorokko refactoring"
+**Strategy**: Each command = Red (test) → Green (impl) → RuboCop -A → Refactor → Commit
 
-### Final Quality Verification
+#### 3.1: env list command (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Write test for `ptrk env list`
+  - Test file: `test/commands/env_test.rb`
+  - Assertion: Lists all environments in ptrk_user_root
+  - Assertion: Shows env name, path, status
+- [ ] **GREEN**: Implement in `lib/ptrk/commands/env.rb`
+  - Add `list` method with output formatting
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: Ensure clean output logic
+- [ ] **COMMIT**: "feat: implement ptrk env list command"
+
+#### 3.2: env set command with options (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test `ptrk env set <name> [--commit <sha>] [--branch <name>]`
+  - Assertion: Creates environment directory structure
+  - Assertion: Stores commit/branch if provided
+  - Assertion: Validates env name against pattern
+- [ ] **GREEN**: Implement in `lib/ptrk/commands/env.rb`
+  - Add `set` method with option parsing
+  - Create directory structure in ptrk_env/{env_name}
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: Simplify if possible
+- [ ] **COMMIT**: "feat: implement ptrk env set with options"
+- [ ] **NOTE**: [TODO-INFRASTRUCTURE-ENV-SET-PATHS] - Directory structure verified in Phase 4
+
+#### 3.3: env reset command (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test `ptrk env reset <name>`
+  - Assertion: Removes and recreates environment
+  - Assertion: Preserves commit/branch metadata
+- [ ] **GREEN**: Implement in `lib/ptrk/commands/env.rb`
+  - Add `reset` method
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "feat: implement ptrk env reset command"
+
+#### 3.4: env show command (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test `ptrk env show <name>`
+  - Assertion: Displays environment details (commit, branch, path, etc.)
+  - Assertion: Works with user-provided env names
+- [ ] **GREEN**: Implement enhancement in `lib/ptrk/commands/env.rb`
+  - Update `show` to include version details
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: Ensure clarity
+- [ ] **COMMIT**: "feat: enhance ptrk env show with details"
+
+#### 3.5: env patch operations (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test `ptrk env patch_export`, `patch_apply`, `patch_diff`
+  - Assertion: Commands accept env name parameter
+  - Assertion: Proper output for patches
+- [ ] **GREEN**: Move patch operations from deleted commands into `env.rb`
+  - Implement: `patch_export`, `patch_apply`, `patch_diff` as env subcommands
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "feat: move patch operations to env command"
+
+#### 3.6: Delete obsolete commands and update device (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test that deleted commands don't exist
+  - Assertion: `cache`, `build`, `patch` commands not available
+- [ ] **GREEN**: Delete files
+  - Delete: `lib/ptrk/commands/cache.rb`
+  - Delete: `lib/ptrk/commands/build.rb`
+  - Delete: `lib/ptrk/commands/patch.rb`
+  - Update: `lib/ptrk/cli.rb` to not register deleted commands
+  - Delete: Corresponding test files (cache_test.rb, build_test.rb, patch_test.rb)
+  - Update: `lib/ptrk/commands/device.rb` (remove implicit "current" env logic)
+    - [TODO-INFRASTRUCTURE-DEVICE-COMMAND] from Phase 0: Thor --env flag refactor deferred to Phase 5
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "refactor: remove cache, build, patch commands; update device"
+
+---
+
+### Phase 4: Directory Structure - TDD Approach (3-4 days)
+
+**⚠️ Start**: Check for [TODO-INFRASTRUCTURE-*] markers from Phase 3.
+  - [TODO-INFRASTRUCTURE-ENV-PATHS]: Verify env directory structure
+  - [TODO-INFRASTRUCTURE-ENV-SET-PATHS]: Verify env set creates correct structure
+  - Address any test failures in TDD cycle before proceeding.
+
+**Strategy**: Each directory refactor = Red (test) → Green (impl) → RuboCop -A → Refactor → Commit
+
+#### 4.1: Implement ptrk_env/ consolidated directory structure (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test directory paths use ptrk_env/ prefix
+  - Test: Cache path is `ptrk_env/.cache`
+  - Test: Env path is `ptrk_env/{env_name}`
+  - Test: Config path is `ptrk_env/.picoruby-env.yml`
+  - Test: No `current` symlink exists or is created
+- [ ] **GREEN**: Update `lib/ptrk/env.rb` path logic
+  - Replace: `.cache/` → `ptrk_env/.cache/`
+  - Replace: `build/` → `ptrk_env/{env_name}/`
+  - Replace: `.picoruby-env.yml` → `ptrk_env/.picoruby-env.yml`
+  - Remove: All `current` symlink logic
+  - Remove: `current_env` methods (use explicit env_name)
+- [ ] **RUBOCOP**: `bundle exec rubocop -A lib/ptrk/env.rb test/lib/env_test.rb`
+- [ ] **REFACTOR**: Simplify path construction
+- [ ] **COMMIT**: "refactor: consolidate paths into ptrk_env/ directory"
+
+#### 4.2: Environment name validation in all commands (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test all commands validate env names
+  - Test: `env set` rejects invalid names (not matching `/^[a-z0-9_-]+$/`)
+  - Test: `env list` shows only valid env directories
+  - Test: Device command validates env name before use
+- [ ] **GREEN**: Add validation to `lib/ptrk/env.rb` and all command files
+  - Implement: `validate_env_name!(name)` method
+  - Call: In env set, reset, show, device commands
+  - Return: Error message on invalid names
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: Extract validation into helper method
+- [ ] **COMMIT**: "feat: add env name validation across commands"
+
+#### 4.3: Verify all Phase 4 changes pass quality gates (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Write integration test for directory structure
+  - Test: `bundle exec rake test` all pass with Phase 4 changes
+  - Test: `bundle exec rubocop` 0 violations
+  - Test: Coverage ≥ 80% line, ≥ 50% branch
+- [ ] **GREEN**: Run test suite
+  - `bundle exec rake test` → all passing
+  - `bundle exec rubocop` → 0 violations
+  - SimpleCov report → acceptable coverage
+- [ ] **RUBOCOP**: Final check
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "test: verify Phase 4 directory structure changes"
+
+---
+
+### Phase 5: Device Command Thor Fix & Test Completion - TDD Approach (2-3 days)
+
+**⚠️ START - CRITICAL CHECKS**:
+  - [TODO-INFRASTRUCTURE-DEVICE-COMMAND]: Device command requires `--env` flag refactor
+  - [TODO-INFRASTRUCTURE-SIMPLECOV-DETAILS]: Verify SimpleCov still exits 0
+  - Address all [TODO-INFRASTRUCTURE-*] markers immediately before proceeding.
+
+**Strategy**: Each fix = Red (test) → Green (impl) → RuboCop -A → Refactor → Commit
+
+#### 5.1: Refactor device command to explicit --env flag (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Write test for device command with `--env` option
+  - Test file: `test/commands/device_test.rb` (re-enable)
+  - Assertion: `ptrk device flash --env staging` works
+  - Assertion: Thor doesn't interpret env name as subcommand
+  - Assertion: Explicit `--env` flag is required
+- [ ] **GREEN**: Refactor `lib/ptrk/commands/device.rb`
+  - Add: `--env ENV_NAME` option to all device subcommands
+  - Remove: Logic that treats env names as positional arguments
+  - Update: All flash, monitor, build subcommands to use `--env`
+- [ ] **RUBOCOP**: `bundle exec rubocop -A`
+- [ ] **REFACTOR**: Simplify command structure
+- [ ] **COMMIT**: "refactor: device command uses explicit --env flag"
+
+#### 5.2: Re-enable and verify device tests (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Verify `test/commands/device_test.rb` tests pass
+  - Re-enable: Remove exclusion from Rakefile
+  - Test: All device command variants work with `--env`
+- [ ] **GREEN**: Run test suite
+  - `bundle exec rake test` → all pass including device_test.rb
+  - Verify coverage for device commands
+- [ ] **RUBOCOP**: `bundle exec rubocop -A test/commands/device_test.rb`
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "test: re-enable device command tests"
+
+#### 5.3: Final quality gate check (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Verify all three gates pass
+  - Tests, RuboCop, Coverage all pass together
+- [ ] **GREEN**: Run full suite
+  - `bundle exec rake test` → exit 0, all pass
+  - `bundle exec rubocop` → 0 violations
+  - Coverage ≥ 80% line, ≥ 50% branch
+- [ ] **RUBOCOP**: N/A
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "test: final quality gate verification after device fix"
+
+---
+
+### Phase 6: Documentation & Finalization - TDD Approach (3-4 days)
+
+**⚠️ Start**: Verify all [TODO-INFRASTRUCTURE-*] resolved in Phase 0-5.
+
+**Strategy**: Update documentation in small, testable chunks.
+
+#### 6.1: Update README.md (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test README examples work
+  - Assertion: All `pra` → `ptrk` renamed
+  - Assertion: Installation section uses `picotorokko`
+  - Assertion: Command examples show new 4-command structure
+- [ ] **GREEN**: Update README.md
+  - Replace: All `pra` → `ptrk`
+  - Update: Installation instructions
+  - Update: Command examples for env, device, mrbgem, rubocop
+  - Remove: References to cache, build, patch commands
+- [ ] **RUBOCOP**: `bundle exec rubocop -A README.md` (if applicable)
+- [ ] **REFACTOR**: Ensure clarity and correctness
+- [ ] **COMMIT**: "docs: update README for picotorokko refactoring"
+
+#### 6.2: Update configuration files (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test `.gitignore` and config updated
+  - Assertion: `ptrk_env/` is ignored
+  - Assertion: Old `.cache/`, `build/` entries removed or updated
+- [ ] **GREEN**: Update files
+  - `.gitignore`: Add `ptrk_env/` entries, remove old entries
+  - `CLAUDE.md`: Update project instructions with new structure
+- [ ] **RUBOCOP**: Check files
+- [ ] **REFACTOR**: Simplify if needed
+- [ ] **COMMIT**: "chore: update .gitignore and configuration"
+
+#### 6.3: Update documentation files (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test docs reflect new structure
+  - Assertion: All docs in `docs/` reference new commands
+  - Assertion: No references to removed commands
+- [ ] **GREEN**: Update `docs/` files
+  - Update: `docs/CI_CD_GUIDE.md` (examples, references)
+  - Update: `docs/*.md` (all command documentation)
+  - Remove: If any docs for cache, build, patch commands
+- [ ] **RUBOCOP**: Check Markdown style
+- [ ] **REFACTOR**: Ensure consistency
+- [ ] **COMMIT**: "docs: update documentation for new command structure"
+
+#### 6.4: Add CHANGELOG and final verification (Red → Green → RuboCop → Commit)
+- [ ] **RED**: Test CHANGELOG entry and final build
+  - Assertion: CHANGELOG documents breaking changes
+  - Assertion: Final `bundle exec rake ci` passes
+- [ ] **GREEN**: Create and verify
+  - Add: CHANGELOG entry for picotorokko v1.0
+    - Summarize: Renamed gem, commands, directory structure
+    - List: Breaking changes (command names, env structure)
+  - Run: `bundle exec rake ci` (full test + RuboCop + coverage)
+- [ ] **RUBOCOP**: N/A (rake ci includes rubocop)
+- [ ] **REFACTOR**: N/A
+- [ ] **COMMIT**: "docs: add CHANGELOG for picotorokko refactoring"
+
+---
+
+### Final Quality Verification (1 day)
 - [ ] `bundle exec rake test` - All tests pass (exit 0)
 - [ ] `bundle exec rubocop` - 0 violations (exit 0)
-- [ ] SimpleCov coverage report - ≥ 80% line, ≥ 50% branch (exit 0)
-- [ ] No files in gem root (only ptrk_user_root used)
-- [ ] All commits have clear messages
+- [ ] `bundle exec rake ci` - All gates pass (exit 0)
+- [ ] SimpleCov coverage report - ≥ 80% line, ≥ 50% branch
+- [ ] No files in gem root (only ptrk_user_root used in tests)
+- [ ] All commits have clear, descriptive messages
+- [ ] No [TODO-INFRASTRUCTURE-*] markers remain unresolved
+- [ ] **FINAL COMMIT**: "refactor: complete picotorokko refactoring (v1.0)"
 
 ---
 
