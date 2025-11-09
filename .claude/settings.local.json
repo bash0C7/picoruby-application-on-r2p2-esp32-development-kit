@@ -24,7 +24,8 @@
       "Bash(ruby -e:*)",
       "Bash(ruby:*)",
       "Bash(gh pr diff:*)",
-      "Bash(bundle exec ruby:*)"
+      "Bash(bundle exec ruby:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

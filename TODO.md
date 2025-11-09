@@ -4,6 +4,26 @@
 
 ---
 
+## 🚀 Major Refactoring: picotorokko (ptrk)
+
+**Status**: Planning Phase (Specification Complete)
+
+- [ ] **Refactor pra gem → picotorokko, command pra → ptrk**
+  - **Full Specification**: [docs/PICOTOROKKO_REFACTORING_SPEC.md](docs/PICOTOROKKO_REFACTORING_SPEC.md)
+  - **Scope**: Rename gem, simplify commands (8→4), consolidate directory structure (build/.cache/.picoruby-env.yml → ptrk_env/)
+  - **Why**: Improve naming consistency, reduce complexity, strengthen Rails metaphor with torokko (mining cart)
+  - **Breaking changes**: Yes (but no users affected - unreleased gem)
+  - **Estimated effort**: Large (2-3 weeks, 6 phases)
+  - **Key changes**:
+    - Gem name: `pra` → `picotorokko`
+    - Command: `pra` → `ptrk` (4 chars, typable)
+    - Commands: `env`, `device`, `mrbgem`, `rubocop` (down from 8)
+    - Directory: `ptrk_env/` consolidates `.cache/`, `build/`, `.picoruby-env.yml`
+    - Env names: User-defined (no "current" symlink), defaults to `development`
+    - Tests: Use `Dir.mktmpdir` to keep gem root clean
+
+---
+
 ## 🔮 Future Enhancements (Phase 5+)
 
 For detailed implementation guide and architecture design of the PicoRuby RuboCop Custom Cop, see [docs/RUBOCOP_PICORUBY_GUIDE.md](docs/RUBOCOP_PICORUBY_GUIDE.md).
