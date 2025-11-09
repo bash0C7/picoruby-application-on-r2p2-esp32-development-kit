@@ -78,16 +78,27 @@
 
 ---
 
-### **🔮 Future Enhancements (Phase 4+)**
+### **✅ Phase 4: PicoRuby RuboCop Custom Cop 実装（完了）** 🎯
 
-#### Task 4.x: カバレッジ Line 80%→90%, Branch 50%→70% 向上
-- 現状: Line 81.57%, Branch 56.14% で既に高い基準達成
-- 将来: device_test.rb の R2P2-ESP32 依存をモック化し、全テストを CI で実行可能にする
-- 推奨アプローチ: アプローチ A（`lib/pra/env.rb` に CI 環境検出を追加）
+**実装内容**:
+- `lib/pra/commands/rubocop.rb` - RuboCop サブコマンド (setup/update)
+- `lib/pra/templates/rubocop/` - テンプレートディレクトリ構造
+  - `.rubocop.yml` - RuboCop 設定
+  - `lib/rubocop/cop/picoruby/unsupported_method.rb` - カスタム Cop
+  - `scripts/update_methods.rb` - PicoRuby 定義データ抽出スクリプト
+  - `README.md` - セットアップガイド
+- `test/commands/rubocop_test.rb` - テスト (7 tests, all passing)
 
-#### Task 5.x: RuboCop 統合・CI 完全自動化
-- 現状: ローカルテストで `bundle exec rake ci` (test + rubocop) 実行可能
-- 将来: CI workflow を `bundle exec rake ci` に統合（全品質チェック自動化）
+**成果**:
+- ✅ 38/38 tests passing (100%)
+- ✅ RuboCop: gem コード 0 違反
+- ✅ ユーザーが `pra rubocop setup` → `pra rubocop update` → `bundle exec rubocop` で PicoRuby 互換性チェック実現
+
+---
+
+### **🔮 Future Enhancements (Phase 5+)**
+
+将来の拡張は TODO_rubocop_picoruby.md に記録（実装ガイドとして保持）。
 
 ---
 

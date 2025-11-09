@@ -9,6 +9,7 @@ require_relative 'commands/patch'
 require_relative 'commands/device'
 require_relative 'commands/ci'
 require_relative 'commands/mrbgems'
+require_relative 'commands/rubocop'
 
 module Pra
   # praコマンドのCLIエントリーポイント
@@ -38,6 +39,9 @@ module Pra
 
     desc 'device SUBCOMMAND ...ARGS', 'ESP32 device operation commands'
     subcommand 'device', Pra::Commands::Device
+
+    desc 'rubocop SUBCOMMAND ...ARGS', 'RuboCop configuration for PicoRuby development'
+    subcommand 'rubocop', Pra::Commands::Rubocop
 
     # バージョン表示
     desc 'version', 'Show pra version'
