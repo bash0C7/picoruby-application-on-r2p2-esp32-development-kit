@@ -355,6 +355,89 @@ class PraCommandsEnvTest < PraTestCase
     end
   end
 
+  # env reset コマンドのテスト
+  sub_test_case "env reset command" do
+    test "removes and recreates environment" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          # Create environment with initial data
+          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+          Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info, notes: 'Original environment')
+
+          # Reset the environment
+          output = capture_stdout do
+            Pra::Commands::Env.start(['reset', 'test-env'])
+          end
+
+          # Verify environment still exists
+          env_config = Pra::Env.get_environment('test-env')
+          assert_not_nil(env_config)
+          # Original data should be gone (recreated with placeholder)
+          assert_equal('placeholder', env_config['R2P2-ESP32']['commit'])
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "preserves environment name after reset" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          # Create initial environment
+          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+          Pra::Env.set_environment('preserve-test', r2p2_info, esp32_info, picoruby_info)
+
+          # Reset
+          output = capture_stdout do
+            Pra::Commands::Env.start(['reset', 'preserve-test'])
+          end
+
+          # Check that environment still exists with same name
+          env_config = Pra::Env.get_environment('preserve-test')
+          assert_not_nil(env_config)
+          assert_match(/preserve-test/, output)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "raises error when environment does not exist" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          assert_raise(RuntimeError) do
+            capture_stdout do
+              Pra::Commands::Env.start(['reset', 'non-existent'])
+            end
+          end
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+  end
+
   # env latest コマンドのテスト
   sub_test_case "env latest command" do
     test "fetches latest commits and creates environment" do

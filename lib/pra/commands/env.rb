@@ -112,6 +112,31 @@ module Pra
         end
       end
 
+      desc 'reset ENV_NAME', 'Remove and recreate environment definition'
+      def reset(env_name)
+        # validate environment name
+        unless env_name.match?(Pra::Env::ENV_NAME_PATTERN)
+          raise "Error: Invalid environment name '#{env_name}'. Must match pattern: #{Pra::Env::ENV_NAME_PATTERN}"
+        end
+
+        # Check if environment exists
+        env_config = Pra::Env.get_environment(env_name)
+        raise "Error: Environment definition '#{env_name}' not found in .picoruby-env.yml" if env_config.nil?
+
+        # Store original metadata before removal
+        original_notes = env_config['notes']
+
+        # Remove and recreate with new timestamps
+        r2p2_info = { 'commit' => 'placeholder', 'timestamp' => Time.now.strftime('%Y%m%d_%H%M%S') }
+        esp32_info = { 'commit' => 'placeholder', 'timestamp' => Time.now.strftime('%Y%m%d_%H%M%S') }
+        picoruby_info = { 'commit' => 'placeholder', 'timestamp' => Time.now.strftime('%Y%m%d_%H%M%S') }
+
+        notes = original_notes.to_s.empty? ? "Reset at #{Time.now}" : "#{original_notes} (reset at #{Time.now})"
+
+        Pra::Env.set_environment(env_name, r2p2_info, esp32_info, picoruby_info, notes: notes)
+        puts "✓ Environment definition '#{env_name}' has been reset"
+      end
+
       desc 'latest', 'Fetch latest commit versions and create environment definition'
       def latest
         require 'tmpdir'
