@@ -5,6 +5,9 @@ require "stringio"
 
 # Refinement-based system command mocking for CI compatibility
 module SystemCommandMocking
+  # Store original Kernel#system before refinement
+  ORIGINAL_SYSTEM = Kernel.instance_method(:system)
+
   # Scoped Kernel#system override using Refinement
   # This approach is CI-compatible (no global state pollution)
   module SystemRefinement
@@ -12,7 +15,7 @@ module SystemCommandMocking
       def system(*args)
         # Check if mock context is active in thread-local storage
         mock_context = Thread.current[:system_mock_context]
-        return super unless mock_context
+        return SystemCommandMocking::ORIGINAL_SYSTEM.bind(self).call(*args) unless mock_context
 
         cmd = args.join(' ')
 
@@ -47,7 +50,7 @@ module SystemCommandMocking
         end
 
         # Fallback to original system() for other commands
-        super
+        SystemCommandMocking::ORIGINAL_SYSTEM.bind(self).call(*args)
       end
     end
   end
