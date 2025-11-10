@@ -1292,18 +1292,16 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir)
         begin
-          # Create dummy destination directory to skip clone
-          dest = File.join(tmpdir, 'dest')
-          FileUtils.mkdir_p(dest)
-          FileUtils.mkdir_p(File.join(dest, '.git'))
-
+          # Don't pre-create dest: let clone succeed, but checkout fails
           with_system_mocking(fail_checkout: true) do |mock|
             error = assert_raise(RuntimeError) do
-              Pra::Env.clone_repo('https://github.com/test/repo.git', dest, 'abc1234')
+              Pra::Env.clone_repo('https://github.com/test/repo.git', 'dest', 'abc1234')
             end
             assert_match(/Failed to checkout commit/, error.message)
-            # clone is not called since dest already exists
-            assert_equal(0, mock[:call_count][:clone])
+            # clone should be called successfully
+            assert_equal(1, mock[:call_count][:clone])
+            # checkout should be attempted (counter increments before fail check)
+            assert_equal(1, mock[:call_count][:checkout])
           end
         ensure
           Dir.chdir(original_dir)
