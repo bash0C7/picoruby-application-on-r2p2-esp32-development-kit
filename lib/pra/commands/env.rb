@@ -65,8 +65,31 @@ module Pra
         end
       end
 
-      desc 'set ENV_NAME', 'Switch to specified environment definition (updates build/current symlink)'
+      desc 'set ENV_NAME', 'Switch to specified environment or create new with options'
+      option :commit, type: :string, desc: 'R2P2-ESP32 commit hash for new environment'
+      option :branch, type: :string, desc: 'Git branch reference'
       def set(env_name)
+        # validate environment name
+        unless env_name.match?(Pra::Env::ENV_NAME_PATTERN)
+          raise "Error: Invalid environment name '#{env_name}'. Must match pattern: #{Pra::Env::ENV_NAME_PATTERN}"
+        end
+
+        # Mode 1: Create new environment with commit option
+        if options[:commit]
+          r2p2_info = { 'commit' => options[:commit], 'timestamp' => Time.now.strftime('%Y%m%d_%H%M%S') }
+          # For now, use placeholder values for esp32 and picoruby
+          esp32_info = { 'commit' => 'placeholder', 'timestamp' => Time.now.strftime('%Y%m%d_%H%M%S') }
+          picoruby_info = { 'commit' => 'placeholder', 'timestamp' => Time.now.strftime('%Y%m%d_%H%M%S') }
+
+          notes = "Created with R2P2-ESP32 commit: #{options[:commit]}"
+          notes += ", branch: #{options[:branch]}" if options[:branch]
+
+          Pra::Env.set_environment(env_name, r2p2_info, esp32_info, picoruby_info, notes: notes)
+          puts "✓ Environment definition '#{env_name}' created with commit #{options[:commit]}"
+          return
+        end
+
+        # Mode 2: Switch to existing environment (original behavior)
         env_config = Pra::Env.get_environment(env_name)
         raise "Error: Environment definition '#{env_name}' not found in .picoruby-env.yml" if env_config.nil?
 

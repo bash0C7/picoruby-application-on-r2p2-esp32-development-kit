@@ -288,6 +288,71 @@ class PraCommandsEnvTest < PraTestCase
         end
       end
     end
+
+    test "validates environment name against pattern" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          # Invalid env name (contains uppercase)
+          assert_raise(RuntimeError) do
+            capture_stdout do
+              Pra::Commands::Env.start(['set', 'InvalidEnv', '--commit', 'abc1234'])
+            end
+          end
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "creates environment with commit option" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          # set with --commit option
+          output = capture_stdout do
+            Pra::Commands::Env.start(['set', 'custom-env', '--commit', 'abc1234def567'])
+          end
+
+          # Verify environment was created
+          env_config = Pra::Env.get_environment('custom-env')
+          assert_not_nil(env_config)
+          assert_equal('abc1234def567', env_config['R2P2-ESP32']['commit'])
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "creates environment with commit and branch options" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          # set with --commit and --branch options
+          output = capture_stdout do
+            Pra::Commands::Env.start(['set', 'branch-env', '--commit', 'abc1234', '--branch', 'develop'])
+          end
+
+          # Verify environment was created with options
+          env_config = Pra::Env.get_environment('branch-env')
+          assert_not_nil(env_config)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
   end
 
   # env latest コマンドのテスト
