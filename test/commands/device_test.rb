@@ -6,6 +6,7 @@ require "stringio"
 # SystemCommandMocking is now defined in test_helper.rb
 
 class PraCommandsDeviceTest < PraTestCase
+  include SystemCommandMocking
   # device flash コマンドのテスト
   sub_test_case "device flash command" do
     test "raises error when environment not found" do
