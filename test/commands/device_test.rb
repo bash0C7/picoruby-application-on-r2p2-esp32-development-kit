@@ -7,6 +7,8 @@ require "stringio"
 
 class PraCommandsDeviceTest < PraTestCase
   include SystemCommandMocking
+
+  using SystemCommandMocking::SystemRefinement
   # device flash コマンドのテスト
   sub_test_case "device flash command" do
     test "raises error when environment not found" do
