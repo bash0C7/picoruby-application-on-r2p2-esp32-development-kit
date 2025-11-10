@@ -875,7 +875,48 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "get_commit_hash returns formatted commit hash with timestamp" do
-      omit "TODO-INFRASTRUCTURE-GIT-ERROR-HANDLING: Requires get_timestamp error handling"
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          # Create a minimal git repository with a commit
+          system('git init', out: File::NULL) || raise('git init failed')
+          system('git config user.email "test@example.com"')
+          system('git config user.name "Test User"')
+          system('git config commit.gpgsign false')
+          File.write('test.txt', 'test')
+          system('git add .') || raise('git add failed')
+          system('git commit -m "test"', out: File::NULL) || raise('git commit failed')
+
+          result = Pra::Env.get_commit_hash(tmpdir, 'HEAD')
+          # Should return format: short_hash-YYYYMMDD_HHMMSS
+          assert_match(/^[a-f0-9]{7}-\d{8}_\d{6}$/, result)
+        end
+      end
+    end
+
+    test "get_commit_hash raises error when git rev-parse fails" do
+      Dir.mktmpdir do |tmpdir|
+        # Directory without git repository
+        error = assert_raise(RuntimeError) do
+          Pra::Env.get_commit_hash(tmpdir, 'HEAD')
+        end
+        assert_match(/Failed to get commit hash/, error.message)
+      end
+    end
+
+    test "get_commit_hash raises error when commit does not exist" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          # Create git repo but no commits
+          system('git init', out: File::NULL)
+          system('git config user.email "test@example.com"')
+          system('git config user.name "Test User"')
+
+          error = assert_raise(RuntimeError) do
+            Pra::Env.get_commit_hash(tmpdir, 'nonexistent')
+          end
+          assert_match(/Failed to get commit hash/, error.message)
+        end
+      end
     end
 
     test "clone_with_submodules raises error when submodule init fails" do
