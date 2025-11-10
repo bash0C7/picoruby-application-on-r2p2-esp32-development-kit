@@ -1,5 +1,6 @@
 
 require 'thor'
+require 'pra/patch_applier'
 
 module Pra
   module Commands
