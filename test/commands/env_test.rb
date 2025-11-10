@@ -965,11 +965,69 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "traverse_submodules_and_validate returns info for all three levels" do
-      omit "TODO-INFRASTRUCTURE-GIT-ERROR-HANDLING: Requires error handling in get_timestamp (lib/pra/env.rb:188)"
+      Dir.mktmpdir do |tmpdir|
+        # Create R2P2-ESP32 repo
+        r2p2_path = tmpdir
+        Dir.chdir(r2p2_path) do
+          setup_test_git_repo
+
+          # Create components/picoruby-esp32 submodule
+          esp32_path = File.join(r2p2_path, "components", "picoruby-esp32")
+          FileUtils.mkdir_p(esp32_path)
+          Dir.chdir(esp32_path) do
+            setup_test_git_repo
+
+            # Create picoruby submodule
+            picoruby_path = File.join(esp32_path, "picoruby")
+            FileUtils.mkdir_p(picoruby_path)
+            Dir.chdir(picoruby_path) do
+              setup_test_git_repo
+            end
+          end
+        end
+
+        info, warnings = Pra::Env.traverse_submodules_and_validate(r2p2_path)
+
+        # Should return info for all 3 levels
+        assert_equal 3, info.size
+        assert info.key?("R2P2-ESP32")
+        assert info.key?("picoruby-esp32")
+        assert info.key?("picoruby")
+        assert_match(/^[a-f0-9]{7}-\d{8}_\d{6}$/, info["R2P2-ESP32"])
+        assert_match(/^[a-f0-9]{7}-\d{8}_\d{6}$/, info["picoruby-esp32"])
+        assert_match(/^[a-f0-9]{7}-\d{8}_\d{6}$/, info["picoruby"])
+        assert_equal 0, warnings.size
+      end
     end
 
     test "traverse_submodules_and_validate warns about 4th level submodules" do
-      omit "TODO-INFRASTRUCTURE-GIT-ROBUSTNESS: Requires traverse_submodules error handling"
+      Dir.mktmpdir do |tmpdir|
+        # Create R2P2-ESP32 repo with .gitmodules at 3rd level
+        r2p2_path = tmpdir
+        Dir.chdir(r2p2_path) do
+          setup_test_git_repo
+
+          esp32_path = File.join(r2p2_path, "components", "picoruby-esp32")
+          FileUtils.mkdir_p(esp32_path)
+          Dir.chdir(esp32_path) do
+            setup_test_git_repo
+
+            picoruby_path = File.join(esp32_path, "picoruby")
+            FileUtils.mkdir_p(picoruby_path)
+            Dir.chdir(picoruby_path) do
+              setup_test_git_repo
+              # Add .gitmodules to trigger warning
+              File.write(".gitmodules", "[submodule \"test\"]\n\tpath = test\n")
+            end
+          end
+        end
+
+        info, warnings = Pra::Env.traverse_submodules_and_validate(r2p2_path)
+
+        # Should warn about 4th level
+        assert_equal 1, warnings.size
+        assert_match(/4th level/, warnings.first)
+      end
     end
   end
 
