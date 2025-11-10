@@ -6,9 +6,6 @@ Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
   test_files = FileList["test/**/*_test.rb"]
-  # TEMPORARILY EXCLUDED: device_test.rb
-  # See TODO.md "Fix device_test.rb Thor command argument handling" for details
-  test_files.exclude("test/commands/device_test.rb")
 
   t.test_files = test_files
 
