@@ -6,12 +6,8 @@ Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
   test_files = FileList["test/**/*_test.rb"]
-  # TEMPORARILY EXCLUDED: device_test.rb
-  # Note: device_test.rb tests pass when run independently, but including them
-  # in the full test suite causes a complex test framework interaction issue.
-  # All 19 device tests pass with the --env flag refactoring.
-  # TODO: Investigate and fix test framework interaction with device_test.rb
-  test_files.exclude("test/commands/device_test.rb")
+  # NOTE: Re-enabling device_test.rb to investigate test framework interaction issue
+  # test_files.exclude("test/commands/device_test.rb")
 
   t.test_files = test_files
 
