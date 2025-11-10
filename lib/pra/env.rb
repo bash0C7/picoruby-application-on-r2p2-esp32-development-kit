@@ -39,6 +39,16 @@ module Pra
     }.freeze
 
     class << self
+      # ====== 環境名検証 ======
+
+      # 環境名が有効なパターンか検証
+      # @param name [String] 検証する環境名
+      # @raise [RuntimeError] 無効な環境名の場合
+      def validate_env_name!(name)
+        return if name.match?(ENV_NAME_PATTERN)
+        raise "Error: Invalid environment name '#{name}'. Must match pattern: #{ENV_NAME_PATTERN}"
+      end
+
       # ====== 環境定義（YAML）操作 ======
 
       # .picoruby-env.yml を読み込み（環境定義のメタデータ）
@@ -130,7 +140,15 @@ module Pra
       def get_commit_hash(repo_path, commit)
         Dir.chdir(repo_path) do
           short_hash = `git rev-parse --short=7 #{Shellwords.escape(commit)}`.strip
+          if short_hash.empty?
+            raise "Failed to get commit hash for '#{commit}' in repository: #{repo_path}"
+          end
+
           timestamp_str = `git show -s --format=%ci #{Shellwords.escape(commit)}`.strip
+          if timestamp_str.empty?
+            raise "Failed to get commit hash for '#{commit}' in repository: #{repo_path}"
+          end
+
           timestamp = Time.parse(timestamp_str).strftime('%Y%m%d_%H%M%S')
           "#{short_hash}-#{timestamp}"
         end
@@ -143,6 +161,9 @@ module Pra
 
         # R2P2-ESP32の情報取得
         r2p2_short = `git -C #{Shellwords.escape(repo_path)} rev-parse --short=7 HEAD`.strip
+        if r2p2_short.empty?
+          raise "Failed to get commit hash from git repository: #{repo_path}"
+        end
         r2p2_timestamp = get_timestamp(repo_path)
         info['R2P2-ESP32'] = "#{r2p2_short}-#{r2p2_timestamp}"
 
@@ -150,6 +171,9 @@ module Pra
         esp32_path = File.join(repo_path, 'components', 'picoruby-esp32')
         if Dir.exist?(esp32_path)
           esp32_short = `git -C #{Shellwords.escape(esp32_path)} rev-parse --short=7 HEAD`.strip
+          if esp32_short.empty?
+            raise "Failed to get commit hash from git repository: #{esp32_path}"
+          end
           esp32_timestamp = get_timestamp(esp32_path)
           info['picoruby-esp32'] = "#{esp32_short}-#{esp32_timestamp}"
 
@@ -157,6 +181,9 @@ module Pra
           picoruby_path = File.join(esp32_path, 'picoruby')
           if Dir.exist?(picoruby_path)
             picoruby_short = `git -C #{Shellwords.escape(picoruby_path)} rev-parse --short=7 HEAD`.strip
+            if picoruby_short.empty?
+              raise "Failed to get commit hash from git repository: #{picoruby_path}"
+            end
             picoruby_timestamp = get_timestamp(picoruby_path)
             info['picoruby'] = "#{picoruby_short}-#{picoruby_timestamp}"
 
@@ -175,6 +202,9 @@ module Pra
       # Timestamp取得（ローカルタイムゾーン）
       def get_timestamp(repo_path)
         timestamp_str = `git -C #{Shellwords.escape(repo_path)} show -s --format=%ci HEAD`.strip
+        if timestamp_str.empty?
+          raise "Failed to get timestamp from git repository: #{repo_path}"
+        end
         Time.parse(timestamp_str).strftime('%Y%m%d_%H%M%S')
       end
 
