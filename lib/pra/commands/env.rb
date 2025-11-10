@@ -31,38 +31,17 @@ module Pra
         end
       end
 
-      desc 'show', 'Display current environment definition from .picoruby-env.yml'
-      def show
-        current = Pra::Env.get_current_env
-        if current.nil?
-          puts 'Current environment definition: (not set)'
-          puts "Run 'pra env set ENV_NAME' to set an environment definition"
-        else
-          env_config = Pra::Env.get_environment(current)
-          if env_config.nil?
-            puts "Error: Environment '#{current}' not found in .picoruby-env.yml"
-          else
-            puts "Current environment definition: #{current}"
+      desc 'show [ENV_NAME]', 'Display environment definition (current or specified) from .picoruby-env.yml'
+      def show(env_name = nil)
+        # Use provided env name, or fall back to current environment
+        target_env = env_name || Pra::Env.get_current_env
 
-            # Symlink情報（ビルド環境）
-            current_link = File.join(Pra::Env::BUILD_DIR, 'current')
-            if File.symlink?(current_link)
-              target = File.readlink(current_link)
-              puts "Symlink: #{File.basename(current_link)} -> #{File.basename(target)}/"
-            end
+        return show_no_env if target_env.nil?
 
-            puts "\nRepo versions:"
-            %w[R2P2-ESP32 picoruby-esp32 picoruby].each do |repo|
-              info = env_config[repo] || {}
-              commit = info['commit'] || 'N/A'
-              timestamp = info['timestamp'] || 'N/A'
-              puts "  #{repo}: #{commit} (#{timestamp})"
-            end
+        env_config = Pra::Env.get_environment(target_env)
+        return show_env_not_found(target_env) if env_config.nil?
 
-            puts "\nCreated: #{env_config['created_at']}"
-            puts "Notes: #{env_config['notes']}" unless env_config['notes'].to_s.empty?
-          end
-        end
+        show_env_details(target_env, env_config, env_name)
       end
 
       desc 'set ENV_NAME', 'Switch to specified environment or create new with options'
@@ -195,6 +174,52 @@ module Pra
         puts "\nNext steps:"
         puts "  1. pra cache fetch #{env_name}  # Fetch repositories to cache"
         puts "  2. pra build setup #{env_name}  # Setup build environment"
+      end
+
+      private
+
+      def show_no_env
+        puts 'Current environment definition: (not set)'
+        puts "Run 'pra env set ENV_NAME' to set an environment definition"
+      end
+
+      def show_env_not_found(env_name)
+        puts "Error: Environment '#{env_name}' not found in .picoruby-env.yml"
+      end
+
+      def show_env_details(target_env, env_config, env_name)
+        # Display label based on whether we're showing current or specified env
+        label = env_name ? 'Environment definition' : 'Current environment definition'
+        puts "#{label}: #{target_env}"
+
+        # Symlink情報（ビルド環境）- only for current environment
+        show_symlink_info unless env_name
+
+        display_repo_versions(env_config)
+        display_metadata(env_config)
+      end
+
+      def show_symlink_info
+        current_link = File.join(Pra::Env::BUILD_DIR, 'current')
+        return unless File.symlink?(current_link)
+
+        target = File.readlink(current_link)
+        puts "Symlink: #{File.basename(current_link)} -> #{File.basename(target)}/"
+      end
+
+      def display_repo_versions(env_config)
+        puts "\nRepo versions:"
+        %w[R2P2-ESP32 picoruby-esp32 picoruby].each do |repo|
+          info = env_config[repo] || {}
+          commit = info['commit'] || 'N/A'
+          timestamp = info['timestamp'] || 'N/A'
+          puts "  #{repo}: #{commit} (#{timestamp})"
+        end
+      end
+
+      def display_metadata(env_config)
+        puts "\nCreated: #{env_config['created_at']}"
+        puts "Notes: #{env_config['notes']}" unless env_config['notes'].to_s.empty?
       end
     end
   end

@@ -197,6 +197,56 @@ class PraCommandsEnvTest < PraTestCase
         end
       end
     end
+
+    test "shows specific environment when name is provided" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          # Create multiple environments
+          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
+          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
+          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+
+          Pra::Env.set_environment('staging', r2p2_info, esp32_info, picoruby_info, notes: 'Staging environment')
+          Pra::Env.set_environment('production', r2p2_info, esp32_info, picoruby_info, notes: 'Production environment')
+
+          output = capture_stdout do
+            Pra::Commands::Env.start(['show', 'staging'])
+          end
+
+          # Verify staging environment details are shown
+          assert_match(/staging/, output)
+          assert_match(/Staging environment/, output)
+          assert_match(/Repo versions:/, output)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "shows error when requested environment name does not exist" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Pra::Env::ENV_FILE)
+          FileUtils.rm_rf(Pra::Env::BUILD_DIR)
+
+          output = capture_stdout do
+            Pra::Commands::Env.start(['show', 'missing-env'])
+          end
+
+          # Verify error message is shown
+          assert_match(/Error: Environment 'missing-env' not found|not found/i, output)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
   end
 
   # env set コマンドのテスト
