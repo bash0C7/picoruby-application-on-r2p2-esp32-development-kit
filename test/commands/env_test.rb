@@ -57,9 +57,8 @@ module SystemCommandMocking
 
   # Helper method to set up system command mocking with Refinement
   # Usage: with_system_mocking(fail_clone: true) { |mock| ... }
+  # Note: Refinement is already applied at class level via 'using' declaration
   def with_system_mocking(fail_clone: false, fail_checkout: false, fail_submodule: false)
-    using SystemRefinement
-
     mock_context = {
       call_count: { clone: 0, checkout: 0, submodule: 0 },
       fail_clone: fail_clone,
