@@ -15,7 +15,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['flash', 'nonexistent-env'])
+              Pra::Commands::Device.start(['flash', '--env', 'nonexistent-env'])
             end
           end
 
@@ -33,7 +33,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['flash'])
+              Pra::Commands::Device.start(['flash', '--env', 'current'])
             end
           end
 
@@ -43,12 +43,6 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "raises error when build environment not found" do
-      # SKIPPED: Device.start(['flash', 'test-env']) passes test-env as an argument
-      # but Thor interprets it as a subcommand, causing SystemExit with "Could not find command"
-      # This leaves $ERROR_INFO set, preventing SimpleCov from processing coverage correctly
-      # See TODO.md for details on "device_test method_missing tests SimpleCov issue"
-      return # Skipped: test-env argument breaks SimpleCov exit code detection
-
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
@@ -64,7 +58,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             assert_raise(RuntimeError) do
               capture_stdout do
-                Pra::Commands::Device.start(['flash', 'test-env'])
+                Pra::Commands::Device.start(['flash', '--env', 'test-env'])
               end
             end
 
@@ -75,12 +69,6 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when flashing" do
-      # SKIPPED: Device.start(['flash', 'test-env']) passes test-env as an argument
-      # but Thor interprets it as a subcommand, causing SystemExit with "Could not find command"
-      # This leaves $ERROR_INFO set, preventing SimpleCov from processing coverage correctly
-      # See TODO.md for details on "device_test method_missing tests SimpleCov issue"
-      return # Skipped: test-env argument breaks SimpleCov exit code detection
-
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
@@ -91,7 +79,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             with_stubbed_esp_env do
               output = capture_stdout do
-                Pra::Commands::Device.start(['flash', 'test-env'])
+                Pra::Commands::Device.start(['flash', '--env', 'test-env'])
               end
 
               # 出力を確認
@@ -117,7 +105,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['monitor', 'nonexistent-env'])
+              Pra::Commands::Device.start(['monitor', '--env', 'nonexistent-env'])
             end
           end
 
@@ -135,7 +123,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['monitor'])
+              Pra::Commands::Device.start(['monitor', '--env', 'current'])
             end
           end
 
@@ -145,11 +133,6 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when monitoring" do
-      # SKIPPED: Device.start(['monitor', 'test-env']) passes test-env as an argument
-      # but Thor interprets it as a subcommand, causing SystemExit with "Could not find command"
-      # This leaves $ERROR_INFO set, preventing SimpleCov from processing coverage correctly
-      return # Skipped: test-env argument breaks SimpleCov exit code detection
-
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
@@ -160,7 +143,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             with_stubbed_esp_env do
               output = capture_stdout do
-                Pra::Commands::Device.start(['monitor', 'test-env'])
+                Pra::Commands::Device.start(['monitor', '--env', 'test-env'])
               end
 
               # 出力を確認
@@ -186,7 +169,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['build', 'nonexistent-env'])
+              Pra::Commands::Device.start(['build', '--env', 'nonexistent-env'])
             end
           end
 
@@ -196,11 +179,6 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when building" do
-      # SKIPPED: Device.start(['build', 'test-env']) passes test-env as an argument
-      # but Thor interprets it as a subcommand, causing SystemExit with "Could not find command"
-      # This leaves $ERROR_INFO set, preventing SimpleCov from processing coverage correctly
-      return # Skipped: test-env argument breaks SimpleCov exit code detection
-
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
@@ -211,7 +189,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             with_stubbed_esp_env do
               output = capture_stdout do
-                Pra::Commands::Device.start(['build', 'test-env'])
+                Pra::Commands::Device.start(['build', '--env', 'test-env'])
               end
 
               # 出力を確認
@@ -237,7 +215,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['setup_esp32', 'nonexistent-env'])
+              Pra::Commands::Device.start(['setup_esp32', '--env', 'nonexistent-env'])
             end
           end
 
@@ -247,11 +225,6 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when setting up ESP32" do
-      # SKIPPED: Device.start(['setup_esp32', 'test-env']) passes test-env as an argument
-      # but Thor interprets it as a subcommand, causing SystemExit with "Could not find command"
-      # This leaves $ERROR_INFO set, preventing SimpleCov from processing coverage correctly
-      return # Skipped: test-env argument breaks SimpleCov exit code detection
-
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
@@ -262,7 +235,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             with_stubbed_esp_env do
               output = capture_stdout do
-                Pra::Commands::Device.start(['setup_esp32', 'test-env'])
+                Pra::Commands::Device.start(['setup_esp32', '--env', 'test-env'])
               end
 
               # 出力を確認
@@ -288,7 +261,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['tasks', 'nonexistent-env'])
+              Pra::Commands::Device.start(['tasks', '--env', 'nonexistent-env'])
             end
           end
 
@@ -306,7 +279,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Pra::Commands::Device.start(['tasks'])
+              Pra::Commands::Device.start(['tasks', '--env', 'current'])
             end
           end
 
@@ -326,7 +299,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             with_stubbed_esp_env do
               output = capture_stdout do
-                Pra::Commands::Device.start(['tasks', 'test-env'])
+                Pra::Commands::Device.start(['tasks', '--env', 'test-env'])
               end
 
               # タスク一覧メッセージが出力されることを確認
@@ -344,13 +317,6 @@ class PraCommandsDeviceTest < PraTestCase
   # method_missing による動的Rakeタスク委譲のテスト
   sub_test_case "method_missing rake task delegation" do
     test "delegates custom_task to R2P2-ESP32 rake task" do
-      # SKIPPED: This test intentionally catches SystemExit, which leaves $ERROR_INFO set.
-      # This causes SimpleCov to report "previous error not related to SimpleCov"
-      # and fail the test suite with exit code 1 despite all tests passing.
-      # Need to refactor test isolation to prevent SystemExit from leaking into $ERROR_INFO.
-      # See TODO.md for details on "device_test method_missing tests SimpleCov issue".
-      return # Skipped: SystemExit handling breaks SimpleCov exit code detection
-
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
@@ -361,17 +327,12 @@ class PraCommandsDeviceTest < PraTestCase
 
             with_stubbed_esp_env do
               # custom_task が Rakefile に存在するため、method_missing で委譲される
-              # ただし、Thor.start は 'test-env' を追加のサブコマンドとして解釈しようとして、
-              # 見つからずに SystemExit(1) を raise する (exit_on_failure? = true)
-
-              capture_stdout do
-                Pra::Commands::Device.start(['custom_task', 'test-env'])
+              output = capture_stdout do
+                Pra::Commands::Device.start(['custom_task', '--env', 'test-env'])
               end
-            rescue SystemExit => e
-              # SystemExit は予期された動作
-              assert_equal(1, e.status, "SystemExit should exit with code 1 for unrecognized subcommand")
-            else
-              flunk("Expected SystemExit to be raised")
+
+              # タスク委譲メッセージが出力されることを確認
+              assert_match(/Delegating to R2P2-ESP32 task: custom_task/, output)
             end
 
             # Directory change is handled by with_fresh_project_root
@@ -390,9 +351,9 @@ class PraCommandsDeviceTest < PraTestCase
             setup_test_environment('test-env')
 
             with_failing_esp_env do
-              assert_raise(SystemExit) do
+              assert_raise(RuntimeError) do
                 capture_stdout do
-                  Pra::Commands::Device.start(['nonexistent_task', 'test-env'])
+                  Pra::Commands::Device.start(['nonexistent_task', '--env', 'test-env'])
                 end
               end
             end
@@ -403,36 +364,24 @@ class PraCommandsDeviceTest < PraTestCase
       end
     end
 
-    test "uses default env_name when not provided" do
-      # SKIPPED: This test intentionally catches SystemExit, which leaves $ERROR_INFO set.
-      # This causes SimpleCov to report "previous error not related to SimpleCov"
-      # and fail the test suite with exit code 1 despite all tests passing.
-      # Need to refactor test isolation to prevent SystemExit from leaking into $ERROR_INFO.
-      # See TODO.md for details on "device_test method_missing tests SimpleCov issue".
-      return # Skipped: SystemExit handling breaks SimpleCov exit code detection
-
+    test "delegates rake task with explicit env" do
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment_with_current('test-env')
+            setup_test_environment('test-env')
 
             with_stubbed_esp_env do
               # custom_task が Rakefile に存在するため、method_missing で委譲される
-              # env_name が省略された場合、'current' がデフォルトとして使用される
-              # Thor はこのコマンドで正常に実行される
-
+              # 環境名は --env で明示的に指定する（暗黙のカレント環境は存在しない）
               output = capture_stdout do
-                Pra::Commands::Device.start(['custom_task'])
+                Pra::Commands::Device.start(['custom_task', '--env', 'test-env'])
               end
 
-              # デフォルト環境（current）が使われることを確認
+              # タスク委譲メッセージが出力されることを確認
               assert_match(/Delegating to R2P2-ESP32 task: custom_task/, output)
-            rescue SystemExit => e
-              # Unexpected exit - this test should not raise SystemExit
-              flunk("Unexpected SystemExit with code #{e.status}: env_name should default to 'current'")
             end
 
             # Directory change is handled by with_fresh_project_root
@@ -460,7 +409,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             with_tasks_list_esp_env do
               output = capture_stdout do
-                Pra::Commands::Device.start(['help', 'test-env'])
+                Pra::Commands::Device.start(['help', '--env', 'test-env'])
               end
 
               # ヘルプメッセージが表示されることを確認
@@ -510,9 +459,7 @@ class PraCommandsDeviceTest < PraTestCase
   def setup_test_environment_with_current(env_name)
     env_name, r2p2_path = setup_test_environment(env_name)
 
-    current_link = File.join(Pra::Env::BUILD_DIR, "current")
-    env_hash = Pra::Env.compute_env_hash(env_name).last
-    FileUtils.ln_s(env_hash, current_link)
+    # Set current environment for default resolution
     Pra::Env.set_current_env(env_name)
 
     [env_name, r2p2_path]
