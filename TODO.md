@@ -295,21 +295,28 @@ Pra::Commands::Device.start(['flash', 'test-env'])
 
 **Strategy**: Each directory refactor = Red (test) → Green (impl) → RuboCop -A → Refactor → Commit
 
-#### 4.1: Implement ptrk_env/ consolidated directory structure (Red → Green → RuboCop → Commit)
-- [ ] **RED**: Test directory paths use ptrk_env/ prefix
-  - Test: Cache path is `ptrk_env/.cache`
-  - Test: Env path is `ptrk_env/{env_name}`
-  - Test: Config path is `ptrk_env/.picoruby-env.yml`
-  - Test: No `current` symlink exists or is created
-- [ ] **GREEN**: Update `lib/ptrk/env.rb` path logic
-  - Replace: `.cache/` → `ptrk_env/.cache/`
-  - Replace: `build/` → `ptrk_env/{env_name}/`
-  - Replace: `.picoruby-env.yml` → `ptrk_env/.picoruby-env.yml`
-  - Remove: All `current` symlink logic
-  - Remove: `current_env` methods (use explicit env_name)
-- [ ] **RUBOCOP**: `bundle exec rubocop -A lib/ptrk/env.rb test/lib/env_test.rb`
-- [ ] **REFACTOR**: Simplify path construction
-- [ ] **COMMIT**: "refactor: consolidate paths into ptrk_env/ directory"
+#### 4.1: Implement ptrk_env/ consolidated directory structure (Red → Green → RuboCop → Commit) ✅ COMPLETED
+- [x] **RED**: Test directory paths use ptrk_env/ prefix
+  - Test: Cache path is `ptrk_env/.cache` ✅
+  - Test: Env path is `ptrk_env/{env_name}` ✅
+  - Test: Config path is `ptrk_env/.picoruby-env.yml` ✅
+  - Test: No `current` symlink exists or is created ✅
+- [x] **GREEN**: Update `lib/pra/env.rb` and `lib/pra/commands/env.rb` path logic
+  - Replace: `.cache/` → `ptrk_env/.cache/` ✅
+  - Replace: `build/{env_hash}/` → `ptrk_env/{env_name}/` ✅
+  - Replace: `.picoruby-env.yml` → `ptrk_env/.picoruby-env.yml` ✅
+  - Remove: All `current` symlink logic ✅
+  - Update: `get_current_env()` always returns nil ✅
+  - Update: `set_current_env()` is no-op ✅
+  - Remove: BUILD_DIR constant completely ✅
+  - Update: env show command requires env_name parameter ✅
+  - Update: env set command only creates (remove switch mode) ✅
+  - Update: patch operations use env_name-based paths ✅
+- [x] **RUBOCOP**: `bundle exec rubocop -A` (0 violations) ✅
+- [x] **REFACTOR**: Simplified path construction ✅
+- [x] **COMMIT**: "refactor: complete Phase 4.1 - use env_name-based paths" (1b8df43) ✅
+- [x] **COMMIT**: "chore: update .gitignore for Phase 4.1 directory structure" (d5a27ba) ✅
+- **QUALITY**: 107 tests, 223 assertions, 100% pass, 80.1% line coverage, 56.38% branch coverage ✅
 
 #### 4.2: Environment name validation in all commands (Red → Green → RuboCop → Commit)
 - [ ] **RED**: Test all commands validate env names
