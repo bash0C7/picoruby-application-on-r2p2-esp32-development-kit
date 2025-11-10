@@ -185,6 +185,9 @@ module Pra
       # Timestamp取得（ローカルタイムゾーン）
       def get_timestamp(repo_path)
         timestamp_str = `git -C #{Shellwords.escape(repo_path)} show -s --format=%ci HEAD`.strip
+        if timestamp_str.empty?
+          raise "Failed to get timestamp from git repository: #{repo_path}"
+        end
         Time.parse(timestamp_str).strftime('%Y%m%d_%H%M%S')
       end
 
