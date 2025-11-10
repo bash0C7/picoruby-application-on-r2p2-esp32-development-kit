@@ -35,392 +35,60 @@
 - ✅ All quality gates must pass: Tests + RuboCop + Coverage
 - ✅ **TDD-First approach**: Test infrastructure before any feature implementation
 
-### Phase 0: Test Infrastructure ✅ COMPLETED (1 day - ahead of schedule!)
+### Phase 0: Test Infrastructure ✅ COMPLETED
 
-**Objective**: Establish solid test foundation for all downstream phases. Each task = Red → Green → RuboCop -A → Refactor → Commit.
-
-**Strategy**: Fix infrastructure issues early so Phase 2-6 can focus on feature TDD without blocked tests.
+**Objective**: Establish solid test foundation for all downstream phases.
 
 **Completion Summary**:
-- ✅ Phase 0.1: test_helper.rb PTRK_USER_ROOT setup
-- ✅ Phase 0.2: SimpleCov exit code verification
-- ✅ Phase 0.3: RuboCop integration verification
-- ✅ Phase 0.4: Three-gate quality check (Tests 100%, RuboCop 0 violations, Coverage 85.24% line)
-- ✅ Phase 0.5: Device command Thor analysis (Infrastructure marker documented)
-- **Quality Metrics**: 144 tests, 323 assertions, 100% pass rate
-- **Git Status**: Clean, 5 focused commits
+- ✅ test_helper.rb PTRK_USER_ROOT setup
+- ✅ SimpleCov exit code verification
+- ✅ RuboCop integration verification
+- ✅ Three-gate quality check (Tests 100%, RuboCop 0 violations, Coverage 85.24% line)
+- ✅ Device command Thor analysis and infrastructure marker [TODO-INFRASTRUCTURE-DEVICE-COMMAND] documented
+- **Final Metrics**: 144 tests, 323 assertions, 100% pass rate
 
-#### 0.1: Update test/test_helper.rb for temp ptrk_user_root ✅ COMPLETED
-- [x] **RED**: Write test expecting temp root (no gem root pollution)
-  - Test file: `test/test_helper_test.rb` ✅
-  - Assertion: `ENV['PTRK_USER_ROOT']` uses `Dir.mktmpdir` ✅
-  - Assertion: `verify_gem_root_clean!` method exists ✅
-- [x] **GREEN**: Implement in `test/test_helper.rb` ✅
-  - Add `ENV['PTRK_USER_ROOT'] = Dir.mktmpdir` in setup ✅
-  - Add `verify_gem_root_clean!` method ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A test/test_helper_test.rb test/test_helper.rb` ✅
-- [x] **REFACTOR**: Ensure clarity and simplicity ✅
-- [x] **COMMIT**: "test: configure test_helper for isolated ptrk_user_root" (34a77ed) ✅
-
-#### 0.2: Verify SimpleCov exit code behavior ✅ COMPLETED
-- [x] **RED**: Write test expecting SimpleCov exit 0 on success
-  - Test file: `test/coverage_test.rb` ✅
-  - Verify SimpleCov XML report generated ✅
-- [x] **GREEN**: SimpleCov config verified correct
-  - SimpleCov exits with code 0 on success ✅
-  - Coverage XML generated successfully ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅
-- [x] **REFACTOR**: Code is clean and simple ✅
-- [x] **COMMIT**: "test: add SimpleCov exit code verification test" (a5343a0) ✅
-
-#### 0.3: Verify RuboCop integration with tests ✅ COMPLETED
-- [x] **RED**: Test RuboCop integration
-  - Test: `bundle exec rubocop` succeeds with 0 violations ✅
-- [x] **GREEN**: RuboCop integration verified
-  - RuboCop: 0 violations across all files ✅
-- [x] **RUBOCOP**: Check current state ✅
-- [x] **REFACTOR**: N/A (RuboCop is the refactor tool) ✅
-- [x] **COMMIT**: "test: add RuboCop integration verification test" (575d4ff) ✅
-
-#### 0.4: Three-gate quality check (Tests + RuboCop + Coverage) ✅ COMPLETED
-- [x] **RED**: Write integration test for three-gate quality
-  - Test file: `test/quality_gates_test.rb` ✅
-- [x] **GREEN**: All three gates verified passing
-  - Tests: 144/144 (100%) ✅
-  - RuboCop: 0 violations ✅
-  - Coverage: 85.24% line, 65.2% branch ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅
-- [x] **REFACTOR**: N/A ✅
-- [x] **COMMIT**: "test: add three-gate quality verification test" (c5a0785) ✅
-
-#### 0.5: Device command Thor argument handling investigation
-- [x] **ANALYSIS**: Understand Thor issue without fixing yet
-  - Read: `test/commands/device_test.rb` (currently excluded from Rakefile)
-  - Understand: Why Thor treats env names as subcommands
-  - Record: Exact error behavior, root cause
-
-**ANALYSIS RESULT (Phase 0.5 Completed)**:
-
-**Problem**: 複数のテストが `return # Skipped: test-env argument breaks SimpleCov exit code detection` で skip されている
-
-**Root Cause - Thor Subcommand Interpretation**:
-```ruby
-# Test attempts to call:
-Pra::Commands::Device.start(['flash', 'test-env'])
-
-# But Thor interprets 'test-env' as a SUBCOMMAND, not an argument
-# Thor looks for a 'test-env' subcommand in the Device class
-# When not found: raises SystemExit(1) with "Could not find command test-env"
-# This leaves $ERROR_INFO set globally, corrupting SimpleCov exit code detection
-```
-
-**Affected Tests** (test/commands/device_test.rb):
-- Line 46-50: "raises error when build environment not found"
-- Line 78-82: "shows message when flashing"
-- Line 147-151: "shows message when monitoring"
-- Line 198-202: "shows message when building"
-- Line 250-253: "shows message when setting up ESP32"
-- Line 347-352: "delegates custom_task to R2P2-ESP32 rake task"
-- Line 407-412: "uses default env_name when not provided"
-
-**Current Workaround**: Tests call `return` early to avoid SystemExit
-
-**Solution** (Deferred to Phase 5):
-- Refactor device command to use explicit `--env` flag
-- Change: `Device.start(['flash', 'test-env'])` → `Device.start(['flash', '--env', 'test-env'])`
-- This prevents Thor from interpreting env_name as a subcommand
-
-- [x] **MARK**: [TODO-INFRASTRUCTURE-DEVICE-COMMAND]
-  - **Status**: Documented for Phase 5 (device command refactor to `--env` flag)
-  - **Reference**:
-    - Test file: `test/commands/device_test.rb` (lines 46-50, 78-82, 147-151, 198-202, 250-253, 347-352, 407-412)
-    - Implementation: `lib/ptrk/commands/device.rb` (requires `--env` option refactor)
-    - Configuration: Rakefile currently excludes device_test.rb from test suite
-  - **Not blocking**: Phase 2-4 proceed with other commands; device is Phase 5 focus
-  - **Dependency**: Phase 5.1 must fix this before re-enabling device_test.rb
+**Deferred Issues**:
+- [TODO-INFRASTRUCTURE-DEVICE-COMMAND]: Device command requires `--env` flag refactor (Phase 5)
+  - Device tests excluded from Rakefile until Phase 5.1
 
 ---
 
 ### Phase 1: Planning & Documentation ✅ COMPLETED
-- [x] Analyze current command structure
-- [x] Investigate naming options
-- [x] Create detailed refactoring specification
-- [x] Update TODO.md with phased breakdown
+- ✅ Analyzed current command structure and naming options
+- ✅ Created detailed refactoring specification (docs/PICOTOROKKO_REFACTORING_SPEC.md)
+- ✅ Updated TODO.md with phased breakdown
 
 ---
 
-### Phase 2: Rename & Constants ✅ COMPLETED (1 day - on schedule!)
-
-**Status**: All three subphases completed with full test coverage
+### Phase 2: Rename & Constants ✅ COMPLETED
 
 **Completion Summary**:
-- ✅ Phase 2.1: Rename gemspec and bin/ptrk
-- ✅ Phase 2.2: Add Pra::Env constants (ENV_DIR, ENV_NAME_PATTERN)
-- ✅ Phase 2.3: Update CLI command registration (removed cache, build, patch, ci)
-- **Quality Metrics**: 153 tests, 345 assertions, 100% pass rate, 0 RuboCop violations, 85.12% coverage
-- **Git Status**: Clean, 3 focused commits
-
-#### 2.1: Rename gemspec and bin/ptrk ✅ COMPLETED
-- [x] **RED**: Created test for executable name in gemspec (test/gemspec_test.rb)
-- [x] **GREEN**: Updated gemspec with spec.name = "picotorokko", renamed exe/pra → exe/ptrk
-- [x] **RUBOCOP**: RuboCop auto-correct passed (0 violations)
-- [x] **COMMIT**: "chore: rename executable pra → ptrk in gemspec" (0c4802d)
-
-#### 2.2: Update lib/ptrk/env.rb constants ✅ COMPLETED
-- [x] **RED**: Created test for new constants (test/lib/env_constants_test.rb)
-  - Assertion: Pra::Env::ENV_DIR == "ptrk_env" ✅
-  - Assertion: Pra::Env::ENV_NAME_PATTERN matches /^[a-z0-9_-]+$/ ✅
-- [x] **GREEN**: Added constants to lib/pra/env.rb
-  - ENV_DIR = "ptrk_env".freeze ✅
-  - ENV_NAME_PATTERN = /^[a-z0-9_-]+$/ ✅
-  - [TODO-INFRASTRUCTURE-ENV-PATHS] - Deferred to Phase 4 as noted
-- [x] **RUBOCOP**: RuboCop auto-correct applied .freeze (1 violation corrected)
-- [x] **COMMIT**: "refactor: add constants for ptrk env directory" (02263a8)
-
-#### 2.3: Update lib/ptrk/cli.rb command registration ✅ COMPLETED
-- [x] **RED**: Created test for CLI command registration (test/commands/cli_test.rb)
-  - Assertions: env, device, mrbgems, rubocop commands registered ✅
-  - Assertions: cache, build, patch, ci commands NOT registered ✅
-- [x] **GREEN**: Updated lib/pra/cli.rb
-  - Removed CLI registration for: cache, build, patch, ci
-  - Kept registered: env, device, mrbgems, rubocop ✅
-- [x] **RUBOCOP**: RuboCop auto-correct passed (0 violations)
-- [x] **COMMIT**: "refactor: update cli.rb for new command structure" (4cd1106)
+- ✅ Renamed gemspec and exe/ptrk
+- ✅ Added Pra::Env constants (ENV_DIR, ENV_NAME_PATTERN)
+- ✅ Updated CLI command registration (removed cache, build, patch, ci)
+- **Final Metrics**: 153 tests, 345 assertions, 100% pass rate, 85.12% coverage
 
 ---
 
-### Phase 3: Command Structure - TDD Approach (5-6 days)
+### Phase 3: Command Structure ✅ COMPLETED
 
-**⚠️ Start**: Check for [TODO-INFRASTRUCTURE-*] markers from Phase 2.
-  - If [TODO-INFRASTRUCTURE-ENV-PATHS] found: Defer path logic to Phase 4, proceed with command structure.
-  - If [TODO-INFRASTRUCTURE-*] blocking test: Resolve immediately in TDD cycle.
-
-**Strategy**: Each command = Red (test) → Green (impl) → RuboCop -A → Refactor → Commit
-
-#### 3.1: env list command (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Write test for `ptrk env list`
-  - Test file: `test/commands/env_test.rb` ✅
-  - Assertion: Lists all environments in ptrk_user_root ✅
-  - Assertion: Shows env name, path, status ✅
-- [x] **GREEN**: Implement in `lib/ptrk/commands/env.rb` ✅
-  - Add `list` method with output formatting ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅
-- [x] **REFACTOR**: Ensure clean output logic ✅
-- [x] **COMMIT**: "feat: implement ptrk env list command" (597e52e) ✅
-
-#### 3.2: env set command with options (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Test `ptrk env set <name> [--commit <sha>] [--branch <name>]` ✅
-  - Assertion: Creates environment with options ✅
-  - Assertion: Stores commit/branch if provided ✅
-  - Assertion: Validates env name against pattern ✅
-- [x] **GREEN**: Implement in `lib/ptrk/commands/env.rb` ✅
-  - Add `set` method with option parsing ✅
-  - Support both create and switch modes ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅ (1 auto-correction: unless modifier)
-- [x] **REFACTOR**: Simplify logic ✅
-- [x] **COMMIT**: "feat: enhance ptrk env set with --commit and --branch options" (d731858) ✅
-
-#### 3.3: env reset command (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Test `ptrk env reset <name>` ✅
-  - Assertion: Removes and recreates environment ✅
-  - Assertion: Preserves metadata (notes) ✅
-- [x] **GREEN**: Implement in `lib/ptrk/commands/env.rb` ✅
-  - Add `reset` method ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅
-- [x] **REFACTOR**: N/A ✅
-- [x] **COMMIT**: "feat: implement ptrk env reset command" (68e6226) ✅
-
-#### 3.4: env show command (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Test `ptrk env show [ENV_NAME]` ✅
-  - Assertion: Displays specific environment details ✅
-  - Assertion: Works with user-provided env names ✅
-  - Assertion: Shows error for missing environments ✅
-- [x] **GREEN**: Implement enhancement in `lib/ptrk/commands/env.rb` ✅
-  - Update `show` to accept optional env name parameter ✅
-  - Extract display logic into helper methods ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅ (0 violations after refactoring)
-- [x] **REFACTOR**: Extract helper methods to reduce nesting ✅
-- [x] **COMMIT**: "feat: enhance ptrk env show to accept optional environment name" (d7478c0) ✅
-
-**Phase 3.1-3.4 Status**: 4 commits (597e52e, d731858, 68e6226, d7478c0) successfully pushed to origin/claude/execute-todo-items-011CUynGmL5qMprB2AGpc5Jc and merged into main
-
-#### 3.5: env patch operations (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Test `ptrk env patch_export`, `patch_apply`, `patch_diff` ✅
-  - Assertion: Commands accept env name parameter ✅
-  - Assertion: Proper output for patches ✅
-  - Test file: `test/commands/env_test.rb` (3 tests added) ✅
-- [x] **GREEN**: Move patch operations from deleted commands into `env.rb` ✅
-  - Implement: `patch_export`, `patch_apply`, `patch_diff` as env subcommands ✅
-  - Add private helper methods: `resolve_work_path`, `export_repo_changes`, `show_repo_diff` ✅
-  - Add require for `pra/patch_applier` ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅ (1 auto-correction)
-- [x] **REFACTOR**: N/A ✅
-- [x] **COMMIT**: "feat: move patch operations to env command" (766b95d) ✅
-
-#### 3.6: Delete obsolete commands and update device (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Test that deleted commands don't exist ✅
-  - Assertion: `cache`, `build`, `patch`, `ci` commands not available ✅
-  - Test already existed in `test/commands/cli_test.rb` from Phase 2.3 ✅
-- [x] **GREEN**: Delete files ✅
-  - Delete: `lib/pra/commands/cache.rb` ✅
-  - Delete: `lib/pra/commands/build.rb` ✅
-  - Delete: `lib/pra/commands/patch.rb` ✅
-  - Delete: `lib/pra/commands/ci.rb` ✅
-  - Update: `lib/pra/cli.rb` to remove requires for deleted commands ✅
-  - Delete: Corresponding test files (cache_test.rb, build_test.rb, patch_test.rb, ci_test.rb) ✅
-  - Update: `lib/ptrk/commands/device.rb` - deferred to Phase 5 ✅
-    - [TODO-INFRASTRUCTURE-DEVICE-COMMAND] from Phase 0: Thor --env flag refactor deferred to Phase 5
-- [x] **RUBOCOP**: `bundle exec rubocop -A` ✅ (0 violations)
-- [x] **REFACTOR**: N/A ✅
-- [x] **COMMIT**: "refactor: remove cache, build, patch, ci commands; update cli" (c7b4acc) ✅
-- [x] **Quality**: 113 tests, 233 assertions, 100% passed; deleted 2485 lines ✅
-
-**Phase 3.5-3.6 Status**: 2 commits (766b95d, c7b4acc) successfully pushed to origin/claude/ruby-todo-implementation-011CUyovXEg8UEuSzPcTPsMS
+**Completion Summary**:
+- ✅ Implemented env list, set, reset, show commands
+- ✅ Moved patch operations into env command (patch_export, patch_apply, patch_diff)
+- ✅ Deleted obsolete commands (cache, build, patch, ci)
+- **Final Metrics**: 113 tests, 233 assertions, 100% pass rate, deleted 2485 lines
 
 ---
 
-### Phase 4: Directory Structure - TDD Approach (3-4 days)
+### Phase 4: Directory Structure & Bug Fixes ✅ COMPLETED
 
-**⚠️ CRITICAL POLICY: No Backward Compatibility Required**
-- This is an **unreleased gem** (version 0.x) with **zero users**
-- Breaking changes are **fully acceptable** and **encouraged** for cleaner design
-- Do NOT add compatibility layers, deprecated constants, or migration paths
-- Remove old logic completely and update all references immediately
-- Focus on the final, clean design without compromise
-
-**⚠️ Start**: Check for [TODO-INFRASTRUCTURE-*] markers from Phase 3.
-  - [TODO-INFRASTRUCTURE-ENV-PATHS]: Verify env directory structure
-  - [TODO-INFRASTRUCTURE-ENV-SET-PATHS]: Verify env set creates correct structure
-  - Address any test failures in TDD cycle before proceeding.
-
-**Strategy**: Each directory refactor = Red (test) → Green (impl) → RuboCop -A → Refactor → Commit
-
-#### 4.1: Implement ptrk_env/ consolidated directory structure (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Test directory paths use ptrk_env/ prefix
-  - Test: Cache path is `ptrk_env/.cache` ✅
-  - Test: Env path is `ptrk_env/{env_name}` ✅
-  - Test: Config path is `ptrk_env/.picoruby-env.yml` ✅
-  - Test: No `current` symlink exists or is created ✅
-- [x] **GREEN**: Update `lib/pra/env.rb` and `lib/pra/commands/env.rb` path logic
-  - Replace: `.cache/` → `ptrk_env/.cache/` ✅
-  - Replace: `build/{env_hash}/` → `ptrk_env/{env_name}/` ✅
-  - Replace: `.picoruby-env.yml` → `ptrk_env/.picoruby-env.yml` ✅
-  - Remove: All `current` symlink logic ✅
-  - Update: `get_current_env()` always returns nil ✅
-  - Update: `set_current_env()` is no-op ✅
-  - Remove: BUILD_DIR constant completely ✅
-  - Update: env show command requires env_name parameter ✅
-  - Update: env set command only creates (remove switch mode) ✅
-  - Update: patch operations use env_name-based paths ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` (0 violations) ✅
-- [x] **REFACTOR**: Simplified path construction ✅
-- [x] **COMMIT**: "refactor: complete Phase 4.1 - use env_name-based paths" (1b8df43) ✅
-- [x] **COMMIT**: "chore: update .gitignore for Phase 4.1 directory structure" (d5a27ba) ✅
-- **QUALITY**: 107 tests, 223 assertions, 100% pass, 80.1% line coverage, 56.38% branch coverage ✅
-
-#### 4.2: Environment name validation in all commands (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Test all commands validate env names ✅
-  - Test: `validate_env_name!` accepts valid lowercase alphanumeric names ✅
-  - Test: `validate_env_name!` rejects uppercase letters ✅
-  - Test: `validate_env_name!` rejects special characters ✅
-  - Test: `validate_env_name!` rejects empty names ✅
-  - Test: `validate_env_name!` rejects names with spaces ✅
-  - Test file: `test/commands/env_test.rb` (lines 493-530) ✅
-  - Note: Device command validation deferred to Phase 5
-- [x] **GREEN**: Add validation to `lib/ptrk/env.rb` and all command files ✅
-  - Implement: `Pra::Env.validate_env_name!(name)` method (lib/pra/env.rb:47-50) ✅
-  - Call: In `env set` and `env reset` commands (lib/pra/commands/env.rb:47, 64) ✅
-  - Return: Error message on invalid names ✅
-  - Refactor: Replace duplicated validation logic with helper method ✅
-- [x] **RUBOCOP**: `bundle exec rubocop -A` (4 violations auto-corrected: guard clause, indentation) ✅
-- [x] **REFACTOR**: Code is already simple and clear, no further refactoring needed ✅
-- [x] **COMMIT**: 3 commits (7a5e419, 412ce52, e2f2b68) ✅
-- **QUALITY**: 127 tests, 254 assertions, 100% pass, 0 RuboCop violations, 80.81% line coverage, 58.06% branch coverage ✅
-
-#### 4.3: Verify all Phase 4 changes pass quality gates (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Write integration test for directory structure ✅
-  - Test: `bundle exec rake test` all pass with Phase 4 changes ✅
-  - Test: `bundle exec rubocop` 0 violations ✅
-  - Test: Coverage ≥ 80% line, ≥ 50% branch ✅
-  - Added 8 new tests (quality gates verification, git operations coverage)
-  - Coverage improved: 80.81% → 82.51% line (+1.7% during testing)
-  - **BUGS DISCOVERED** (記録してPhase 5以降で修正):
-    - [TODO-INFRASTRUCTURE-GIT-ERROR-HANDLING] `lib/pra/env.rb:188` - `get_timestamp` メソッドのエラーハンドリング不足
-      - Gitコマンド失敗時に空文字列を返すとTime.parse("")でArgumentError
-      - 影響範囲: traverse_submodules_and_validate, get_commit_hash
-      - テストケース: test/commands/env_test.rb:847-849, 851-853, 914-916, 918-920 (5 omitted tests)
-    - [TODO-INFRASTRUCTURE-GIT-ROBUSTNESS] `lib/pra/env.rb:156` - `traverse_submodules_and_validate` の堅牢性不足
-      - git rev-parse/git show失敗時のハンドリングなし
-      - サブモジュール存在チェック前にgitコマンド実行
-    - [TODO-INFRASTRUCTURE-TEST-GIT-TIMING] test/commands/env_test.rb - git -C アクセスタイミング問題
-      - git init直後のgit -C でHEAD参照に失敗する場合がある
-- [x] **GREEN**: Fix test code and re-run test suite ✅
-  - Fixed: Skipped 5 tests that require production code bug fixes (using `omit`)
-  - Re-run: `bundle exec rake test` → **135 tests, 257 assertions, 100% passed, 5 omissions**
-  - Verify: `bundle exec rubocop` → **0 violations**
-  - Verify: SimpleCov report → **80.81% line, 58.06% branch** (CI thresholds met: ≥75% line, ≥55% branch)
-- [x] **RUBOCOP**: Final check ✅ (0 violations)
-- [x] **REFACTOR**: N/A ✅
-- [x] **COMMIT**: 4 commits (29fa845, 20c82a9, af97975, 5938687) ✅
-- **QUALITY**: 135 tests, 257 assertions, 100% pass, 5 omissions, 0 RuboCop violations, 80.81% line, 58.06% branch ✅
-- **NOTE**: Coverage goal (85% line, 65% branch) not reached due to production code bugs preventing test execution. Critical bugs discovered and documented for Phase 4.4+ fixes.
-
-#### 4.4: Fix Bug #1 - get_timestamp error handling (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Write tests for get_timestamp error handling ✅
-  - Test: get_timestamp returns formatted timestamp (success case)
-  - Test: get_timestamp raises error when git command fails (error case)
-  - Commit: 8e450b6, e901eb3 (test fixes)
-- [x] **GREEN**: Add empty string check to get_timestamp ✅
-  - Implement: Check if timestamp_str.empty? and raise descriptive error (lib/pra/env.rb:177-179)
-  - Prevents: ArgumentError from Time.parse("")
-  - Commit: c0c406e
-- [x] **TEST ENVIRONMENT FIX**: Resolved git commit signing issue ✅
-  - Problem: Environment git config enabled commit signing, blocking test commits
-  - Solution: Add `git config commit.gpgsign false` in test setup
-  - Commit: 156ecf0, de040ec
-- [x] **RUBOCOP**: 0 violations ✅
-- [x] **REFACTOR**: Code is simple and clear, no refactoring needed ✅
-- [x] **COMMIT**: 3 commits total ✅
-- **QUALITY**: 136 tests, 260 assertions, 100% pass, 4 omissions, 0 RuboCop violations, 81.22% line, 58.51% branch ✅
-- **REMAINING BUGS**: 2 bugs still need fixes (get_commit_hash, traverse_submodules_and_validate)
-
-#### 4.5: Fix Bug #2 - get_commit_hash error handling (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **REFACTOR (PRE)**: Extract git setup to test helper ✅
-  - Helper: setup_test_git_repo in test_helper.rb (reduces duplication)
-  - Commit: 2dd38fe
-- [x] **RED**: Write tests for get_commit_hash error handling ✅
-  - Test: get_commit_hash returns formatted hash-timestamp (success case)
-  - Test: get_commit_hash raises error when git rev-parse fails (no git repo)
-  - Test: get_commit_hash raises error when commit does not exist
-  - Commit: 6fccd33
-  - Verified: ArgumentError from Time.parse("")
-- [x] **GREEN**: Add empty string checks to get_commit_hash ✅
-  - Implement: Check short_hash.empty? and timestamp_str.empty? (lib/pra/env.rb:143-150)
-  - Prevents: ArgumentError from Time.parse("")
-  - Commit: 0b8947e
-- [x] **RUBOCOP**: Auto-corrected 8 violations (string literals) ✅
-  - Commit: fba1da6
-- [x] **REFACTOR**: Code is simple and clear, no refactoring needed ✅
-- [x] **COMMIT**: 4 commits total ✅
-- **QUALITY**: 138 tests, 265 assertions, 100% pass, 3 omissions, 0 RuboCop violations, 82.02% line, 58.85% branch ✅
-- **REMAINING BUG**: 1 bug still needs fix (traverse_submodules_and_validate)
-
-#### 4.6: Fix Bug #3 - traverse_submodules git rev-parse error handling (Red → Green → RuboCop → Commit) ✅ COMPLETED
-- [x] **RED**: Write tests for traverse_submodules_and_validate ✅
-  - Test: Success case - returns info for all three levels (R2P2, esp32, picoruby)
-  - Test: Warning case - warns about 4th level submodules
-  - Test: Error case - raises error when git rev-parse fails
-  - Commit: ea5fcfb, df2548e
-  - Note: Success/warning tests passed immediately (get_timestamp already had error handling)
-- [x] **GREEN**: Add git rev-parse error handling to traverse_submodules ✅
-  - Implement: Check empty string for all 3 levels (lib/pra/env.rb:164, 174, 184)
-  - Prevents: Silent failures when git commands fail
-  - Commit: 2409320
-- [x] **RUBOCOP**: 0 violations ✅
-- [x] **REFACTOR**: Code is simple and clear, no refactoring needed ✅
-- [x] **COMMIT**: 3 commits total ✅
-- **QUALITY**: 139 tests, 277 assertions, 100% pass, 1 omission, 0 RuboCop violations, 84.86% line, 61.11% branch ✅
-- **ACHIEVEMENT**: All 3 infrastructure bugs fixed! Line coverage 84.86% (target 85%, only 0.14% away!)
+**Completion Summary**:
+- ✅ 4.1: Consolidated `ptrk_env/` directory structure (replaced `.cache/`, `build/`, `.picoruby-env.yml`)
+- ✅ 4.2: Environment name validation (`/^[a-z0-9_-]+$/`)
+- ✅ 4.3: Quality gate verification (integrated tests)
+- ✅ 4.4-4.6: Fixed 3 critical git operation bugs (get_timestamp, get_commit_hash, traverse_submodules)
+- **Final Metrics**: 139 tests, 277 assertions, 100% pass, 1 omission, 84.86% line coverage, 61.11% branch coverage
+- **Achievement**: Reached 84.86% line coverage (target 85%, only 0.14% away!)
 
 ---
 
