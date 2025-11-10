@@ -23,9 +23,17 @@ RuboCop::RakeTask.new
 # 開発時のデフォルトタスク：クイックにテストのみ実行
 task default: %i[test]
 
-# CI専用タスク：テスト + コード品質チェック
+# カバレッジ検証タスク（test実行後にcoverage.xmlが生成されていることを確認）
+desc "Validate SimpleCov coverage report was generated"
+task :coverage_validation do
+  coverage_file = File.join(Dir.pwd, "coverage", "coverage.xml")
+  abort "ERROR: SimpleCov coverage report not found at #{coverage_file}" unless File.exist?(coverage_file)
+  puts "✓ SimpleCov coverage report validated: #{coverage_file}"
+end
+
+# CI専用タスク：テスト + コード品質チェック + カバレッジ検証
 desc "Run tests with coverage checks and RuboCop linting (for CI)"
-task ci: %i[test rubocop]
+task ci: %i[test rubocop coverage_validation]
 
 # 品質チェック統合タスク
 desc "Run all quality checks (tests and linting)"
