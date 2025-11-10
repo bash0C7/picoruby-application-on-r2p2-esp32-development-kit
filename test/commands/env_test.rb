@@ -848,12 +848,13 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           # Create a minimal git repository with a commit
-          system('git init', out: File::NULL, err: File::NULL) || raise('git init failed')
-          system('git config user.email "test@example.com"', out: File::NULL, err: File::NULL)
-          system('git config user.name "Test User"', out: File::NULL, err: File::NULL)
+          system('git init', out: File::NULL) || raise('git init failed')
+          system('git config user.email "test@example.com"')
+          system('git config user.name "Test User"')
+          system('git config commit.gpgsign false') # Disable commit signing for tests
           File.write('test.txt', 'test')
-          system('git add .', out: File::NULL, err: File::NULL) || raise('git add failed')
-          system('git commit -m "test"', out: File::NULL, err: File::NULL) || raise('git commit failed')
+          system('git add .') || raise('git add failed')
+          system('git commit -m "test"', out: File::NULL) || raise('git commit failed')
 
           result = Pra::Env.get_timestamp(tmpdir)
           # Should return timestamp in YYYYMMDD_HHMMSS format
