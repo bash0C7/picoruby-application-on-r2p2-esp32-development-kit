@@ -849,7 +849,7 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "get_commit_hash returns formatted commit hash with timestamp" do
-      omit "TODO-INFRASTRUCTURE-GIT-ERROR-HANDLING: Requires error handling in get_timestamp (called by get_commit_hash)"
+      omit "TODO-INFRASTRUCTURE-GIT-ERROR-HANDLING: Requires get_timestamp error handling"
     end
 
     test "clone_with_submodules raises error when submodule init fails" do
@@ -916,7 +916,7 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "traverse_submodules_and_validate warns about 4th level submodules" do
-      omit "TODO-INFRASTRUCTURE-GIT-ROBUSTNESS: Requires error handling in traverse_submodules_and_validate (lib/pra/env.rb:156)"
+      omit "TODO-INFRASTRUCTURE-GIT-ROBUSTNESS: Requires traverse_submodules error handling"
     end
   end
 
