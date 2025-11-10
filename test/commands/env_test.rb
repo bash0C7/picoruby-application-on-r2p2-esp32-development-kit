@@ -845,7 +845,41 @@ class PraCommandsEnvTest < PraTestCase
   # Pra::Env Git operation tests
   sub_test_case "Env module git operations" do
     test "get_timestamp returns formatted timestamp" do
-      omit "TODO-INFRASTRUCTURE-GIT-ERROR-HANDLING: Requires error handling in get_timestamp"
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Create a minimal git repository with a commit
+          system('git init > /dev/null 2>&1')
+          system('git config user.email "test@example.com" > /dev/null 2>&1')
+          system('git config user.name "Test User" > /dev/null 2>&1')
+          File.write('test.txt', 'test')
+          system('git add . > /dev/null 2>&1')
+          system('git commit -m "test" > /dev/null 2>&1')
+
+          result = Pra::Env.get_timestamp(tmpdir)
+          # Should return timestamp in YYYYMMDD_HHMMSS format
+          assert_match(/^\d{8}_\d{6}$/, result)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "get_timestamp raises error when git command fails" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Create a directory without git repository
+          # This will cause git command to fail and return empty string
+          assert_raise(RuntimeError, /Failed to get timestamp/) do
+            Pra::Env.get_timestamp(tmpdir)
+          end
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
     end
 
     test "get_commit_hash returns formatted commit hash with timestamp" do
