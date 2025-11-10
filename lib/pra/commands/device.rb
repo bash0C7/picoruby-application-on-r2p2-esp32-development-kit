@@ -10,8 +10,10 @@ module Pra
         true
       end
 
-      desc 'flash [ENV_NAME]', 'Flash firmware to ESP32'
-      def flash(env_name = 'current')
+      desc 'flash', 'Flash firmware to ESP32'
+      option :env, default: 'current', desc: 'Environment name'
+      def flash
+        env_name = options[:env]
         actual_env = resolve_env_name(env_name)
         validate_and_get_r2p2_path(actual_env)
 
@@ -20,8 +22,10 @@ module Pra
         puts '✓ Flash completed'
       end
 
-      desc 'monitor [ENV_NAME]', 'Monitor ESP32 serial output'
-      def monitor(env_name = 'current')
+      desc 'monitor', 'Monitor ESP32 serial output'
+      option :env, default: 'current', desc: 'Environment name'
+      def monitor
+        env_name = options[:env]
         actual_env = resolve_env_name(env_name)
         validate_and_get_r2p2_path(actual_env)
 
@@ -30,8 +34,10 @@ module Pra
         delegate_to_r2p2('monitor', env_name)
       end
 
-      desc 'build [ENV_NAME]', 'Build firmware for ESP32'
-      def build(env_name = 'current')
+      desc 'build', 'Build firmware for ESP32'
+      option :env, default: 'current', desc: 'Environment name'
+      def build
+        env_name = options[:env]
         actual_env = resolve_env_name(env_name)
         validate_and_get_r2p2_path(actual_env)
 
@@ -40,8 +46,10 @@ module Pra
         puts '✓ Build completed'
       end
 
-      desc 'setup_esp32 [ENV_NAME]', 'Setup ESP32 build environment'
-      def setup_esp32(env_name = 'current')
+      desc 'setup_esp32', 'Setup ESP32 build environment'
+      option :env, default: 'current', desc: 'Environment name'
+      def setup_esp32
+        env_name = options[:env]
         actual_env = resolve_env_name(env_name)
         validate_and_get_r2p2_path(actual_env)
 
@@ -50,17 +58,20 @@ module Pra
         puts '✓ ESP32 setup completed'
       end
 
-      desc 'tasks [ENV_NAME]', 'Show available R2P2-ESP32 tasks'
-      def tasks(env_name = 'current')
+      desc 'tasks', 'Show available R2P2-ESP32 tasks'
+      option :env, default: 'current', desc: 'Environment name'
+      def tasks
+        env_name = options[:env]
         actual_env = resolve_env_name(env_name)
         validate_and_get_r2p2_path(actual_env)
 
         show_available_tasks(env_name)
       end
 
-      desc 'help [ENV_NAME]', 'Show available R2P2-ESP32 tasks (alias for tasks)'
-      def help(env_name = 'current')
-        tasks(env_name)
+      desc 'help', 'Show available R2P2-ESP32 tasks (alias for tasks)'
+      option :env, default: 'current', desc: 'Environment name'
+      def help
+        tasks
       end
 
       # 明示的に定義されていないコマンドをRakeタスクに透過的に委譲
@@ -68,7 +79,8 @@ module Pra
         # Thorの内部メソッド呼び出しは無視
         return super if method_name.to_s.start_with?('_')
 
-        env_name = args.first || 'current'
+        # Parse --env option from args
+        env_name = parse_env_from_args(args) || 'current'
         actual_env = resolve_env_name(env_name)
         r2p2_path = validate_and_get_r2p2_path(actual_env)
 
@@ -101,6 +113,22 @@ module Pra
       end
 
       private
+
+      # --env option を args から抽出
+      def parse_env_from_args(args)
+        return nil if args.empty?
+
+        # 連続する2つのarg: ['--env', 'value'] または 1つのarg: ['--env=value']
+        args.each_with_index do |arg, index|
+          if arg == '--env' && args[index + 1]
+            return args[index + 1]
+          elsif arg.start_with?('--env=')
+            return arg.split('=', 2)[1]
+          end
+        end
+
+        nil
+      end
 
       # 利用可能なR2P2-ESP32タスクを表示
       def show_available_tasks(env_name)
