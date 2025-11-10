@@ -1,5 +1,6 @@
 require "bundler/gem_tasks"
 require "rake/testtask"
+require "English"
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
@@ -27,7 +28,7 @@ end
 desc "Run RuboCop with auto-correction"
 task "rubocop:fix" do
   system("bundle exec rubocop --auto-correct-all")
-  exit $?.exitstatus unless $?.success?
+  exit $CHILD_STATUS.exitstatus unless $CHILD_STATUS.success?
 end
 
 # 開発時のデフォルトタスク：クイックにテストのみ実行
