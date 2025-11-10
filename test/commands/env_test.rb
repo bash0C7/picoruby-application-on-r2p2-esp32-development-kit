@@ -1029,6 +1029,16 @@ class PraCommandsEnvTest < PraTestCase
         assert_match(/4th level/, warnings.first)
       end
     end
+
+    test "traverse_submodules_and_validate raises error when git rev-parse fails" do
+      Dir.mktmpdir do |tmpdir|
+        # Create directory without git repo
+        error = assert_raise(RuntimeError) do
+          Pra::Env.traverse_submodules_and_validate(tmpdir)
+        end
+        assert_match(/Failed to get/, error.message)
+      end
+    end
   end
 
   # env patch operations (patch_export, patch_apply, patch_diff)
