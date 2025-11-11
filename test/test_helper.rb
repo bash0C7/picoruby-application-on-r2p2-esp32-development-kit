@@ -160,6 +160,35 @@ module SystemCommandMocking
   # Store original Kernel#system before refinement
   ORIGINAL_SYSTEM = Kernel.instance_method(:system)
 
+  # Command handler methods (extracted to reduce system() complexity)
+  def self.handle_git_clone_command(cmd, mock_context)
+    mock_context[:call_count][:clone] += 1
+    return false if mock_context[:fail_clone]
+
+    # Create dummy git repository at destination path
+    if cmd =~ /git clone.* (\S+)\s*$/
+      dest_path = ::Regexp.last_match(1).gsub(/['"]/, "")
+      FileUtils.mkdir_p(dest_path)
+      FileUtils.mkdir_p(File.join(dest_path, ".git"))
+    end
+    true
+  end
+
+  def self.handle_git_checkout_command(mock_context)
+    mock_context[:call_count][:checkout] += 1
+    !mock_context[:fail_checkout]
+  end
+
+  def self.handle_git_submodule_command(mock_context)
+    mock_context[:call_count][:submodule] += 1
+    !mock_context[:fail_submodule]
+  end
+
+  def self.handle_rake_command(mock_context)
+    mock_context[:call_count][:rake] += 1
+    !mock_context[:fail_rake]
+  end
+
   # Scoped Kernel#system override using Refinement
   # This approach is CI-compatible (no global state pollution)
   module SystemRefinement
@@ -170,47 +199,13 @@ module SystemCommandMocking
         return SystemCommandMocking::ORIGINAL_SYSTEM.bind_call(self, *args) unless mock_context
 
         cmd = args.join(" ")
-
-        # Track all system calls
         mock_context[:commands_executed] << cmd
 
-        # Mock git clone
-        if cmd.include?("git clone")
-          mock_context[:call_count][:clone] += 1
-          return false if mock_context[:fail_clone]
-
-          # Create dummy git repository at destination path
-          if cmd =~ /git clone.* (\S+)\s*$/
-            dest_path = ::Regexp.last_match(1).gsub(/['"]/, "")
-            FileUtils.mkdir_p(dest_path)
-            FileUtils.mkdir_p(File.join(dest_path, ".git"))
-          end
-          return true
-        end
-
-        # Mock git checkout
-        if cmd.include?("git checkout")
-          mock_context[:call_count][:checkout] += 1
-          return false if mock_context[:fail_checkout]
-
-          return true
-        end
-
-        # Mock git submodule update
-        if cmd.include?("git submodule update")
-          mock_context[:call_count][:submodule] += 1
-          return false if mock_context[:fail_submodule]
-
-          return true
-        end
-
-        # Mock rake commands (for device_test.rb)
-        if cmd.include?("rake")
-          mock_context[:call_count][:rake] += 1
-          return false if mock_context[:fail_rake]
-
-          return true
-        end
+        # Dispatch to appropriate command handler
+        return SystemCommandMocking.handle_git_clone_command(cmd, mock_context) if cmd.include?("git clone")
+        return SystemCommandMocking.handle_git_checkout_command(mock_context) if cmd.include?("git checkout")
+        return SystemCommandMocking.handle_git_submodule_command(mock_context) if cmd.include?("git submodule update")
+        return SystemCommandMocking.handle_rake_command(mock_context) if cmd.include?("rake")
 
         # Fallback to original system() for other commands
         SystemCommandMocking::ORIGINAL_SYSTEM.bind_call(self, *args)

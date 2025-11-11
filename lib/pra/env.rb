@@ -266,21 +266,16 @@ module Pra
       # pra gem は R2P2-ESP32 ディレクトリで Rake コマンドを実行するのみ
       # （直接 ESP-IDF に依存しない - CI 環境で ESP-IDF がない場合も対応可能）
       def execute_with_esp_env(command, working_dir = nil)
-        if working_dir
-          Dir.chdir(working_dir) do
-            success = system(command)
-            unless success
-              exit_status = $CHILD_STATUS.exitstatus if $CHILD_STATUS
-              raise "Command failed (exit status: #{exit_status || 'unknown'}): #{command} (in #{working_dir})"
-            end
-          end
-        else
+        execute_block = lambda do
           success = system(command)
-          unless success
-            exit_status = $CHILD_STATUS.exitstatus if $CHILD_STATUS
-            raise "Command failed (exit status: #{exit_status || 'unknown'}): #{command}"
-          end
+          return if success
+
+          exit_status = $CHILD_STATUS&.exitstatus || "unknown"
+          location = working_dir ? " (in #{working_dir})" : ""
+          raise "Command failed (exit status: #{exit_status}): #{command}#{location}"
         end
+
+        working_dir ? Dir.chdir(working_dir, &execute_block) : execute_block.call
       end
     end
   end
