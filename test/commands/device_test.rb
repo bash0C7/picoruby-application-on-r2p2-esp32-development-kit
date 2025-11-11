@@ -22,7 +22,11 @@ require "stringio"
 class PraCommandsDeviceTest < PraTestCase
   include SystemCommandMocking
 
-  using SystemCommandMocking::SystemRefinement
+  # NOTE: SystemCommandMocking::SystemRefinement is NOT used in device_test.rb
+  # - Refinement-based system() mocking doesn't work across lexical scopes
+  # - device_test.rb uses with_esp_env_mocking instead (mocks Pra::Env.execute_with_esp_env)
+  # - See: test_helper.rb with_esp_env_mocking for device test mocking strategy
+
   # device flash コマンドのテスト
   sub_test_case "device flash command" do
     test "raises error when environment not found" do
