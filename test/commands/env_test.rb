@@ -8,7 +8,12 @@ require "stringio"
 class PraCommandsEnvTest < PraTestCase
   include SystemCommandMocking
 
-  using SystemCommandMocking::SystemRefinement
+  # NOTE: SystemCommandMocking::SystemRefinement is NOT used at class level
+  # - Using Refinement at class level breaks test-unit registration globally
+  # - This causes ALL tests in env_test.rb (66 tests) to fail to register
+  # - 3 tests that need system() mocking are already omitted (clone_repo error tests)
+  # - Other tests don't need system() mocking and work without Refinement
+
   # env list コマンドのテスト
   sub_test_case "env list command" do
     test "lists all environments in ptrk_user_root" do
