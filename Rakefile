@@ -287,7 +287,7 @@ end
 # ============================================================================
 
 # Default: Run all tests (main suite + device suite)
-# NOTE: User can still run individual tests with: rake test SPEC=test/path/file_test.rb
+# NOTE: Run individual test files with: bundle exec ruby test/path/file_test.rb
 desc "Default task: Run all tests (main + device suites) [165 tests total]"
 task default: %i[test:all] do
   puts "\n✓ All 165 tests completed successfully (151 main + 14 device)"
