@@ -916,7 +916,7 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "clone_with_submodules raises error when submodule init fails" do
-      omit "TODO-INFRASTRUCTURE-GIT-ERROR-HANDLING: Requires proper mock setup for system command testing"
+      omit "[TODO-INFRASTRUCTURE-DEVICE-TEST]: See TODO.md for details on system command mocking setup"
     end
 
     test "fetch_remote_commit returns commit hash on success" do
@@ -1194,12 +1194,13 @@ class PraCommandsEnvTest < PraTestCase
     end
   end
 
-  # ⚠️ [TODO-INFRASTRUCTURE-SYSTEM-MOCKING-TESTS]
+  # ⚠️ [TODO-INFRASTRUCTURE-DEVICE-TEST]
   # Branch coverage tests: Uncovered error paths and conditionals
   # NOTE: Now using MockExecutor dependency injection (Phase 0 refactor)
   # - Replaces Refinement-based mocking which had lexical scope issues
   # - Tests inject MockExecutor to control command success/failure
   # - Clean, testable, no global state pollution
+  # - See TODO.md for permanent fix details
 
   sub_test_case "branch coverage: clone_repo error handling" do
     test "clone_repo raises error when git clone fails" do
