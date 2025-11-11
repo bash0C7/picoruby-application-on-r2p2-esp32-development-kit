@@ -161,7 +161,7 @@ module SystemCommandMocking
   ORIGINAL_SYSTEM = Kernel.instance_method(:system)
 
   # Command handler methods (extracted to reduce system() complexity)
-  def self.handle_git_clone_command(cmd, mock_context)
+  def self.process_git_clone_command(cmd, mock_context)
     mock_context[:call_count][:clone] += 1
     return false if mock_context[:fail_clone]
 
@@ -174,17 +174,17 @@ module SystemCommandMocking
     true
   end
 
-  def self.handle_git_checkout_command(mock_context)
+  def self.process_git_checkout_command(mock_context)
     mock_context[:call_count][:checkout] += 1
     !mock_context[:fail_checkout]
   end
 
-  def self.handle_git_submodule_command(mock_context)
+  def self.process_git_submodule_command(mock_context)
     mock_context[:call_count][:submodule] += 1
     !mock_context[:fail_submodule]
   end
 
-  def self.handle_rake_command(mock_context)
+  def self.process_rake_command(mock_context)
     mock_context[:call_count][:rake] += 1
     !mock_context[:fail_rake]
   end
@@ -202,10 +202,10 @@ module SystemCommandMocking
         mock_context[:commands_executed] << cmd
 
         # Dispatch to appropriate command handler
-        return SystemCommandMocking.handle_git_clone_command(cmd, mock_context) if cmd.include?("git clone")
-        return SystemCommandMocking.handle_git_checkout_command(mock_context) if cmd.include?("git checkout")
-        return SystemCommandMocking.handle_git_submodule_command(mock_context) if cmd.include?("git submodule update")
-        return SystemCommandMocking.handle_rake_command(mock_context) if cmd.include?("rake")
+        return SystemCommandMocking.process_git_clone_command(cmd, mock_context) if cmd.include?("git clone")
+        return SystemCommandMocking.process_git_checkout_command(mock_context) if cmd.include?("git checkout")
+        return SystemCommandMocking.process_git_submodule_command(mock_context) if cmd.include?("git submodule update")
+        return SystemCommandMocking.process_rake_command(mock_context) if cmd.include?("rake")
 
         # Fallback to original system() for other commands
         SystemCommandMocking::ORIGINAL_SYSTEM.bind_call(self, *args)
