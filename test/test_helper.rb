@@ -27,6 +27,9 @@ require "pra"
 require "test-unit"
 require "tmpdir"
 
+# Ptrk as alias for Pra (for tests using Ptrk namespace)
+Ptrk = Pra unless defined?(Ptrk)
+
 # テスト用 ptrk_user_root を一時ディレクトリで設定
 # これにより、テスト実行中に gem root に汚染がないようにする
 ENV["PTRK_USER_ROOT"] = Dir.mktmpdir("ptrk_test_")
