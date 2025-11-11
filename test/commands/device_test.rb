@@ -7,7 +7,7 @@ require "stringio"
 # ⚠️  ONE TEST OMITTED (line 426-455)
 # ========================================================================
 # Test "help command displays available tasks" is omitted due to Thor + test-unit conflict
-# See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST-FRAMEWORK]
+# See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]
 #
 # Status:
 #   - 18 of 19 tests run successfully in CI ✓
@@ -439,8 +439,8 @@ class PraCommandsDeviceTest < PraTestCase
       # - This test causes 108 other tests to fail to register when loaded with full test suite
       # - Root cause: Thor help + capture_stdout + mocking context interferes with test-unit hooks
       # - Priority: LOW (display-only feature, non-critical functionality)
-      # - See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST-FRAMEWORK]
-      omit "Thor help command breaks test-unit registration - see TODO.md for details"
+      # - See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]
+      omit "Thor help command breaks test-unit registration - see TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]"
 
       with_fresh_project_root do
         Dir.mktmpdir do |tmpdir|

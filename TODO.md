@@ -2,35 +2,102 @@
 
 ## 🚀 Active Development
 
-### Phase 1: Device Integration (Pending)
+### Phase 0: Command Name Refactoring (pra → picotorokko)
 
-**Goal**: Apply Executor pattern to device.rb and device_test.rb for unified test execution
+**CRITICAL PRIORITY**: Complete migration of gem name from `pra` → `picotorokko` across 46 files
 
-**Tasks**:
-1. Refactor `lib/pra/commands/device.rb` to use executor dependency injection
-2. Update `test/commands/device_test.rb` to replace `with_esp_env_mocking` with MockExecutor
-3. Integrate device_test.rb into main test suite
-4. Verify all 165 tests pass (151 main + 14 device)
+**Goal**: Align codebase and documentation with new naming convention (picotorokko / ptrk command)
+
+#### Phase 0a: Module & Directory Refactoring
+
+**Tasks** (TDD cycles: 1-5 minutes each):
+
+1. Rename `lib/pra/` directory to `lib/picotorokko/`
+2. Update `module Pra` → `module Picotorokko` in all files
+3. Update all `require "pra/..."` → `require "picotorokko/..."`
+4. Update all test helper requires
+5. Verify all 197 tests pass after refactoring
 
 **Related Files**:
-- lib/pra/commands/device.rb
-- test/commands/device_test.rb
-- test/test_helper.rb (remove with_esp_env_mocking)
+- lib/pra.rb
+- lib/pra/version.rb
+- lib/pra/cli.rb
+- lib/pra/env.rb
+- lib/pra/executor.rb
+- lib/pra/patch_applier.rb
+- lib/pra/commands/*.rb (env.rb, device.rb, mrbgems.rb, rubocop.rb)
+- lib/pra/template/*.rb (engine.rb)
+- test/test_helper.rb
+- exe/ptrk
+- picoruby-application-on-r2p2-esp32-development-kit.gemspec
+
+#### Phase 0b: Command Example Updates
+
+**Tasks**:
+
+1. Update SPEC.md: `pra env show` → `ptrk env show` (58 references)
+2. Update `.picoruby-env.yml.example`: all command examples `pra` → `ptrk`
+3. Update `CONTRIBUTING.md`: "Contributing to pra" → "Contributing to picotorokko"
+4. Update `CHANGELOG.md`: Initial release message
+
+**Related Files**:
+- SPEC.md
+- .picoruby-env.yml.example
+- CONTRIBUTING.md
+- CHANGELOG.md
+- docs/RUBOCOP_PICORUBY_GUIDE.md
+- docs/AST_TEMPLATE_ENGINE_SPEC.md
+
+#### Phase 0c: Configuration & Tooling
+
+**Tasks**:
+
+1. Update `.rubocop.yml`: `lib/pra/` → `lib/picotorokko/` in exclusion path
+2. Update `.claude/settings.local.json`: `pra` → `ptrk` command references
+3. Update `.github/workflows/release.yml`: version.rb path (pra → picotorokko)
+4. Update test file names & requires (pra_test.rb references)
+5. Run full test suite and verify 0 violations, 197 tests passing
+
+**Related Files**:
+- .rubocop.yml
+- .claude/settings.local.json
+- .github/workflows/release.yml
+- test/pra_test.rb
+- test/commands/mrbgems_test.rb
 
 ---
 
-## 📋 Optional Enhancements
+### Phase 1: Device Integration (Executor Pattern Application)
 
-### Test Coverage Targets (Low Priority)
+**Goal**: Apply Executor pattern to device.rb and device_test.rb for unified test execution
 
-**Current**: 85.86% line, 64.11% branch (exceeds minimum thresholds)
-**Ideal targets**: 90% line, 70% branch
-**Status**: Optional, not required for release
+**⚠️ Check for [TODO-INFRASTRUCTURE-DEVICE-TEST] markers before starting**
 
-**Potential coverage improvements**:
-- Add tests for edge cases in Executor classes
-- Expand device.rb error handling tests
-- Test template engines with complex YAML structures
+**Tasks**:
+1. Refactor `lib/picotorokko/commands/device.rb` to use executor dependency injection
+2. Update `test/commands/device_test.rb` to replace `with_esp_env_mocking` with MockExecutor
+3. Integrate device_test.rb into main test suite
+4. Verify all 197 tests pass with coverage ≥ 85% line / 60% branch
+
+**Related Files**:
+- lib/picotorokko/commands/device.rb
+- test/commands/device_test.rb
+- test/test_helper.rb
+
+---
+
+## [TODO-INFRASTRUCTURE-DEVICE-TEST]
+
+**Consolidated marker** for device test framework infrastructure issues:
+
+- **Context**: Thor help command breaks test-unit registration, requiring mock setup for system command testing
+- **Affected Tests**:
+  - test/commands/env_test.rb:919 (GIT-ERROR-HANDLING tests)
+  - test/commands/env_test.rb:1197 (SYSTEM-MOCKING-TESTS)
+  - test/commands/device_test.rb:10, 442 (DEVICE-TEST-FRAMEWORK)
+- **Current Workaround**: device_test.rb excluded from main suite, integrated via test:all task
+- **Permanent Fix**: Phase 1 will apply Executor pattern to remove mock helper dependencies
+- **Reference**: test/test_helper.rb:22
 
 ---
 
@@ -38,83 +105,50 @@
 
 ### ✅ Phase 0: Infrastructure & System Mocking (Session 6)
 
-**Completion Status**: ✅ **COMPLETE**
+**Status**: ✅ **COMPLETE**
 
-**What was done**:
 - Created Executor abstraction (ProductionExecutor, MockExecutor)
 - Refactored Pra::Env to use dependency injection
 - Re-enabled 3 git error handling tests
-- Unified test execution (rake, rake test, rake ci, rake test:all)
 - Coverage: 85.86% line, 64.11% branch
-
-**Key Commits**:
-- d8c2c89: Add Executor abstraction with Open3
-- 4b3397c: Refactor Env to use executor
-- 95f2caf: Re-enable 3 git error handling tests
-- 89ee6ae: Integrate device_test into default execution
-- 0f1c543: Update docs for individual test files
-
-**Documentation**:
-- See: docs/PHASE_0_EXECUTOR_ABSTRACTION.md
-
----
+- Reference: docs/PHASE_0_EXECUTOR_ABSTRACTION.md
 
 ### ✅ AST-Based Template Engine (Previous Session)
 
-**Completion Status**: ✅ **COMPLETE** (merged from origin/main)
+**Status**: ✅ **COMPLETE**
 
-**What was done**:
 - Implemented RubyTemplateEngine (Prism-based AST)
 - Implemented YamlTemplateEngine (Psych-based)
 - Implemented CTemplateEngine (String substitution)
-- Full test coverage for all engines
-- Integrated into mrbgems command
-
-**Key Commits**:
-- c411bd4: Integrate AST-Based Template Engine
-- 55664bf: Test RubyTemplateEngine
-- 9806bd7: Test YamlTemplateEngine and CTemplateEngine
-- f95f036: Add AST-compatible templates for mrbgem
-
-**Documentation**:
-- See: docs/AST_TEMPLATE_ENGINE_SPEC.md
-
----
+- Reference: docs/AST_TEMPLATE_ENGINE_SPEC.md
 
 ### ✅ Device Test Infrastructure Workaround (Session 5)
 
 **Status**: ✅ **WORKAROUND COMPLETE** (permanent fix deferred to Phase 1)
 
-**What was done**:
 - Separated device_test.rb from main suite to prevent Thor interference
 - Integrated via test:all and default rake task
 - Maintained 14 device tests without breaking main suite
 
-**Known Limitation**:
-- device_test.rb excluded from main test suite (temporary)
-- Permanent fix: Apply Executor pattern (scheduled for Phase 1)
-
 ---
 
-## 📚 Test Execution Summary
+## 📚 Test Execution & Quality Summary
 
 ### Current Status
+
 - **Main suite**: 183 tests ✓ (includes template engine tests)
-  - Core tests: 151
-  - Template engine tests: 32
 - **Device suite**: 14 tests ✓
 - **Total**: 197 tests (when running `rake` or `rake test:all`)
-- **Execution methods**:
-  - `rake` → runs all 197 tests (default)
-  - `rake test` → 183 main tests + template tests
-  - `rake test:all` → 197 tests with coverage
-  - `rake ci` → 183 main tests + RuboCop + coverage
-  - `bundle exec ruby test/path/file_test.rb` → individual file
+- **RuboCop**: 0 violations (27 files)
+- **Coverage**: 85.86% line, 64.11% branch (exceeds minimum thresholds)
 
-### Quality Gates
-- ✅ RuboCop: 0 violations (27 files)
-- ✅ Coverage: 85.86% line (from Phase 0), now tested with template engines
-- ✅ Tests: 197 passing, 0 failures
+### Execution Methods
+
+- `rake` → runs all 197 tests (default)
+- `rake test` → 183 main tests + template tests
+- `rake test:all` → 197 tests with coverage validation
+- `rake ci` → 183 main tests + RuboCop + coverage
+- `bundle exec ruby test/path/file_test.rb` → individual file
 
 ---
 

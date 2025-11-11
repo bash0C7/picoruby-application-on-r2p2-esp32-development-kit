@@ -19,7 +19,7 @@ SimpleCov.formatter = SimpleCov::Formatter::CoberturaFormatter
 
 # NOTE: SystemExit cleanup code removed - device_test.rb is excluded from test suite
 # If device_test.rb is re-enabled in the future, SystemExit handling must be implemented
-# See TODO.md "Fix device_test.rb Thor command argument handling" for details
+# See TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST] for details
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "pra"
