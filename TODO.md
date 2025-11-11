@@ -99,20 +99,22 @@
 ## 📚 Test Execution Summary
 
 ### Current Status
-- **Main suite**: 151 tests ✓
+- **Main suite**: 183 tests ✓ (includes template engine tests)
+  - Core tests: 151
+  - Template engine tests: 32
 - **Device suite**: 14 tests ✓
-- **Total**: 165 tests (when running `rake` or `rake test:all`)
+- **Total**: 197 tests (when running `rake` or `rake test:all`)
 - **Execution methods**:
-  - `rake` → runs all 165 tests (default)
-  - `rake test` → 151 main tests only
-  - `rake test:all` → 165 tests with coverage
-  - `rake ci` → 151 main tests + RuboCop + coverage
+  - `rake` → runs all 197 tests (default)
+  - `rake test` → 183 main tests + template tests
+  - `rake test:all` → 197 tests with coverage
+  - `rake ci` → 183 main tests + RuboCop + coverage
   - `bundle exec ruby test/path/file_test.rb` → individual file
 
 ### Quality Gates
 - ✅ RuboCop: 0 violations (27 files)
-- ✅ Coverage: 85.86% line, 64.11% branch (exceeds minimums: 75%/60%)
-- ✅ Tests: 165 passing, 0 failures
+- ✅ Coverage: 85.86% line (from Phase 0), now tested with template engines
+- ✅ Tests: 197 passing, 0 failures
 
 ---
 
