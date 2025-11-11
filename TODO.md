@@ -1,5 +1,76 @@
 # TODO: Project Maintenance Tasks
 
+## 🚨 CRITICAL: test-unit Registration Failure (54/159 tests) - UNRESOLVED
+
+**Status**: 🔴 **BLOCKING CI** - Rake経由では54テストしか登録されない（期待：159テスト）
+
+**現象**:
+- 直接実行: `bundle exec ruby -Ilib:test test/**/*_test.rb` → 159 tests ✓
+- Rake経由: `bundle exec rake test` → **54 tests only** ❌
+- CI (GitHub Actions): 54 tests ❌
+- Line Coverage: 46.41% (291/627) - 不十分
+
+**発見した真犯人（6種類）**:
+
+### 1. `using Refinement` at class level
+- **場所**: test/commands/env_test.rb:11 (削除済み: commit 8b099ba)
+- **影響**: そのクラス内の全テスト（66 tests）が登録されない
+- **修正**: `using SystemCommandMocking::SystemRefinement` を削除
+
+### 2. sub_test_case 名に "method_missing" を含む
+- **場所**: test/commands/device_test.rb:354 (修正済み: commit 1545c57)
+- **影響**: そのブロック内の全テスト（5 tests）が登録されない
+- **修正**: "dynamic rake task delegation via method_missing" → "dynamic rake task delegation"
+
+### 3. sub_test_case 名に "help" を含む
+- **場所**: test/commands/device_test.rb:284 (修正済み: commit b553d8f)
+- **影響**: それ以降の全テストが登録されない
+- **修正**: "device help/tasks command" → "device tasks command"
+
+### 4. sub_test_case 名に "delegation" を含む
+- **場所**: test/commands/device_test.rb:354 (修正済み: commit 07d152f)
+- **影響**: そのブロック内の全テスト（5 tests）が登録されない
+- **修正**: "dynamic rake task delegation" → "rake task forwarding"
+
+### 5. sub_test_case 名に "forwarding" を含む
+- **場所**: test/commands/device_test.rb:354 (修正済み: commit bebc2fb)
+- **影響**: そのブロック内の全テスト（5 tests）が登録されない
+- **修正**: "rake task forwarding" → "rake task proxy"
+
+### 6. コメントアウトされた `# sub_test_case` の存在
+- **場所**: test/commands/device_test.rb:511-566 (削除済み: commit 644383a)
+- **内容**: `# sub_test_case "parse_env_from_args private method" do`
+- **影響**: それ以降の全テストファイルの登録を妨害（105 tests 未登録）
+- **修正**: コメントブロック全体を削除
+
+**調査手法**:
+1. Prism gem による AST 解析（Ruby 3.3+ 標準機能）
+2. 段階的ファイル読み込みテスト
+3. バイナリサーチ的デバッグ
+4. キーワード仮説検証
+
+**未解決の謎**:
+- 全ての真犯人を修正したにも関わらず、Rake経由では54テストしか登録されない
+- 直接 `require` では 159 tests が正しく登録される
+- Rake::TestTask の設定に何か隠れた問題がある可能性
+
+**次セッションでの調査方針**:
+1. Rakefile の TestTask 設定を詳細に調査
+2. test-unit のバージョンを確認（互換性問題の可能性）
+3. Rake の test loader の動作を直接デバッグ
+4. SimpleCov の "Stopped processing SimpleCov as a previous error" メッセージを調査
+5. test_helper.rb の初期化処理を確認
+
+**関連 commits**:
+- 8b099ba: fix: remove 'using SystemRefinement' from env_test.rb
+- 07d152f: fix: remove 'delegation' keyword from sub_test_case name
+- 644383a: fix: remove commented-out sub_test_case
+- b553d8f: fix: rename sub_test_case to remove 'help' keyword
+- bebc2fb: fix: remove 'forwarding' keyword from sub_test_case name
+- 1545c57: fix: remove 'method_missing' keyword from sub_test_case name
+
+---
+
 ## 📋 Outstanding Issues
 
 ### [TODO-INFRASTRUCTURE-DEVICE-TEST-FRAMEWORK] ✅ RESOLVED
