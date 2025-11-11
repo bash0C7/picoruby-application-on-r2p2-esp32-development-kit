@@ -24,8 +24,8 @@ class PraCommandsDeviceTest < PraTestCase
 
   # NOTE: SystemCommandMocking::SystemRefinement is NOT used in device_test.rb
   # - Refinement-based system() mocking doesn't work across lexical scopes
-  # - device_test.rb uses with_esp_env_mocking instead (mocks Picotorokko::Env.execute_with_esp_env)
-  # - See: test_helper.rb with_esp_env_mocking for device test mocking strategy
+  # - device_test.rb uses with_mock_executor instead (dependency injection of MockExecutor)
+  # - See: test_helper.rb with_mock_executor for device test mocking strategy
 
   # device flash コマンドのテスト
   sub_test_case "device flash command" do
@@ -104,7 +104,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_mock_executor do |mock|
               output = capture_stdout do
                 Picotorokko::Commands::Device.start(['flash', '--env', 'test-env'])
               end
@@ -114,7 +114,7 @@ class PraCommandsDeviceTest < PraTestCase
               assert_match(/✓ Flash completed/, output)
 
               # コマンド実行の検証（rake flash が実行されたことを確認）
-              assert_equal(1, mock[:commands_executed].count { |cmd| cmd.include?('rake flash') })
+              assert_equal(1, mock.calls.count { |c| c[:command].include?('rake flash') })
             end
 
             # Directory change is handled by with_fresh_project_root
@@ -171,7 +171,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |_mock|
+            with_mock_executor do |_mock|
               output = capture_stdout do
                 Picotorokko::Commands::Device.start(['monitor', '--env', 'test-env'])
               end
@@ -217,7 +217,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |_mock|
+            with_mock_executor do |_mock|
               output = capture_stdout do
                 Picotorokko::Commands::Device.start(['build', '--env', 'test-env'])
               end
@@ -263,7 +263,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |_mock|
+            with_mock_executor do |_mock|
               output = capture_stdout do
                 Picotorokko::Commands::Device.start(['setup_esp32', '--env', 'test-env'])
               end
@@ -333,7 +333,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |_mock|
+            with_mock_executor do |_mock|
               output = capture_stdout do
                 Picotorokko::Commands::Device.start(['tasks', '--env', 'test-env'])
               end
@@ -361,7 +361,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |_mock|
+            with_mock_executor do |_mock|
               # custom_task が Rakefile に存在するため、method_missing で委譲される
               output = capture_stdout do
                 Picotorokko::Commands::Device.start(['custom_task', '--env', 'test-env'])
@@ -386,12 +386,19 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking(fail_command: true) do |_mock|
+            # Configure mock to fail for nonexistent task
+            mock = Picotorokko::MockExecutor.new
+            mock.set_result("rake nonexistent_task", fail: true, stderr: "rake aborted!")
+            original = Picotorokko::Env.executor
+            Picotorokko::Env.set_executor(mock)
+            begin
               assert_raise(SystemExit) do
                 capture_stdout do
                   Picotorokko::Commands::Device.start(['nonexistent_task', '--env', 'test-env'])
                 end
               end
+            ensure
+              Picotorokko::Env.set_executor(original)
             end
 
             # Directory change is handled by with_fresh_project_root
@@ -409,7 +416,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |_mock|
+            with_mock_executor do |_mock|
               # custom_task が Rakefile に存在するため、method_missing で委譲される
               # 環境名は --env で明示的に指定する（暗黙のカレント環境は存在しない）
               output = capture_stdout do
