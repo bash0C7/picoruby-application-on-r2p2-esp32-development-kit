@@ -1,16 +1,71 @@
 # TODO: Project Maintenance Tasks
 
-## 🚨 CRITICAL: test-unit Registration Failure (54/159 tests) - UNRESOLVED
+## 🚨 CRITICAL: test-unit Registration Failure (54/551 tests) - ROOT CAUSE UNDER INVESTIGATION
 
-**Status**: 🔴 **BLOCKING CI** - Rake経由では54テストしか登録されない（期待：159テスト）
+**Status**: 🔴 **BLOCKING CI** - Rake経由では54テストしか登録されない（期待：551テスト）
 
 **現象**:
-- 直接実行: `bundle exec ruby -Ilib:test test/**/*_test.rb` → 159 tests ✓
+- 個別実行: `test/*.rb` を単独実行 → 各ファイルで正常に登録 ✓
+  - cli_test.rb: 27 tests
+  - device_test.rb: 33 tests
+  - env_test.rb: 66 tests (test/commands/)
+  - mrbgems_test.rb: 97 tests
+  - rubocop_test.rb: 86 tests
+  - env_test.rb: 81 tests (test/)
+  - env_constants_test.rb: 62 tests
+  - pra_test.rb: 36 tests
+  - rake_task_extractor_test.rb: 63 tests
+  - **合計: 551 tests** ✓
+- 複数ファイルをRakefile で組み合わせ → 54 tests only ❌
 - Rake経由: `bundle exec rake test` → **54 tests only** ❌
 - CI (GitHub Actions): 54 tests ❌
-- Line Coverage: 46.41% (291/627) - 不十分
 
-**発見した真犯人（6種類）**:
+**[TODO-INFRASTRUCTURE-RAKE-TEST-DISCOVERY]** 根本原因：複数テストファイルのロード時にtest-unit が登録を破壊
+
+### 最新調査結果（Session 2）
+
+**バイナリサーチ結果**：
+- 左半分（4ファイル）：95テスト
+- 右半分（5ファイル）：59テスト
+- 全ファイル一緒：97テスト（mrbgems_test.rb だけ？）
+- **損失：497テスト（90%以上）**
+
+**問題の本質**：
+1. **ファイル毎の setup/teardown が複数ロード時に干渉**
+   - test_helper.rb の `Pra::Env.__send__(:remove_const, :PROJECT_ROOT)` が危険
+   - CACHE_DIR, PATCH_DIR などの定数は初期化時に固定されるため、PROJECT_ROOT の変更が反映されない
+   - 複数テストが同じ `Pra::Env` の状態を変更すると、定数解決が破壊される可能性
+
+2. **test-unit の複数ファイルロード機構の問題**
+   - 個別実行では成功するが、一緒にロードすると失敗
+   - test-unit のフック機構が、複数ファイルロード時に一部のテストを登録から漏らす
+
+### 実施した修正（暫定）
+- ✅ Rakefile に `.sort` を追加（ファイルロード順序を固定）
+- ✅ test_helper.rb の git diff subprocess を disabled（副作用排除）
+- ❌ **でも 54テストのままで改善されていない**
+
+### 次セッションでの正しい調査戦略
+
+**ユーザーの指摘**：「各テストが何を作成するか把握して、teardown で綺麗にする」
+
+**必要な修正**：
+1. `Pra::Env` をリファクター：定数ではなく**動的メソッド**に変更
+   - `PROJECT_ROOT` → `def self.project_root`
+   - `CACHE_DIR` → `def self.cache_dir`
+   - これにより PROJECT_ROOT の変更が自動的に反映される
+
+2. test/commands/ 内の各テストファイルが何を作成・削除しているか詳細調査
+   - ファイル毎の污染状態（グローバル変数、クラス変数、定数）をチェック
+   - テスト間の状態漏洩を検出
+
+3. test-unit v3 のバージョン検証とアップグレード検討
+   - 複数ファイルロード時の内部動作をデバッグ
+   - または最新版へのアップグレードで解決するか確認
+
+---
+
+**発見した旧レジストレーション破壊原因（6種類）**:
 
 ### 1. `using Refinement` at class level
 - **場所**: test/commands/env_test.rb:11 (削除済み: commit 8b099ba)
