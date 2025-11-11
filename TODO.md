@@ -4,53 +4,84 @@
 
 ### [TODO-INFRASTRUCTURE-DEVICE-TEST-FRAMEWORK] 🚨 HIGHEST PRIORITY - CI BLOCKER
 
-**Status**: ROOT CAUSE IDENTIFIED - Rake::TestTask breaks test-unit registration mechanism
+**Status**: ROOT CAUSE NARROWED DOWN - device_test.rb implementation breaks test-unit registration
 
 **Problem Summary**:
-- Including device_test.rb in Rake::TestTask causes only 59 tests to load (expected: 167 tests)
-- Direct `require` loads all 167 tests correctly ✓
-- Individual device tests run successfully (17 tests, 23 assertions, 0 errors) ✓
-- **CI fails with non-zero exit status** due to stderr pollution ✗
+- device_test.rb causes test-unit registration to fail completely
+- When device_test.rb is loaded: Only 17 tests register (device_test.rb's own tests)
+- When device_test.rb is excluded: 148 tests register normally ✓
+- **This is NOT a Rake::TestTask issue** - problem occurs with direct `ruby -e require` as well ❌
 
 **What is happening**:
-1. **Test Registration Failure**: When device_test.rb is included in FileList["test/**/*_test.rb"], test-unit's registration mechanism breaks
-   - Expected: 167 tests (148 existing + 19 device tests)
-   - Actual: 59 tests registered
-   - Missing: 108 tests silently fail to register
+1. **device_test.rb destroys test-unit's registration mechanism globally**
+   - device_test.rb alone: 17 tests ✓
+   - env_test.rb alone: 66 tests ✓
+   - env_test.rb → device_test.rb: **17 tests** (66 env tests disappear) ❌
+   - device_test.rb → env_test.rb: **17 tests** (66 env tests never register) ❌
+   - All test files: **59 tests** (108 tests missing) ❌
 
-2. **Stderr Pollution**: "test: raises error when build environment not found" outputs to stderr:
-   ```
-   rake aborted!
-   Don't know how to build task 'flash'
-   ```
+2. **Order-independent destruction**:
+   - Regardless of load order, only device_test.rb's 17 tests survive
+   - All other test files fail to register their tests
+   - Not a race condition - reproducible 100%
+
+3. **Stderr pollution is secondary issue**:
+   - "rake aborted! Don't know how to build task 'flash'" appears in stderr
    - Test itself passes (assert_raise catches the error)
-   - But stderr output causes CI to fail with exit 1
+   - stderr output causes CI to fail with exit 1
+   - But this is NOT the root cause of test registration failure
 
 **Why this happens**:
-1. **Rake::TestTask + test-unit incompatibility**: The combination of Rake's rake_test_loader.rb and test-unit's AutoRunner creates a registration conflict when device_test.rb is loaded
-2. **Execution environment difference**:
-   - Direct require: test-unit loads files in Ruby interpreter context → Works ✓
-   - Rake::TestTask: Uses rake_test_loader.rb → Breaks test registration ✗
-3. **Stderr from Thor/Rake**: Some code path in device.rb triggers Rake error messages that escape to stderr even though the test passes
+1. **device_test.rb contains code that breaks test-unit globally**:
+   - NOT the class definition (tested: minimal class works fine)
+   - NOT sub_test_case syntax (tested: works fine)
+   - NOT Thor.start calls (tested: works fine)
+   - NOT capture_stdout helper (tested: works fine)
+   - **Suspect: specific code within device_test.rb's 552 lines**
+
+2. **device.rb (production code) is INNOCENT**:
+   - Test that only requires device.rb: 149 tests ✓
+   - device.rb does not interfere with test registration
+
+3. **Rake::TestTask is INNOCENT**:
+   - Direct ruby execution shows same problem
+   - `ruby -Ilib:test -e "Dir.glob(...).each { |f| require f }"` → 59 tests
+   - This eliminates rake_test_loader.rb as the culprit
+
+**Investigation Results**:
+
+| Experiment | Command | Result | Conclusion |
+|-----------|---------|--------|------------|
+| device.rb only | `require 'pra/commands/device'` | 149 tests ✅ | device.rb is innocent |
+| device_test.rb only | `require 'test/commands/device_test'` | 17 tests ✅ | device_test works alone |
+| env_test → device_test | Sequential require | 17 tests ❌ | 66 env tests destroyed |
+| device_test → env_test | Sequential require | 17 tests ❌ | 66 env tests never register |
+| All tests via Rake::TestTask | `bundle exec rake test` | 59 tests ❌ | Not Rake-specific |
+| All tests via ruby | `ruby -e require all` | 59 tests ❌ | Rake is innocent |
+| Minimal device class | 10-line test class | 67 tests ✅ | Class structure is fine |
 
 **Current Workaround**:
-- `capture_stdout` now captures both stdout and stderr (commit 6ede610)
-- This suppresses stderr pollution for individual test runs
-- However, full test suite run (via Rake::TestTask) still shows errors
+- device_test.rb excluded from Rakefile (commit 5a8a5f9)
+- `capture_stdout` captures stderr to suppress rake errors (commit 6ede610)
+- Individual device tests can be run: `bundle exec ruby -Ilib:test test/commands/device_test.rb`
 
-**Tests affected** (currently OMITTED due to framework issues):
-- All 19 tests in device_test.rb are omitted from main test suite
-- See: test/commands/device_test.rb lines 14-421
+**Tests affected**:
+- 17 device tests in device_test.rb (552 lines)
+- When included, destroys 108 tests from other files
 
 **Priority**: 🚨 **CRITICAL** - Blocks:
-1. CI pipeline (exit status non-zero)
+1. CI pipeline (cannot include device tests)
 2. device.rb coverage expansion (currently 51.35%)
-3. Full test suite execution (missing 108 tests)
+3. Full test suite integrity (108 tests missing when device_test included)
 
 **Next Steps**:
-1. Implement custom test task (Option B below) to bypass Rake::TestTask
-2. OR: Deeply investigate rake_test_loader.rb + test-unit AutoRunner interaction
-3. Re-enable device tests once framework issue is resolved
+1. **Binary search device_test.rb** to find exact line(s) causing test registration failure
+   - Split file in half, test each part
+   - Narrow down to specific test case or helper method
+   - Identify what global state is being corrupted
+2. **Fix root cause** in device_test.rb implementation
+3. **Re-enable in CI** once fixed
+4. Alternative: Implement custom test task (Option B) as temporary workaround
 
 ---
 
