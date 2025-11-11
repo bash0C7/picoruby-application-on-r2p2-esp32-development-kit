@@ -245,32 +245,4 @@ module SystemCommandMocking
       Picotorokko::Env.set_executor(original)
     end
   end
-
-  # Helper method to mock Picotorokko::Env.execute_with_esp_env for device tests
-  # Usage: with_esp_env_mocking { |mock| ... }
-  # This mocks execute_with_esp_env to track commands instead of executing them
-  def with_esp_env_mocking(fail_command: false)
-    mock_context = {
-      commands_executed: [],
-      fail_command: fail_command
-    }
-
-    Thread.current[:esp_env_mock_context] = mock_context
-
-    original_method = Picotorokko::Env.method(:execute_with_esp_env)
-    Picotorokko::Env.define_singleton_method(:execute_with_esp_env) do |command, working_dir = nil|
-      ctx = Thread.current[:esp_env_mock_context]
-      return original_method.call(command, working_dir) unless ctx
-
-      ctx[:commands_executed] << command
-      raise "Command failed: #{command}" if ctx[:fail_command]
-    end
-
-    begin
-      yield(mock_context)
-    ensure
-      Thread.current[:esp_env_mock_context] = nil
-      Picotorokko::Env.define_singleton_method(:execute_with_esp_env, original_method)
-    end
-  end
 end

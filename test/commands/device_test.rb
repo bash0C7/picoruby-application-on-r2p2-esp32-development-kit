@@ -457,7 +457,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |_mock|
+            with_mock_executor do |_mock|
               output = capture_stdout do
                 Picotorokko::Commands::Device.start(['help', '--env', 'test-env'])
               end
