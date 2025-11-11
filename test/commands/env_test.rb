@@ -1207,7 +1207,7 @@ class PraCommandsEnvTest < PraTestCase
             error = assert_raise(RuntimeError) do
               Pra::Env.clone_repo('https://github.com/test/repo.git', 'dest', 'abc1234')
             end
-            assert_match(/Failed to clone repository/, error.message)
+            assert_match(/Command failed.*git clone/, error.message)
             assert_equal(1, mock[:call_count][:clone])
           end
         ensure
@@ -1226,7 +1226,7 @@ class PraCommandsEnvTest < PraTestCase
             error = assert_raise(RuntimeError) do
               Pra::Env.clone_repo('https://github.com/test/repo.git', 'dest', 'abc1234')
             end
-            assert_match(/Failed to checkout commit/, error.message)
+            assert_match(/Command failed.*git checkout/, error.message)
             # clone should be called successfully
             assert_equal(1, mock[:call_count][:clone])
             # checkout should be attempted (counter increments before fail check)
@@ -1249,7 +1249,7 @@ class PraCommandsEnvTest < PraTestCase
             error = assert_raise(RuntimeError) do
               Pra::Env.clone_with_submodules('https://github.com/test/repo.git', 'dest', 'abc1234')
             end
-            assert_match(/Failed to initialize submodules/, error.message)
+            assert_match(/Command failed.*git submodule/, error.message)
             assert_equal(1, mock[:call_count][:clone])
             assert_equal(1, mock[:call_count][:submodule])
           end

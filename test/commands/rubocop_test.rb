@@ -171,11 +171,12 @@ class PraCommandsRubocopTest < PraTestCase
           rubocop_cmd = Pra::Commands::Rubocop.new
           rubocop_cmd.define_singleton_method(:system) { |_cmd| false }
 
-          assert_raises(SystemExit) do
+          error = assert_raises(RuntimeError) do
             capture_stdout do
               rubocop_cmd.update
             end
           end
+          assert_match(/Command failed.*ruby.*update_methods\.rb/, error.message)
         ensure
           Dir.chdir(original_dir)
         end
