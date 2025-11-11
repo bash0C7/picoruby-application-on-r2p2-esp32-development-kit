@@ -8,14 +8,14 @@ Gem::Specification.new do |spec|
   spec.email = ["ksb.4038.nullpointer+github@gmail.com"]
 
   spec.summary = "Multi-version build system for ESP32 + PicoRuby development"
-  spec.description = "pra is a multi-version build system for ESP32 + PicoRuby development that manages multiple versions of R2P2-ESP32 and its nested submodules in parallel, allowing easy switching and validation across versions.\n\nNOTE: This gem targets Ruby 3.4+ where frozen_string_literal is the default behavior. Ruby 3.3 is partially supported for legacy environments."
-  spec.homepage = "https://github.com/bash0C7/picoruby-application-on-r2p2-esp32-development-kit"
+  spec.description = "picotorokko is a multi-version build system for ESP32 + PicoRuby development that manages multiple versions of R2P2-ESP32 and its nested submodules in parallel, allowing easy switching and validation across versions.\n\nNOTE: This gem targets Ruby 3.4+ where frozen_string_literal is the default behavior. Ruby 3.3 is partially supported for legacy environments."
+  spec.homepage = "https://github.com/bash0C7/picotorokko"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/bash0C7/picoruby-application-on-r2p2-esp32-development-kit"
-  spec.metadata["changelog_uri"] = "https://github.com/bash0C7/picoruby-application-on-r2p2-esp32-development-kit/blob/main/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://github.com/bash0C7/picotorokko"
+  spec.metadata["changelog_uri"] = "https://github.com/bash0C7/picotorokko/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   # Specify which files should be added to the gem when it is released.
