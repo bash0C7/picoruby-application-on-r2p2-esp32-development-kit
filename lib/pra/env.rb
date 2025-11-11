@@ -266,7 +266,7 @@ module Pra
       # pra gem は R2P2-ESP32 ディレクトリで Rake コマンドを実行するのみ
       # （直接 ESP-IDF に依存しない - CI 環境で ESP-IDF がない場合も対応可能）
       def execute_with_esp_env(command, working_dir = nil)
-        execute_block = lambda do
+        execute_block = lambda do |_dir = nil|
           success = system(command)
           return if success
 
