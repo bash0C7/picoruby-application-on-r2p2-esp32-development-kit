@@ -4,84 +4,89 @@
 
 ### [TODO-INFRASTRUCTURE-DEVICE-TEST-FRAMEWORK] 🚨 HIGHEST PRIORITY - CI BLOCKER
 
-**Status**: ROOT CAUSE NARROWED DOWN - device_test.rb implementation breaks test-unit registration
+**Status**: 🎯 **CULPRIT IDENTIFIED** - Specific test case at line 426-448 breaks test-unit registration
 
 **Problem Summary**:
-- device_test.rb causes test-unit registration to fail completely
-- When device_test.rb is loaded: Only 17 tests register (device_test.rb's own tests)
-- When device_test.rb is excluded: 148 tests register normally ✓
-- **This is NOT a Rake::TestTask issue** - problem occurs with direct `ruby -e require` as well ❌
+- ONE specific test in device_test.rb destroys test-unit's registration mechanism
+- Culprit: `test "help command displays available tasks"` (lines 426-448)
+- When this test is loaded: test-unit registration fails globally
+- When this test is excluded: All tests work normally ✓
+
+**Binary Search Results** (19 total tests in device_test.rb):
+- ✅ **18 tests INNOCENT**: All other tests work perfectly
+- ❌ **1 test GUILTY**: Line 426-448 `test "help command displays available tasks"`
 
 **What is happening**:
-1. **device_test.rb destroys test-unit's registration mechanism globally**
-   - device_test.rb alone: 17 tests ✓
-   - env_test.rb alone: 66 tests ✓
-   - env_test.rb → device_test.rb: **17 tests** (66 env tests disappear) ❌
-   - device_test.rb → env_test.rb: **17 tests** (66 env tests never register) ❌
-   - All test files: **59 tests** (108 tests missing) ❌
+1. **The guilty test case (lines 426-448)**:
+   ```ruby
+   test "help command displays available tasks" do
+     with_fresh_project_root do
+       Dir.mktmpdir do |tmpdir|
+         Dir.chdir(tmpdir)
+         setup_test_environment('test-env')
+         with_esp_env_mocking do |_mock|
+           output = capture_stdout do
+             Pra::Commands::Device.start(['help', '--env', 'test-env'])  # ← THIS BREAKS REGISTRATION
+           end
+           assert_match(/Available R2P2-ESP32 tasks for environment: test-env/, output)
+         end
+       end
+     end
+   end
+   ```
 
-2. **Order-independent destruction**:
-   - Regardless of load order, only device_test.rb's 17 tests survive
-   - All other test files fail to register their tests
-   - Not a race condition - reproducible 100%
+2. **Why this specific test breaks registration**:
+   - Calls **Thor's `help` command** via `Pra::Commands::Device.start(['help', ...])`
+   - Combined with `with_fresh_project_root` + `with_esp_env_mocking` + `capture_stdout`
+   - Thor's help mechanism interferes with test-unit's test registration hooks
+   - This test itself doesn't register (0 tests when run alone)
+   - When loaded with other tests, destroys registration globally (108 tests missing)
 
-3. **Stderr pollution is secondary issue**:
-   - "rake aborted! Don't know how to build task 'flash'" appears in stderr
-   - Test itself passes (assert_raise catches the error)
-   - stderr output causes CI to fail with exit 1
-   - But this is NOT the root cause of test registration failure
+3. **Verification experiments**:
+   - This test alone: **0 tests** (doesn't even register itself) ❌
+   - This test + 2 dummy tests: **2 tests** (only dummy tests register) ❌
+   - 18 other device tests: **All register correctly** ✅
+   - Thor `help` without sub_test_case: **Works fine** ✅
+   - Thor `help` in sub_test_case with full setup: **Breaks registration** ❌
 
-**Why this happens**:
-1. **device_test.rb contains code that breaks test-unit globally**:
-   - NOT the class definition (tested: minimal class works fine)
-   - NOT sub_test_case syntax (tested: works fine)
-   - NOT Thor.start calls (tested: works fine)
-   - NOT capture_stdout helper (tested: works fine)
-   - **Suspect: specific code within device_test.rb's 552 lines**
+**Why other tests work**:
+- Thor commands (flash, monitor, build, setup_esp32, tasks): ✅ No problem
+- method_missing delegation tests: ✅ No problem
+- Direct Thor instantiation tests: ✅ No problem
+- **ONLY `help` command in this specific context breaks test-unit** ❌
 
-2. **device.rb (production code) is INNOCENT**:
-   - Test that only requires device.rb: 149 tests ✓
-   - device.rb does not interfere with test registration
+**Root Cause Analysis**:
+- Thor's `help` command has special behavior (exits early, manipulates output)
+- When captured via `capture_stdout` inside `with_esp_env_mocking` + `with_fresh_project_root`
+- Interferes with test-unit's `at_exit` hooks or test registration mechanism
+- This is a **Thor + test-unit interaction bug** in the test code itself
 
-3. **Rake::TestTask is INNOCENT**:
-   - Direct ruby execution shows same problem
-   - `ruby -Ilib:test -e "Dir.glob(...).each { |f| require f }"` → 59 tests
-   - This eliminates rake_test_loader.rb as the culprit
-
-**Investigation Results**:
-
-| Experiment | Command | Result | Conclusion |
-|-----------|---------|--------|------------|
-| device.rb only | `require 'pra/commands/device'` | 149 tests ✅ | device.rb is innocent |
-| device_test.rb only | `require 'test/commands/device_test'` | 17 tests ✅ | device_test works alone |
-| env_test → device_test | Sequential require | 17 tests ❌ | 66 env tests destroyed |
-| device_test → env_test | Sequential require | 17 tests ❌ | 66 env tests never register |
-| All tests via Rake::TestTask | `bundle exec rake test` | 59 tests ❌ | Not Rake-specific |
-| All tests via ruby | `ruby -e require all` | 59 tests ❌ | Rake is innocent |
-| Minimal device class | 10-line test class | 67 tests ✅ | Class structure is fine |
+**Investigation Timeline**:
+| Step | Action | Result |
+|------|--------|--------|
+| 1 | Identified device_test.rb as culprit | 17 tests vs 148 tests ✓ |
+| 2 | Binary search: first 10 tests | 76 tests ✅ (innocent) |
+| 3 | Binary search: remaining 9 tests | 8 tests ❌ (1 guilty) |
+| 4 | Isolated to method_missing sub_test_case | 1 test ❌ |
+| 5 | Isolated specific test: "help command displays available tasks" | **0 tests** 🎯 |
 
 **Current Workaround**:
 - device_test.rb excluded from Rakefile (commit 5a8a5f9)
-- `capture_stdout` captures stderr to suppress rake errors (commit 6ede610)
 - Individual device tests can be run: `bundle exec ruby -Ilib:test test/commands/device_test.rb`
-
-**Tests affected**:
-- 17 device tests in device_test.rb (552 lines)
-- When included, destroys 108 tests from other files
 
 **Priority**: 🚨 **CRITICAL** - Blocks:
 1. CI pipeline (cannot include device tests)
 2. device.rb coverage expansion (currently 51.35%)
-3. Full test suite integrity (108 tests missing when device_test included)
+3. Full test suite integrity (1 test breaks 108 others)
 
 **Next Steps**:
-1. **Binary search device_test.rb** to find exact line(s) causing test registration failure
-   - Split file in half, test each part
-   - Narrow down to specific test case or helper method
-   - Identify what global state is being corrupted
-2. **Fix root cause** in device_test.rb implementation
-3. **Re-enable in CI** once fixed
-4. Alternative: Implement custom test task (Option B) as temporary workaround
+1. **Fix the guilty test** (line 426-448):
+   - Option A: Remove or skip this specific test
+   - Option B: Refactor to avoid Thor `help` command
+   - Option C: Test help functionality differently (without capture_stdout)
+2. **Re-enable device_test.rb in Rakefile**
+3. **Verify full test suite** (should be 167 tests)
+4. **Re-run CI** to confirm fix
 
 ---
 
