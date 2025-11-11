@@ -153,3 +153,113 @@ class PraTestCase < Test::Unit::TestCase
     system('git commit -m "test"', out: File::NULL) || raise("git commit failed")
   end
 end
+
+# Refinement-based system command mocking for CI compatibility
+# Shared by env_test.rb and device_test.rb
+module SystemCommandMocking
+  # Store original Kernel#system before refinement
+  ORIGINAL_SYSTEM = Kernel.instance_method(:system)
+
+  # Command handler methods (extracted to reduce system() complexity)
+  def self.process_git_clone_command(cmd, mock_context)
+    mock_context[:call_count][:clone] += 1
+    return false if mock_context[:fail_clone]
+
+    # Create dummy git repository at destination path
+    if cmd =~ /git clone.* (\S+)\s*$/
+      dest_path = ::Regexp.last_match(1).gsub(/['"]/, "")
+      FileUtils.mkdir_p(dest_path)
+      FileUtils.mkdir_p(File.join(dest_path, ".git"))
+    end
+    true
+  end
+
+  def self.process_git_checkout_command(mock_context)
+    mock_context[:call_count][:checkout] += 1
+    !mock_context[:fail_checkout]
+  end
+
+  def self.process_git_submodule_command(mock_context)
+    mock_context[:call_count][:submodule] += 1
+    !mock_context[:fail_submodule]
+  end
+
+  def self.process_rake_command(mock_context)
+    mock_context[:call_count][:rake] += 1
+    !mock_context[:fail_rake]
+  end
+
+  # Scoped Kernel#system override using Refinement
+  # This approach is CI-compatible (no global state pollution)
+  module SystemRefinement
+    refine Kernel do
+      def system(*args)
+        # Check if mock context is active in thread-local storage
+        mock_context = Thread.current[:system_mock_context]
+        return SystemCommandMocking::ORIGINAL_SYSTEM.bind_call(self, *args) unless mock_context
+
+        cmd = args.join(" ")
+        mock_context[:commands_executed] << cmd
+
+        # Dispatch to appropriate command handler
+        return SystemCommandMocking.process_git_clone_command(cmd, mock_context) if cmd.include?("git clone")
+        return SystemCommandMocking.process_git_checkout_command(mock_context) if cmd.include?("git checkout")
+        return SystemCommandMocking.process_git_submodule_command(mock_context) if cmd.include?("git submodule update")
+        return SystemCommandMocking.process_rake_command(mock_context) if cmd.include?("rake")
+
+        # Fallback to original system() for other commands
+        SystemCommandMocking::ORIGINAL_SYSTEM.bind_call(self, *args)
+      end
+    end
+  end
+
+  # Helper method to set up system command mocking with Refinement
+  # Usage: with_system_mocking(fail_clone: true) { |mock| ... }
+  # Note: Refinement is already applied at class level via 'using' declaration
+  def with_system_mocking(fail_clone: false, fail_checkout: false, fail_submodule: false, fail_rake: false)
+    mock_context = {
+      call_count: { clone: 0, checkout: 0, submodule: 0, rake: 0 },
+      commands_executed: [],
+      fail_clone: fail_clone,
+      fail_checkout: fail_checkout,
+      fail_submodule: fail_submodule,
+      fail_rake: fail_rake
+    }
+
+    Thread.current[:system_mock_context] = mock_context
+
+    begin
+      yield(mock_context)
+    ensure
+      Thread.current[:system_mock_context] = nil
+    end
+  end
+
+  # Helper method to mock Pra::Env.execute_with_esp_env for device tests
+  # Usage: with_esp_env_mocking { |mock| ... }
+  # This mocks execute_with_esp_env to track commands instead of executing them
+  def with_esp_env_mocking(fail_command: false)
+    mock_context = {
+      commands_executed: [],
+      fail_command: fail_command
+    }
+
+    Thread.current[:esp_env_mock_context] = mock_context
+
+    original_method = Pra::Env.method(:execute_with_esp_env)
+    Pra::Env.define_singleton_method(:execute_with_esp_env) do |command, working_dir = nil|
+      ctx = Thread.current[:esp_env_mock_context]
+      return original_method.call(command, working_dir) unless ctx
+
+      ctx[:commands_executed] << command
+      raise "Command failed: #{command}" if ctx[:fail_command]
+    end
+
+    begin
+      yield(mock_context)
+    ensure
+      Thread.current[:esp_env_mock_context] = nil
+      Pra::Env.define_singleton_method(:execute_with_esp_env, original_method)
+    end
+  end
+end

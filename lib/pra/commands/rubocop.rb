@@ -1,3 +1,4 @@
+require "English"
 require "fileutils"
 require "thor"
 
@@ -67,13 +68,14 @@ module Pra
         puts ""
 
         # Execute the update script
-        success = system("ruby #{script_path}")
+        cmd = "ruby #{script_path}"
+        success = system(cmd)
 
         return if success
 
-        puts ""
-        puts "❌ Update failed. Please check the error above."
-        exit 1
+        # Failure case
+        exit_status = $CHILD_STATUS.exitstatus if $CHILD_STATUS
+        raise "Command failed (exit status: #{exit_status || "unknown"}): #{cmd}"
       end
 
       private

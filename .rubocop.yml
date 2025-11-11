@@ -51,3 +51,8 @@ Metrics/BlockLength:
   Exclude:
     - "test/**/*"
     - "picoruby-application-on-r2p2-esp32-development-kit.gemspec" # Gem specification file with standard DSL structure
+
+# Command processors in test mocking return boolean for success/failure, not predicates
+Naming/PredicateMethod:
+  Exclude:
+    - "test/test_helper.rb" # process_*_command methods are command processors, not predicates

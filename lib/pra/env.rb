@@ -1,4 +1,5 @@
 
+require 'English'
 require 'fileutils'
 require 'yaml'
 require 'time'
@@ -112,14 +113,16 @@ module Pra
         return if Dir.exist?(dest_path)
 
         puts "Cloning #{repo_url} to #{dest_path}..."
-        unless system("git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(dest_path)}")
-          raise "Failed to clone repository"
+        cmd = "git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(dest_path)}"
+        unless system(cmd)
+          raise "Command failed (exit status: #{$CHILD_STATUS.exitstatus}): #{cmd}"
         end
 
         # 指定コミットにチェックアウト
         Dir.chdir(dest_path) do
-          unless system("git checkout #{Shellwords.escape(commit)}")
-            raise "Failed to checkout commit #{commit}"
+          cmd = "git checkout #{Shellwords.escape(commit)}"
+          unless system(cmd)
+            raise "Command failed (exit status: #{$CHILD_STATUS.exitstatus}): #{cmd}"
           end
         end
       end
@@ -130,8 +133,9 @@ module Pra
 
         Dir.chdir(dest_path) do
           # Submodule初期化
-          unless system('git submodule update --init --recursive')
-            raise "Failed to initialize submodules"
+          cmd = 'git submodule update --init --recursive'
+          unless system(cmd)
+            raise "Command failed (exit status: #{$CHILD_STATUS.exitstatus}): #{cmd} (in #{dest_path})"
           end
         end
       end
@@ -262,15 +266,16 @@ module Pra
       # pra gem は R2P2-ESP32 ディレクトリで Rake コマンドを実行するのみ
       # （直接 ESP-IDF に依存しない - CI 環境で ESP-IDF がない場合も対応可能）
       def execute_with_esp_env(command, working_dir = nil)
-        if working_dir
-          Dir.chdir(working_dir) do
-            success = system(command)
-            raise "Command failed: #{command}" unless success
-          end
-        else
+        execute_block = lambda do |_dir = nil|
           success = system(command)
-          raise "Command failed: #{command}" unless success
+          return if success
+
+          exit_status = $CHILD_STATUS&.exitstatus || "unknown"
+          location = working_dir ? " (in #{working_dir})" : ""
+          raise "Command failed (exit status: #{exit_status}): #{command}#{location}"
         end
+
+        working_dir ? Dir.chdir(working_dir, &execute_block) : execute_block.call
       end
     end
   end
