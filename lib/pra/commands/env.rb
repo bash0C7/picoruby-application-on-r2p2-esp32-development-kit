@@ -1,4 +1,5 @@
 
+require 'English'
 require 'thor'
 require 'pra/patch_applier'
 
@@ -177,8 +178,9 @@ module Pra
             puts "    Cloning to get timestamp..."
 
             # Shallow clone（高速化のため）
-            unless system("git clone --depth 1 --branch HEAD #{Shellwords.escape(repo_url)} #{Shellwords.escape(tmp_repo)} 2>/dev/null")
-              raise "Failed to clone #{repo_name}"
+            cmd = "git clone --depth 1 --branch HEAD #{Shellwords.escape(repo_url)} #{Shellwords.escape(tmp_repo)} 2>/dev/null"
+            unless system(cmd)
+              raise "Command failed (exit status: #{$CHILD_STATUS.exitstatus}): #{cmd.sub(' 2>/dev/null', '')}"
             end
 
             # コミットハッシュとタイムスタンプ取得

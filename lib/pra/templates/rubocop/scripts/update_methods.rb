@@ -5,6 +5,7 @@
 # Usage: ruby scripts/update_methods.rb
 # Generates data/picoruby_supported_methods.json and data/picoruby_unsupported_methods.json
 
+require 'English'
 require 'json'
 require 'fileutils'
 require 'tmpdir'
@@ -59,15 +60,22 @@ class MethodDatabaseUpdater
     if Dir.exist?(@work_dir)
       puts '📦 Repository already cloned. Pulling latest changes...'
       Dir.chdir(@work_dir) do
-        result = system('git pull origin main 2>/dev/null')
-        raise 'Failed to pull repository' unless result
+        cmd = 'git pull origin main'
+        result = system("#{cmd} 2>/dev/null")
+        unless result
+          exit_status = $CHILD_STATUS.exitstatus if $CHILD_STATUS
+          raise "Command failed (exit status: #{exit_status || 'unknown'}): #{cmd}"
+        end
       end
     else
       puts '📥 Cloning picoruby.github.io repository...'
       FileUtils.mkdir_p(File.dirname(@work_dir))
       cmd = "git clone #{PICORUBY_REPO} #{@work_dir}"
       result = system("#{cmd} 2>/dev/null")
-      raise 'Failed to clone repository' unless result
+      unless result
+        exit_status = $CHILD_STATUS.exitstatus if $CHILD_STATUS
+        raise "Command failed (exit status: #{exit_status || 'unknown'}): #{cmd}"
+      end
     end
   end
 
