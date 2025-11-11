@@ -149,7 +149,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_esp_env_mocking do |_mock|
               output = capture_stdout do
                 Pra::Commands::Device.start(['monitor', '--env', 'test-env'])
               end
@@ -195,7 +195,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_esp_env_mocking do |_mock|
               output = capture_stdout do
                 Pra::Commands::Device.start(['build', '--env', 'test-env'])
               end
@@ -241,7 +241,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_esp_env_mocking do |_mock|
               output = capture_stdout do
                 Pra::Commands::Device.start(['setup_esp32', '--env', 'test-env'])
               end
@@ -305,7 +305,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_esp_env_mocking do |_mock|
               output = capture_stdout do
                 Pra::Commands::Device.start(['tasks', '--env', 'test-env'])
               end
@@ -333,7 +333,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_esp_env_mocking do |_mock|
               # custom_task が Rakefile に存在するため、method_missing で委譲される
               output = capture_stdout do
                 Pra::Commands::Device.start(['custom_task', '--env', 'test-env'])
@@ -358,7 +358,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking(fail_command: true) do |mock|
+            with_esp_env_mocking(fail_command: true) do |_mock|
               assert_raise(RuntimeError) do
                 capture_stdout do
                   Pra::Commands::Device.start(['nonexistent_task', '--env', 'test-env'])
@@ -381,7 +381,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_esp_env_mocking do |_mock|
               # custom_task が Rakefile に存在するため、method_missing で委譲される
               # 環境名は --env で明示的に指定する（暗黙のカレント環境は存在しない）
               output = capture_stdout do
@@ -415,7 +415,7 @@ class PraCommandsDeviceTest < PraTestCase
 
             setup_test_environment('test-env')
 
-            with_esp_env_mocking do |mock|
+            with_esp_env_mocking do |_mock|
               output = capture_stdout do
                 Pra::Commands::Device.start(['help', '--env', 'test-env'])
               end
@@ -435,11 +435,14 @@ class PraCommandsDeviceTest < PraTestCase
 
   def capture_stdout
     original_stdout = $stdout
+    original_stderr = $stderr
     $stdout = StringIO.new
+    $stderr = StringIO.new # stderr もキャプチャして捨てる（rake エラーメッセージを抑制）
     yield
     $stdout.string
   ensure
     $stdout = original_stdout
+    $stderr = original_stderr
   end
 
   def setup_test_environment(env_name)
