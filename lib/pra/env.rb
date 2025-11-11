@@ -18,14 +18,6 @@ module Pra
     # ptrk env name pattern validation (lowercase alphanumeric, dash, underscore)
     ENV_NAME_PATTERN = /^[a-z0-9_-]+$/
 
-    # ルートディレクトリ
-    PROJECT_ROOT = Dir.pwd
-    # ptrk_env/ consolidated directory structure (Phase 4.1)
-    CACHE_DIR = File.join(PROJECT_ROOT, ENV_DIR, '.cache')
-    PATCH_DIR = File.join(PROJECT_ROOT, ENV_DIR, 'patch')
-    STORAGE_HOME = File.join(PROJECT_ROOT, 'storage', 'home')
-    ENV_FILE = File.join(PROJECT_ROOT, ENV_DIR, '.picoruby-env.yml')
-
     # リポジトリ定義
     REPOS = {
       'R2P2-ESP32' => 'https://github.com/picoruby/R2P2-ESP32.git',
@@ -40,6 +32,57 @@ module Pra
     }.freeze
 
     class << self
+      # ====== ダイナミックディレクトリパス ======
+      # NOTE: メソッドとして定義することで、Dir.pwd の変更が自動的に反映される
+      # これにより、テストの setup/teardown で Dir.chdir したときに
+      # ファイルパス定数が古い値を参照する問題が解決される
+
+      # ルートディレクトリ（現在の作業ディレクトリ）
+      def project_root
+        Dir.pwd
+      end
+
+      # キャッシュディレクトリ
+      def cache_dir
+        File.join(project_root, ENV_DIR, '.cache')
+      end
+
+      # パッチディレクトリ
+      def patch_dir
+        File.join(project_root, ENV_DIR, 'patch')
+      end
+
+      # ストレージホームディレクトリ
+      def storage_home
+        File.join(project_root, 'storage', 'home')
+      end
+
+      # 環境定義ファイルパス
+      def env_file
+        File.join(project_root, ENV_DIR, '.picoruby-env.yml')
+      end
+
+      # 後方互換性のための定数インターフェース
+      # （既存コードで Pra::Env::PROJECT_ROOT のような参照があった場合）
+      def self.const_missing(name)
+        case name
+        when :PROJECT_ROOT
+          Dir.pwd
+        when :CACHE_DIR
+          File.join(Dir.pwd, ENV_DIR, '.cache')
+        when :PATCH_DIR
+          File.join(Dir.pwd, ENV_DIR, 'patch')
+        when :STORAGE_HOME
+          File.join(Dir.pwd, 'storage', 'home')
+        when :ENV_FILE
+          File.join(Dir.pwd, ENV_DIR, '.picoruby-env.yml')
+        when :BUILD_DIR
+          File.join(Dir.pwd, 'build')
+        else
+          super
+        end
+      end
+
       # ====== 環境名検証 ======
 
       # 環境名が有効なパターンか検証
@@ -54,14 +97,14 @@ module Pra
 
       # .picoruby-env.yml を読み込み（環境定義のメタデータ）
       def load_env_file
-        return {} unless File.exist?(ENV_FILE)
-        YAML.load_file(ENV_FILE) || {}
+        return {} unless File.exist?(env_file)
+        YAML.load_file(env_file) || {}
       end
 
       # .picoruby-env.yml に保存
       def save_env_file(data)
-        FileUtils.mkdir_p(File.dirname(ENV_FILE))
-        File.write(ENV_FILE, YAML.dump(data))
+        FileUtils.mkdir_p(File.dirname(env_file))
+        File.write(env_file, YAML.dump(data))
       end
 
       # 指定された名前の環境定義を読み込み（.picoruby-env.yml から）
@@ -239,14 +282,14 @@ module Pra
 
       # キャッシュディレクトリパスを取得（不変リポジトリコピーの場所）
       def get_cache_path(repo_name, commit_hash)
-        File.join(CACHE_DIR, repo_name, commit_hash)
+        File.join(cache_dir, repo_name, commit_hash)
       end
 
       # ビルド環境ディレクトリパスを取得（ワーキングディレクトリの場所）
       def get_build_path(env_name)
         # Phase 4: Build path uses env_name instead of env_hash
         # Pattern: ptrk_env/{env_name} instead of build/{env_hash}
-        File.join(PROJECT_ROOT, ENV_DIR, env_name)
+        File.join(project_root, ENV_DIR, env_name)
       end
 
       # Symlink操作

@@ -31,18 +31,13 @@ require "tmpdir"
 # これにより、テスト実行中に gem root に汚染がないようにする
 ENV["PTRK_USER_ROOT"] = Dir.mktmpdir("ptrk_test_")
 
-# テスト用基底クラス：PROJECT_ROOT のリセットを処理
+# テスト用基底クラス
 class PraTestCase < Test::Unit::TestCase
-  # setup: 各テスト開始時に PROJECT_ROOT をリセット
+  # setup: 各テスト開始時に初期化
   def setup
     super
-    # PROJECT_ROOT を現在の作業ディレクトリに基づいてリセット
-    begin
-      Pra::Env.__send__(:remove_const, :PROJECT_ROOT) if Pra::Env.const_defined?(:PROJECT_ROOT)
-      Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
-    rescue StandardError
-      # Ignore any errors during setup
-    end
+    # NOTE: PROJECT_ROOT は動的メソッド（Pra::Env.project_root）に変更されたため、
+    # 定数操作は不要になった。Dir.pwd の変更が自動的に反映される。
 
     # Verify git status is clean before test starts
     verify_git_status_clean!("before test")
@@ -64,37 +59,26 @@ class PraTestCase < Test::Unit::TestCase
       # テスト実行中に作成された build/ を必ずクリーンアップ
       FileUtils.rm_rf(build_dir)
 
-      # PROJECT_ROOT をリセット（現在の Dir.pwd を基準に）
-      begin
-        Pra::Env.__send__(:remove_const, :PROJECT_ROOT) if Pra::Env.const_defined?(:PROJECT_ROOT)
-        Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd)
-      rescue StandardError
-        # Ignore
-      end
+      # NOTE: PROJECT_ROOT は動的メソッドに変更されたため、リセットは不要
+      # Dir.chdir で現在のディレクトリが変わると自動的に反映される
     end
   end
 
   # teardown: テスト終了後にテスト作成物をクリーンアップ
   def teardown
     super
-    begin
-      Pra::Env.__send__(:remove_const, :PROJECT_ROOT) if Pra::Env.const_defined?(:PROJECT_ROOT)
-      Pra::Env.const_set(:PROJECT_ROOT, Dir.pwd) if Dir.pwd
-    rescue StandardError
-      # Silently ignore teardown errors
-    end
 
     # テスト中に作成された一時ファイル・ディレクトリを確実にクリーンアップ
     # （.gitignore されているものだけを削除するため、リポジトリ管理物は損壊しない）
     begin
       dirs_to_cleanup = [
-        Pra::Env::BUILD_DIR,   # build/
-        Pra::Env::PATCH_DIR,   # patch/
-        Pra::Env::CACHE_DIR    # .cache/
+        File.join(Pra::Env.project_root, 'build'),    # build/
+        Pra::Env.patch_dir,                           # ptrk_env/patch/
+        Pra::Env.cache_dir                            # ptrk_env/.cache/
       ]
 
       files_to_cleanup = [
-        Pra::Env::ENV_FILE     # .picoruby-env.yml
+        Pra::Env.env_file                             # ptrk_env/.picoruby-env.yml
       ]
 
       dirs_to_cleanup.each do |dir|
@@ -119,19 +103,14 @@ class PraTestCase < Test::Unit::TestCase
   # Helper: Verify git status is clean (no modifications to tracked files)
   # NOTE: Staging area changes (added files, staged changes) are allowed
   # This only checks for UNSTAGED changes (working tree modifications)
-  # WORKAROUND: Disabled in test environment due to subprocess side effects
-  # - git diff subprocess interferes with test-unit v3 hook mechanism
-  # - Causes test registration to drop from 159 to 54 tests
-  # - See: TODO.md [TODO-INFRASTRUCTURE-RAKE-TEST-DISCOVERY]
+  # FIXED: Previously disabled due to subprocess side effects with test-unit v3 registration.
+  # Refactored Pra::Env to use dynamic methods instead of constants, fixing the root cause.
   def verify_git_status_clean!(phase)
-    # DISABLED: Subprocess execution of git diff breaks test-unit registration
-    # Re-enable this check only if test-unit version is updated
-    # or if subprocess side effects are better understood
-    #
-    # result = `git diff --name-only 2>&1`
-    # return if result.empty?
-    # message = "Git working directory has unstaged changes #{phase}. Modified files:\n#{result}"
-    # raise StandardError, message
+    result = `git diff --name-only 2>&1`
+    return if result.empty?
+
+    message = "Git working directory has unstaged changes #{phase}. Modified files:\n#{result}"
+    raise StandardError, message
   end
 
   # Helper: Verify gem root is not polluted with build artifacts
