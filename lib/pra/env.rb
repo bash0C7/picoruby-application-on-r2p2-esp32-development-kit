@@ -31,15 +31,33 @@ module Pra
       'picoruby-esp32' => 'picoruby'
     }.freeze
 
-    class << self
-      # ====== ダイナミックディレクトリパス ======
-      # NOTE: メソッドとして定義することで、Dir.pwd の変更が自動的に反映される
-      # これにより、テストの setup/teardown で Dir.chdir したときに
-      # ファイルパス定数が古い値を参照する問題が解決される
+    # ====== CRITICAL FIX: Cache initial project root ======
+    # PROBLEM: Dynamic methods using Dir.pwd break when tests chdir
+    # - export_repo_changes does Dir.chdir(work_path)
+    # - Inside that, Pra::Env.patch_dir calls Dir.pwd
+    # - Gets wrong path (work_path/ptrk_env/patch instead of original/ptrk_env/patch)
+    # - Test assertion fails: Dir.exist?(patch_dir) returns false
+    #
+    # SOLUTION: Cache the initial project_root once, then use cached value
+    # Only reset in tests via @reset_cached_root call
+    @cached_project_root = Dir.pwd.freeze
+    @reset_cached_root_enabled = true
 
-      # ルートディレクトリ（現在の作業ディレクトリ）
+    class << self
+      # ====== ダイナミックディレクトリパス（キャッシュベース） ======
+      # NOTE: Caches initial project_root to prevent Dir.chdir interference
+      # This ensures patch_dir, cache_dir always point to the original project root
+      # not the current working directory
+
+      # ルートディレクトリ（初期化時のDirパスをキャッシュ）
       def project_root
-        Dir.pwd
+        @project_root ||= Dir.pwd
+      end
+
+      # テスト用：キャッシュされた project_root をリセット
+      def reset_cached_root!
+        return unless @reset_cached_root_enabled
+        @project_root = Dir.pwd
       end
 
       # キャッシュディレクトリ
@@ -304,20 +322,22 @@ module Pra
     # 後方互換性のための定数インターフェース
     # MODULE レベルで定義：モジュール上の定数ルックアップで呼び出される
     # （既存コードで Pra::Env::PROJECT_ROOT のような参照があった場合）
+    # NOTE: CRITICAL FIX - Use project_root method, not Dir.pwd directly
+    # This ensures const_missing returns cached values, consistent with dynamic methods
     def self.const_missing(name)
       case name
       when :PROJECT_ROOT
-        Dir.pwd
+        project_root
       when :CACHE_DIR
-        File.join(Dir.pwd, ENV_DIR, '.cache')
+        cache_dir
       when :PATCH_DIR
-        File.join(Dir.pwd, ENV_DIR, 'patch')
+        patch_dir
       when :STORAGE_HOME
-        File.join(Dir.pwd, 'storage', 'home')
+        storage_home
       when :ENV_FILE
-        File.join(Dir.pwd, ENV_DIR, '.picoruby-env.yml')
+        env_file
       when :BUILD_DIR
-        File.join(Dir.pwd, 'build')
+        File.join(project_root, 'build')
       else
         super
       end

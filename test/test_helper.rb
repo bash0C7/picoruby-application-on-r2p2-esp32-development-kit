@@ -39,6 +39,10 @@ class PraTestCase < Test::Unit::TestCase
     # NOTE: PROJECT_ROOT は動的メソッド（Pra::Env.project_root）に変更されたため、
     # 定数操作は不要になった。Dir.pwd の変更が自動的に反映される。
 
+    # CRITICAL FIX: Reset cached project root at test start
+    # This ensures each test starts with the current directory as the project root
+    Pra::Env.reset_cached_root!
+
     # Verify git status is clean before test starts
     verify_git_status_clean!("before test")
   end
@@ -59,8 +63,9 @@ class PraTestCase < Test::Unit::TestCase
       # テスト実行中に作成された build/ を必ずクリーンアップ
       FileUtils.rm_rf(build_dir)
 
-      # NOTE: PROJECT_ROOT は動的メソッドに変更されたため、リセットは不要
-      # Dir.chdir で現在のディレクトリが変わると自動的に反映される
+      # CRITICAL FIX: Reset cached project root when returning from chdir
+      # This ensures patch_dir, cache_dir point back to the original directory
+      Pra::Env.reset_cached_root!
     end
   end
 

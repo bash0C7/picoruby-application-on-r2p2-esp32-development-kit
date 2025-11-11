@@ -55,6 +55,51 @@ Rake::TestTask.new("test:right_half") do |t|
   t.ruby_opts = ["-W1"]
 end
 
+# Test first 2 files (cli, device)
+Rake::TestTask.new("test:left_quarter_1") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = [
+    "test/commands/cli_test.rb",
+    "test/commands/device_test.rb"
+  ]
+  t.ruby_opts = ["-W1"]
+end
+
+# Test next 2 files (env_commands, mrbgems)
+Rake::TestTask.new("test:left_quarter_2") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = [
+    "test/commands/env_test.rb",
+    "test/commands/mrbgems_test.rb"
+  ]
+  t.ruby_opts = ["-W1"]
+end
+
+# Test first 3 files of right half
+Rake::TestTask.new("test:right_quarter_1") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = [
+    "test/commands/rubocop_test.rb",
+    "test/env_test.rb",
+    "test/lib/env_constants_test.rb"
+  ]
+  t.ruby_opts = ["-W1"]
+end
+
+# Test last 2 files of right half
+Rake::TestTask.new("test:right_quarter_2") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = [
+    "test/pra_test.rb",
+    "test/rake_task_extractor_test.rb"
+  ]
+  t.ruby_opts = ["-W1"]
+end
+
 # Test each file individually for baseline
 Rake::TestTask.new("test:individual") do |t|
   t.libs << "test"
