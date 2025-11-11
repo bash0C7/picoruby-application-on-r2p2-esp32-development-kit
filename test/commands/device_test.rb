@@ -373,7 +373,7 @@ class PraCommandsDeviceTest < PraTestCase
             setup_test_environment('test-env')
 
             with_esp_env_mocking(fail_command: true) do |_mock|
-              assert_raise(RuntimeError) do
+              assert_raise(SystemExit) do
                 capture_stdout do
                   Pra::Commands::Device.start(['nonexistent_task', '--env', 'test-env'])
                 end
