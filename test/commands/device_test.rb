@@ -75,6 +75,10 @@ class PraCommandsDeviceTest < PraTestCase
 
             Pra::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
 
+            # ビルド環境ディレクトリが存在する場合は削除（前のテストの残骸をクリーンアップ）
+            build_path = Pra::Env.get_build_path('test-env')
+            FileUtils.rm_rf(build_path) if Dir.exist?(build_path)
+
             assert_raise(RuntimeError) do
               capture_stdout do
                 Pra::Commands::Device.start(['flash', '--env', 'test-env'])
