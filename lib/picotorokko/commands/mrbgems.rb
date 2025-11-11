@@ -80,8 +80,8 @@ module Picotorokko
         puts "Location: mrbgems/#{name}/"
         puts "\nNext steps:"
         puts "  1. Edit the C extension: mrbgems/#{name}/src/#{c_prefix}.c"
-        puts "  2. The mrbgem will be registered automatically during 'pra build setup'"
-        puts "  3. Export patches to manage your changes: pra patch export <env>"
+        puts "  2. The mrbgem will be registered automatically during 'ptrk build setup'"
+        puts "  3. Export patches to manage your changes: ptrk patch export <env>"
       end
     end
   end

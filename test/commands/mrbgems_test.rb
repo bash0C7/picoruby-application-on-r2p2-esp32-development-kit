@@ -229,7 +229,7 @@ class PraCommandsMrbgemsTest < PraTestCase
         # ナビゲーションメッセージを確認
         assert_match(/Next steps/, output)
         assert_match(/Edit the C extension/, output)
-        assert_match(/pra build setup/, output)
+        assert_match(/ptrk build setup/, output)
       ensure
         Dir.chdir(original_dir)
       end

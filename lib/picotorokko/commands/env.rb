@@ -212,8 +212,8 @@ module Picotorokko
 
         puts "✓ Environment definition '#{env_name}' created successfully in .picoruby-env.yml"
         puts "\nNext steps:"
-        puts "  1. pra cache fetch #{env_name}  # Fetch repositories to cache"
-        puts "  2. pra build setup #{env_name}  # Setup build environment"
+        puts "  1. ptrk cache fetch #{env_name}  # Fetch repositories to cache"
+        puts "  2. ptrk build setup #{env_name}  # Setup build environment"
       end
 
       private

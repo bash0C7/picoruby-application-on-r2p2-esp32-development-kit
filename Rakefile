@@ -51,7 +51,7 @@ Rake::TestTask.new("test:left_half") do |t|
   t.ruby_opts = ["-W1"]
 end
 
-# Test with right half of files (4-8: rubocop, env, env_constants, pra, rake_task_extractor)
+# Test with right half of files (4-8: rubocop, env, env_constants, picotorokko, rake_task_extractor)
 Rake::TestTask.new("test:right_half") do |t|
   t.libs << "test"
   t.libs << "lib"
@@ -59,7 +59,7 @@ Rake::TestTask.new("test:right_half") do |t|
     "test/commands/rubocop_test.rb",
     "test/env_test.rb",
     "test/lib/env_constants_test.rb",
-    "test/pra_test.rb",
+    "test/picotorokko_test.rb",
     "test/rake_task_extractor_test.rb"
   ]
   t.ruby_opts = ["-W1"]
@@ -104,7 +104,7 @@ Rake::TestTask.new("test:right_quarter_2") do |t|
   t.libs << "test"
   t.libs << "lib"
   t.test_files = [
-    "test/pra_test.rb",
+    "test/picotorokko_test.rb",
     "test/rake_task_extractor_test.rb"
   ]
   t.ruby_opts = ["-W1"]
