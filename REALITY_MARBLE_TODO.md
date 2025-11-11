@@ -1044,6 +1044,335 @@ end
    - 案2 for test file direct calls (fast path)
    - 案3 for production code calls (slow path, on-demand)
 
+---
+
+## 🛡️ 案3.1: TracePoint + Temporary Method Redefinition (Ensure-Safe)
+
+### Motivation: Critical User Requirement
+
+**User feedback**: 「全メソッド呼び出しを監視は問題ないけど、横取りしたところの撤回はこのライブラリで保証したいな」
+
+**Translation**: "Monitoring all method calls is acceptable, but the library must guarantee restoration after interception."
+
+**Critical requirement**:
+- ✅ `ensure` blocks must execute (resource cleanup guaranteed)
+- ✅ Methods must be restored after `activate` ends (no permanent pollution)
+
+### The Fatal Flaw of 案3 (throw/catch)
+
+```ruby
+def clone_repo(url, path)
+  acquire_lock(path)
+  system("git clone #{url} #{path}")  # ← throw :intercept HERE
+  release_lock(path)  # ← NEVER EXECUTED
+ensure
+  cleanup_temp_files(path)  # ← NEVER EXECUTED (stack unwound!)
+end
+```
+
+**Problem**: `throw` unwinds the stack, skipping both normal code AND `ensure` blocks.
+
+**Impact**: Resource leaks, file handles, database connections, locks not released.
+
+### Solution: Method Redefinition Instead of Stack Unwinding
+
+**Key insight**: If we redefine the method temporarily, execution flow remains normal.
+
+```ruby
+# Original implementation (before activate)
+module Kernel
+  def system(cmd)
+    # ... native implementation ...
+  end
+end
+
+# During activate: TracePoint detects first call → redefine with guard
+module Kernel
+  def system(cmd)
+    ctx = Thread.current[:reality_marble_context]
+
+    if ctx && ctx.has_mock?(Kernel, :system)
+      # Execute mock
+      ctx.execute_mock(Kernel, :system, cmd)
+    else
+      # Call original (via saved UnboundMethod)
+      RealityMarble.call_original(Kernel, :system, self, cmd)
+    end
+  end
+end
+
+# After activate ends (in ensure block): restore original
+module Kernel
+  def system(cmd)
+    # ← RESTORED to original implementation
+  end
+end
+```
+
+Now `ensure` blocks execute normally:
+```ruby
+def clone_repo(url, path)
+  acquire_lock(path)
+  system("git clone ...")  # ← Returns mock value (NO throw)
+  release_lock(path)  # ← EXECUTES ✅
+ensure
+  cleanup_temp_files(path)  # ← EXECUTES ✅ (normal flow)
+end
+```
+
+### Architecture
+
+```ruby
+module RealityMarble
+  # Global registry with reference counting for concurrent activations
+  @redefinition_registry = {}  # {[Class, :method] => {original:, ref_count:}}
+  @registry_mutex = Mutex.new
+
+  class Activation
+    def initialize(marble)
+      @marble = marble
+      @my_redefinitions = []  # Track which methods THIS activation redefined
+    end
+
+    def activate(&test_block)
+      context = Context.new(@marble.mocks)
+      Thread.current[:reality_marble_context] = context
+
+      # TracePoint to detect and redefine methods on first call
+      trace = TracePoint.new(:call) do |tp|
+        mock = context.find_mock(tp.defined_class, tp.method_id)
+        next unless mock
+
+        # Redefine method (with reference counting)
+        RealityMarble.redefine_method(tp.defined_class, tp.method_id)
+        @my_redefinitions << [tp.defined_class, tp.method_id]
+      end
+
+      trace.enable
+
+      begin
+        result = test_block.call(context.trace)
+        result
+      ensure
+        trace.disable
+
+        # Restore all methods redefined by THIS activation
+        @my_redefinitions.each do |klass, method|
+          RealityMarble.restore_method(klass, method)
+        end
+
+        Thread.current[:reality_marble_context] = nil
+      end
+    end
+  end
+
+  class << self
+    def redefine_method(klass, method_name)
+      @registry_mutex.synchronize do
+        key = [klass, method_name]
+
+        # Already redefined by another concurrent activation?
+        if @redefinition_registry[key]
+          @redefinition_registry[key][:ref_count] += 1
+          return
+        end
+
+        # First time: save original and redefine
+        original = klass.instance_method(method_name)
+        @redefinition_registry[key] = {
+          original: original,
+          ref_count: 1
+        }
+
+        # Redefine with Thread-local guard
+        klass.define_method(method_name) do |*args, **kwargs, &block|
+          ctx = Thread.current[:reality_marble_context]
+
+          if ctx && ctx.has_mock?(klass, method_name)
+            # Inside activate (this thread) → execute mock
+            ctx.execute_mock(klass, method_name, *args, **kwargs, &block)
+          else
+            # Outside activate OR different thread → call original
+            original_method = RealityMarble.get_original(klass, method_name)
+            original_method.bind(self).call(*args, **kwargs, &block)
+          end
+        end
+      end
+    end
+
+    def restore_method(klass, method_name)
+      @registry_mutex.synchronize do
+        key = [klass, method_name]
+        entry = @redefinition_registry[key]
+        return unless entry
+
+        # Decrement reference count
+        entry[:ref_count] -= 1
+
+        # Last activation using this method? Restore original
+        if entry[:ref_count] == 0
+          klass.define_method(method_name, entry[:original])
+          @redefinition_registry.delete(key)
+        end
+      end
+    end
+
+    def get_original(klass, method_name)
+      @redefinition_registry[[klass, method_name]][:original]
+    end
+  end
+end
+```
+
+### How This Solves Key Problems
+
+#### Problem 1: Ensure Blocks Not Executed ✅ SOLVED
+
+**案3 (throw/catch)**:
+```ruby
+throw :reality_marble_intercept, result
+# ↑ Stack unwinds → ensure blocks skipped
+```
+
+**案3.1 (method redefinition)**:
+```ruby
+def system(cmd)
+  if ctx
+    execute_mock(cmd)  # Returns normally
+  else
+    original(cmd)  # Returns normally
+  end
+end
+# ↑ Normal execution flow → ensure blocks execute
+```
+
+#### Problem 2: Global Pollution ✅ MITIGATED
+
+**Concern**: Redefined methods affect all threads.
+
+**Solution**: Guard checks Thread-local context:
+```ruby
+# Thread A (test with activate)
+Thread.current[:reality_marble_context] = ctx  # Set
+system('git')  # → Guard finds ctx → mock executes
+
+# Thread B (other code)
+Thread.current[:reality_marble_context]  # nil
+system('ls')  # → Guard finds nil → original executes
+```
+
+**Verdict**: Global redefinition, but **behavior is thread-local** ✅
+
+#### Problem 3: Permanent Pollution ✅ SOLVED
+
+**Guarantee**: `activate` ensure block always calls `restore_method`.
+
+```ruby
+def activate
+  # ...
+ensure
+  @my_redefinitions.each { |k, m| restore_method(k, m) }
+end
+```
+
+**Even if test crashes**, ensure runs → methods restored ✅
+
+#### Problem 4: Concurrent Activations ✅ SOLVED
+
+**Scenario**:
+```ruby
+# Thread 1
+git_marble.activate { system('git') }  # Redefines Kernel#system
+
+# Thread 2 (overlapping)
+git_marble.activate { system('git') }  # Tries to redefine again?
+```
+
+**Solution**: Reference counting in global registry:
+```ruby
+# Thread 1 starts
+redefine_method(Kernel, :system)  # ref_count = 1
+
+# Thread 2 starts (overlaps)
+redefine_method(Kernel, :system)  # ref_count = 2 (no actual redefinition)
+
+# Thread 1 ends
+restore_method(Kernel, :system)  # ref_count = 1 (not yet restored)
+
+# Thread 2 ends
+restore_method(Kernel, :system)  # ref_count = 0 → NOW restore
+```
+
+**Verdict**: Safe for concurrent activations ✅
+
+### Comparison: 案3 vs 案3.1
+
+| Aspect | 案3 (throw/catch) | 案3.1 (redefinition) |
+|--------|-------------------|----------------------|
+| **Ensure blocks** | ❌ Not executed | ✅ Always executed |
+| **Resource safety** | ❌ Leaks possible | ✅ Guaranteed cleanup |
+| **Restoration** | ⚠️ Only if no crash | ✅ Ensured by Ruby ensure |
+| **Thread safety** | ⚠️ Complex | ✅ Ref counting + mutex |
+| **Global pollution** | ⚠️ During activate only | ⚠️ During activate only |
+| **Performance** | 🟡 Medium (TracePoint) | 🟡 Medium (TracePoint + redef) |
+| **Complexity** | 🟢 Low | 🟡 Medium (registry) |
+
+### New Challenges in 案3.1
+
+#### Challenge 1: Method Redefinition Overhead ⚠️
+
+**Cost**:
+- TracePoint detection: ~5000ns
+- `define_method` execution: ~100ns (one-time)
+- Mutex synchronization: ~50ns (one-time)
+
+**Impact**: Only pays cost on FIRST call to each mocked method.
+
+**Verdict**: 🟢 Acceptable (one-time cost per method)
+
+#### Challenge 2: Reference Counting Complexity ⚠️
+
+**Risk**: Bugs in ref counting could leave methods redefined permanently.
+
+**Mitigation**:
+- Comprehensive tests for concurrent scenarios
+- Failsafe: Global `RealityMarble.restore_all` method for emergency cleanup
+
+#### Challenge 3: C Methods Still Problematic ⚠️
+
+**Problem**: C methods like `Kernel#system` cannot be redefined with `define_method`.
+
+```ruby
+# This will fail for C methods
+Kernel.define_method(:system) { ... }
+# => TypeError: can't redefine C method
+```
+
+**Solutions**:
+1. Use `alias_method` + `define_method` workaround:
+   ```ruby
+   Kernel.alias_method(:__original_system, :system)
+   Kernel.send(:remove_method, :system)
+   Kernel.define_method(:system) { |cmd| __original_system(cmd) }
+   ```
+
+2. Only support Ruby methods, document C method limitation
+
+**Verdict**: 🟡 Solvable but requires special handling
+
+### Recommendation: 案3.1 vs 案3
+
+**案3.1 advantages**:
+- ✅ **User requirement satisfied**: "横取りしたところの撤回を保証"
+- ✅ Ensure blocks always execute (critical for production use)
+- ✅ Guaranteed restoration even on exceptions
+
+**案3.1 disadvantages**:
+- ⚠️ More complex implementation (registry + ref counting)
+- ⚠️ C method handling requires workarounds
+
+**Verdict**: 🟢 **案3.1 is superior for production use** — satisfies user's critical requirement for safe interception.
+
 ### Recommendation Status: Evaluation Needed
 
 **案3 viability depends on**:
