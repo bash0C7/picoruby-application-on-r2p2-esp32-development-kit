@@ -4,7 +4,7 @@ Build environments in `build/{env-hash}/` provide isolated working directories f
 
 ---
 
-## `pra build setup [ENV_NAME]`
+## `ptrk build setup [ENV_NAME]`
 
 **Description**: Setup `build/{env-hash}/` for specified environment
 
@@ -25,7 +25,7 @@ Build environments in `build/{env-hash}/` provide isolated working directories f
 
 **Example**:
 ```bash
-pra build setup stable-2024-11
+ptrk build setup stable-2024-11
 # => Setting up build environment: stable-2024-11
 #    Creating build/f500652-20241105_143022_6a6da3a-20241105_142015_e57c370-20241105_141030/
 #    Copying .cache/R2P2-ESP32/f500652-20241105_143022/
@@ -39,7 +39,7 @@ pra build setup stable-2024-11
 
 ---
 
-## `pra build clean [ENV_NAME]`
+## `ptrk build clean [ENV_NAME]`
 
 **Description**: Delete specified build environment
 
@@ -53,13 +53,13 @@ pra build setup stable-2024-11
 
 **Example**:
 ```bash
-pra build clean development
+ptrk build clean development
 # => Removing build/34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/
 ```
 
 ---
 
-## `pra build list`
+## `ptrk build list`
 
 **Description**: Display list of constructed environments under `build/`
 

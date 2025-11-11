@@ -51,7 +51,7 @@ cp node_modules/pra/docs/github-actions/esp32-build.yml .github/workflows/
 
 # Or download directly from GitHub
 curl -o .github/workflows/esp32-build.yml \
-  https://raw.githubusercontent.com/bash0C7/picoruby-application-on-r2p2-esp32-development-kit/main/docs/github-actions/esp32-build.yml
+  https://raw.githubusercontent.com/bash0C7/picotorokko/main/docs/github-actions/esp32-build.yml
 ```
 
 #### Step 2: Define Your Environment
@@ -357,7 +357,7 @@ bundle exec ptrk cache fetch your-environment-definition-name
 
 ### Getting Help
 
-- **Gem Issues**: https://github.com/bash0C7/picoruby-application-on-r2p2-esp32-development-kit/issues
+- **Gem Issues**: https://github.com/bash0C7/picotorokko/issues
 - **PicoRuby**: https://github.com/picoruby/picoruby
 - **R2P2-ESP32**: https://github.com/picoruby/r2p2-esp32
 

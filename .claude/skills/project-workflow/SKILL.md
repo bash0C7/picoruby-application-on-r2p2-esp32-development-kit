@@ -9,7 +9,7 @@ Development workflow, build system permissions, and git safety protocols for Pic
 - **Primary role**: Implement and maintain the `pra` gem itself
 - **User perspective**: Temporarily adopt when designing user-facing features (commands, templates, documentation)
 - **Key distinction**:
-  - Files in `lib/pra/`, `test/`, gem configuration → You develop these
+  - Files in `lib/picotorokko/`, `test/`, gem configuration → You develop these
   - Files in `docs/github-actions/`, templates → These are for `pra` users (not executed during gem development)
   - When `pra` commands are incomplete, add to TODO.md — don't rush implementation unless explicitly required
 
@@ -17,7 +17,7 @@ Development workflow, build system permissions, and git safety protocols for Pic
 
 ```
 .
-├── lib/pra/                   # Gem implementation
+├── lib/picotorokko/                   # Gem implementation
 ├── test/                      # Test suite
 ├── docs/github-actions/       # User-facing templates
 ├── storage/home/              # Example application code

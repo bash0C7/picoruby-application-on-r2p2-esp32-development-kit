@@ -42,9 +42,9 @@ jobs:
           ruby-version: '3.4'
           bundler-cache: true
 
-      - name: Install picoruby-application-on-r2p2-esp32-development-kit gem
+      - name: Install picotorokko gem
         run: |
-          gem install picoruby-application-on-r2p2-esp32-development-kit
+          gem install picotorokko
           pra --version
 
       - name: Setup ESP-IDF environment

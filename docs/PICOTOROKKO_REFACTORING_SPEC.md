@@ -469,7 +469,7 @@ ptrk rubocop update                    # Update method database
 ### Current Structure
 
 ```
-picoruby-application-on-r2p2-esp32-development-kit/
+picotorokko/
 ├── .cache/                          # Immutable caches
 │   ├── R2P2-ESP32/{commit-timestamp}/
 │   ├── picoruby-esp32/{commit-timestamp}/
@@ -488,7 +488,7 @@ picoruby-application-on-r2p2-esp32-development-kit/
 ### New Structure
 
 ```
-picoruby-application-on-r2p2-esp32-development-kit/
+picotorokko/
 ├── ptrk_env/                        # Consolidated environment directory
 │   ├── .picoruby-env.yml            # Environment definitions (Git-tracked)
 │   ├── .cache/                      # Immutable caches (Git-ignored)

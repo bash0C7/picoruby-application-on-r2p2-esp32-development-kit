@@ -4,7 +4,7 @@ The cache system maintains immutable repository versions in `.cache/`, allowing 
 
 ---
 
-## `pra cache list`
+## `ptrk cache list`
 
 **Description**: Display list of cached repository versions
 
@@ -27,7 +27,7 @@ Total cache size: 1.2GB
 
 ---
 
-## `pra cache fetch [ENV_NAME]`
+## `ptrk cache fetch [ENV_NAME]`
 
 **Description**: Fetch specified environment from GitHub and save to `.cache`
 
@@ -72,7 +72,7 @@ Total cache size: 1.2GB
 
 **Example**:
 ```bash
-pra cache fetch latest
+ptrk cache fetch latest
 # => Fetching R2P2-ESP32 HEAD...
 #    Cloning to .cache/R2P2-ESP32/34a1c23-20241104_120000/
 #    Updating submodule: components/picoruby-esp32
@@ -83,7 +83,7 @@ pra cache fetch latest
 
 ---
 
-## `pra cache clean REPO`
+## `ptrk cache clean REPO`
 
 **Description**: Delete all caches for specified repo
 
@@ -96,13 +96,13 @@ pra cache fetch latest
 
 **Example**:
 ```bash
-pra cache clean picoruby-esp32
+ptrk cache clean picoruby-esp32
 # => Removing .cache/picoruby-esp32/...
 ```
 
 ---
 
-## `pra cache prune`
+## `ptrk cache prune`
 
 **Description**: Delete caches not referenced by any environment
 
@@ -113,7 +113,7 @@ pra cache clean picoruby-esp32
 
 **Example**:
 ```bash
-pra cache prune
+ptrk cache prune
 # => Unused .cache/R2P2-ESP32/old-hash-20240101_000000/ - removing
 #    Freed: 500MB
 ```

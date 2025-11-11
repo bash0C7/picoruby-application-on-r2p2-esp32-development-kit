@@ -56,7 +56,7 @@ end
 **Goal**: Make the test pass with minimal code
 
 ```ruby
-# lib/pra/commands/device.rb
+# lib/picotorokko/commands/device.rb
 
 def resolve_env_name(short_name)
   { "prod" => "production", "dev" => "development" }[short_name]
@@ -90,7 +90,7 @@ end
 - Extract complex conditions to named variables
 
 ```ruby
-# lib/pra/commands/device.rb
+# lib/picotorokko/commands/device.rb
 
 # BEFORE (minimal Green code)
 def resolve_env_name(short_name)
@@ -347,7 +347,7 @@ Run: `bundle exec rake test` → ❌ FAIL
 
 **Phase 2: GREEN**
 ```ruby
-# lib/pra/commands/device.rb
+# lib/picotorokko/commands/device.rb
 def tasks(env_name = nil)
   puts "Available tasks:"
   puts "  build"
@@ -362,7 +362,7 @@ Run: `bundle exec rubocop -A` → Auto-fixes applied
 
 **Phase 3: REFACTOR**
 ```ruby
-# lib/pra/commands/device.rb
+# lib/picotorokko/commands/device.rb
 
 AVAILABLE_TASKS = ["build", "monitor", "flash", "clean"].freeze
 
@@ -397,7 +397,7 @@ Run: `bundle exec rake ci` → ✅ All gates pass
 ```
 Add tasks command to device for improved discoverability
 
-Users can now run 'pra device tasks' to see available commands
+Users can now run 'ptrk device tasks' to see available commands
 for a specific environment. This reduces cognitive load when
 exploring new commands.
 ```

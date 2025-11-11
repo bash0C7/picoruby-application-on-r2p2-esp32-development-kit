@@ -296,9 +296,9 @@ This shows you exactly which files have 0% branch coverage.
 
 **Example output** (from actual session):
 ```
-lib/pra/commands/env.rb: 0% branch coverage
-lib/pra/commands/patch.rb: 0% branch coverage
-lib/pra/commands/rubocop.rb: 0% branch coverage
+lib/picotorokko/commands/env.rb: 0% branch coverage
+lib/picotorokko/commands/patch.rb: 0% branch coverage
+lib/picotorokko/commands/rubocop.rb: 0% branch coverage
 ```
 
 ### Common Patterns to Test Both Branches

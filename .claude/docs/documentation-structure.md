@@ -2,7 +2,7 @@
 
 ## Overview
 
-The picoruby-application-on-r2p2-esp32-development-kit project serves **two distinct audiences**:
+The picotorokko project serves **two distinct audiences**:
 
 1. **pra Gem Developers** — Those developing the gem itself
 2. **pra Users** — PicoRuby application developers who install and use the gem
@@ -19,13 +19,13 @@ This document clarifies which documentation is for whom and how to maintain cons
 
 **What you do**:
 - Develop the `pra` command and infrastructure
-- Write/test code in `lib/pra/`, `test/`
+- Write/test code in `lib/picotorokko/`, `test/`
 - Manage gem configuration (gemspec, Gemfile, `.ruby-version`)
 - Design user-facing features and guides
 - Release new gem versions to RubyGems
 
 **Files you read/write**:
-- `lib/pra/` — Source code
+- `lib/picotorokko/` — Source code
 - `test/` — Test suite
 - `.claude/` — Internal design and development guides
 - `CLAUDE.md` — Your development guidelines
@@ -33,11 +33,11 @@ This document clarifies which documentation is for whom and how to maintain cons
 
 ### pra User (PicoRuby Application Developer)
 
-**Who**: Someone who runs `gem install picoruby-application-on-r2p2-esp32-development-kit`
+**Who**: Someone who runs `gem install picotorokko`
 
 **What they do**:
 - Use the `pra` command to develop PicoRuby applications
-- Run workflows: `pra env show`, `pra build setup`, `pra device flash`
+- Run workflows: `ptrk env show`, `ptrk build setup`, `ptrk device flash`
 - Customize configuration: `.picoruby-env.yml`, `mrbgems/`, patches
 - Set up GitHub Actions CI/CD
 - Build custom mrbgems
@@ -77,7 +77,7 @@ These documents are **internal to gem development** and not part of the installe
 CLAUDE.md                           # Your development guidelines
 TODO.md                             # Project task tracking
 
-lib/pra/                           # Source code
+lib/picotorokko/                           # Source code
 test/                              # Test suite
 ```
 
@@ -165,7 +165,7 @@ These are **user-facing templates** with gem developer annotations:
 
 ```yaml
 # Template for: PicoRuby application developers
-# Customized by: `pra ci setup` (gem command)
+# Customized by: `ptrk ci setup` (gem command)
 #
 # Users should:
 # - Modify environment names
@@ -183,7 +183,7 @@ These are **user-facing templates** with gem developer annotations:
 ### For User-Facing Docs (docs/, SPEC.md)
 
 - Use **second person**: "You can run...", "Configure your..."
-- Assume user has **pra installed**: "Run `pra env show`"
+- Assume user has **pra installed**: "Run `ptrk env show`"
 - **Hide implementation**: Don't explain how caching works internally
 - **Explain user workflows**: "First, define an environment → fetch repositories → setup build"
 - **Provide examples**: Show `pra` command usage with realistic scenarios
@@ -191,10 +191,10 @@ These are **user-facing templates** with gem developer annotations:
 ### For Gem Developer Docs (.claude/docs/)
 
 - Use **first person**: "We implement...", "Our cache strategy..."
-- Assume **code context**: Reference `lib/pra/cache.rb:42`
+- Assume **code context**: Reference `lib/picotorokko/cache.rb:42`
 - **Explain design decisions**: "Why we chose immutable caches"
 - **Document trade-offs**: "Cache immutability prevents corruption but requires manual cleanup"
-- **Link to source**: "`Pra::Cache#fetch` in lib/pra/cache.rb"
+- **Link to source**: "`Pra::Cache#fetch` in lib/picotorokko/cache.rb"
 
 ---
 
@@ -203,7 +203,7 @@ These are **user-facing templates** with gem developer annotations:
 When making changes that affect documentation:
 
 - [ ] **Modified gem behavior?** → Update both `SPEC.md` (user) and `.claude/docs/spec/*.md` (dev)
-- [ ] **Added new command?** → Update `lib/pra/cli.rb`, `SPEC.md`, `README.md` (user section)
+- [ ] **Added new command?** → Update `lib/picotorokko/cli.rb`, `SPEC.md`, `README.md` (user section)
 - [ ] **Changed workflow template?** → Update `docs/github-actions/*.yml` + README.md (user section)
 - [ ] **Fixed implementation bug?** → Add to `TODO.md` if doc-related, update CHANGELOG.md
 - [ ] **Updated docs?** → Verify section headers match audience (see "Role-Aware Section Headers" above)
@@ -230,7 +230,7 @@ When making changes that affect documentation:
 │ CLAUDE.md                                   │ ✅              │ ❌          │
 │ CONTRIBUTING.md                             │ ✅              │ ✅          │
 │ CHANGELOG.md                                │ ✅              │ ✅          │
-│ lib/pra/                                    │ ✅ (develop)   │ ❌          │
+│ lib/picotorokko/                                    │ ✅ (develop)   │ ❌          │
 │ test/                                       │ ✅ (test)      │ ❌          │
 └─────────────────────────────────────────────┴────────────────┴─────────────┘
 ```
@@ -243,7 +243,7 @@ When making changes that affect documentation:
 
 **Steps**:
 
-1. **Develop gem code** (`lib/pra/commands/config.rb`)
+1. **Develop gem code** (`lib/picotorokko/commands/config.rb`)
 2. **Write tests** (`test/commands/config_test.rb`)
 3. **Add to spec** (`SPEC.md`):
    - Section: "### Config Management"

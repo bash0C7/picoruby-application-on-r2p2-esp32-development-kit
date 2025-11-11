@@ -71,16 +71,16 @@ files.each do |file|
   end
   puts "[Found #{matches.count}] #{file}" unless matches.empty?
 end
-' DefNode lib/pra/commands/env.rb
+' DefNode lib/picotorokko/commands/env.rb
 ```
 
 **出力例**：
 ```
-lib/pra/commands/env.rb:10: DefNode [exit_on_failure?]
+lib/picotorokko/commands/env.rb:10: DefNode [exit_on_failure?]
       def self.exit_on_failure?
-lib/pra/commands/env.rb:15: DefNode [show]
+lib/picotorokko/commands/env.rb:15: DefNode [show]
       def show
-lib/pra/commands/env.rb:49: DefNode [set]
+lib/picotorokko/commands/env.rb:49: DefNode [set]
       def set(env_name)
 ```
 

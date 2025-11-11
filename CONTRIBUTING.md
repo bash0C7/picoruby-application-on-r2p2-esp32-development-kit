@@ -6,8 +6,8 @@ Thank you for your interest in contributing to picotorokko!
 
 1. Fork and clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/picoruby-application-on-r2p2-esp32-development-kit.git
-   cd picoruby-application-on-r2p2-esp32-development-kit
+   git clone https://github.com/YOUR_USERNAME/picotorokko.git
+   cd picotorokko
    ```
 
 2. Install dependencies:

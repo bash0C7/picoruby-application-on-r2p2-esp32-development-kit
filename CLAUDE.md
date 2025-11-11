@@ -16,23 +16,23 @@ ESP32 上の PicoRuby アプリケーション・処理系開発。mrbgems ビ�
 
 ## Your Role
 
-**You are the developer of the `picoruby-application-on-r2p2-esp32-development-kit` gem** — a multi-version build system CLI (`pra` command) for PicoRuby application development on ESP32.
+**You are the developer of the `picoruby-application-on-r2p2-esp32-development-kit` gem** — a multi-version build system CLI (`ptrk` command) for PicoRuby application development on ESP32.
 
 ### Role Clarity: Gem Developer vs. pra User
 
 There are two distinct audiences in this project:
 
-**pra Gem Developer** (Your primary role):
-- You develop the gem itself (the `pra` command and its infrastructure)
-- You read/write: `lib/pra/`, `test/`, gem configuration (gemspec, Gemfile, `.claude/`)
+**ptrk Gem Developer** (Your primary role):
+- You develop the gem itself (the `ptrk` command and its infrastructure)
+- You read/write: `lib/picotorokko/`, `test/`, gem configuration (gemspec, Gemfile, `.claude/`)
 - You design user-facing features but don't *use* the templates yourself
 - You maintain consistency between specification and implementation
 
-**pra Users** (PicoRuby Application Developers):
-- They install the `pra` gem: `gem install picoruby-application-on-r2p2-esp32-development-kit`
-- They use the `pra` command to develop PicoRuby applications for ESP32
+**ptrk Users** (PicoRuby Application Developers):
+- They install the `ptrk` gem: `gem install picoruby-application-on-r2p2-esp32-development-kit`
+- They use the `ptrk` command to develop PicoRuby applications for ESP32
 - They use templates and guides in `docs/`, `docs/github-actions/`, and `SPEC.md`
-- They run: `pra env show`, `pra build setup`, `pra device flash`, etc.
+- They run: `ptrk env show`, `ptrk build setup`, `ptrk device flash`, etc.
 
 ### Documentation Locations
 
@@ -40,31 +40,31 @@ There are two distinct audiences in this project:
 - `.claude/docs/` — Internal design documents, architecture, implementation guides
 - `.claude/skills/` — Agent workflows for your development process
 - `CLAUDE.md` — Your development guidelines (this file)
-- `lib/pra/` — Source code
+- `lib/picotorokko/` — Source code
 
-**For pra users** (they read these):
+**For ptrk users** (they read these):
 - `README.md` — Installation and quick start (sections: "For PicoRuby Application Users")
-- `SPEC.md` — Complete specification of pra commands and behavior
+- `SPEC.md` — Complete specification of ptrk gems and behavior
 - `docs/` — User guides (CI/CD, mrbgems, RuboCop, etc.)
 - `docs/github-actions/` — Workflow templates for GitHub Actions
 
 **Hybrid** (both audiences, but with distinct sections):
-- `README.md` — Sections: "For PicoRuby Application Users" vs "For pra Gem Developers"
+- `README.md` — Sections: "For PicoRuby Application Users" vs "For ptrk gem Developers"
 - `docs/CI_CD_GUIDE.md` — Divided: user section + developer release guide
 
 ### Key Distinction: Development vs. Usage
 
-- **Gem Development**: Modifying `lib/pra/`, adding commands, fixing bugs
+- **Gem Development**: Modifying `lib/picotorokko/`, adding commands, fixing bugs
 - **User Template Design**: Creating/updating `docs/github-actions/*.yml` or `docs/*.md`
   - You *design* these for user consumption
   - You *understand* user workflows but don't execute them as part of gem development
   - When a template references an incomplete command, add to TODO.md — don't implement the command unless explicitly asked
 
 **Example thought process**:
-- "I'm implementing `pra ci setup` command" ✅ (gem development in `lib/pra/`)
-- "I'm designing a workflow template that uses `pra device build`" ✅ (understanding user needs)
-- "The template uses `pra device build` which doesn't exist yet" → Add to TODO.md ✅ (note the dependency)
-- "I must implement `pra device build` NOW before finishing the template" ❌ (unless explicitly requested)
+- "I'm implementing `ptrk ci setup` command" ✅ (gem development in `lib/picotorokko/`)
+- "I'm designing a workflow template that uses `ptrk device build`" ✅ (understanding user needs)
+- "The template uses `ptrk device build` which doesn't exist yet" → Add to TODO.md ✅ (note the dependency)
+- "I must implement `ptrk device build` NOW before finishing the template" ❌ (unless explicitly requested)
 
 ## Core Principles
 
@@ -186,21 +186,21 @@ There are two distinct audiences in this project:
 
 ## R2P2-ESP32 Runtime Integration
 
-**CRITICAL: pra gem has ZERO knowledge of ESP-IDF**
+**CRITICAL: ptrk gem has ZERO knowledge of ESP-IDF**
 
-The `pra` gem is a **build tool only**. It knows:
+The `ptrk` gem is a **build tool only**. It knows:
 - ✅ R2P2-ESP32 project directory structure (location via env/config)
 - ✅ R2P2-ESP32 Rakefile exists and has callable tasks
 - ✅ How to invoke Rake in that directory: `bundle exec rake <task>`
 
-The `pra` gem does **NOT** know:
+The `ptrk` gem does **NOT** know:
 - 🚫 Where ESP-IDF is located
 - 🚫 How to source `export.sh`
 - 🚫 ESP-IDF environment variables or setup
 - 🚫 Specific Rake task names (they may change)
 
 **Implementation Rule**:
-- When `pra` needs to build/flash/monitor, it **delegates to R2P2-ESP32 Rakefile**
+- When `ptrk` needs to build/flash/monitor, it **delegates to R2P2-ESP32 Rakefile**
 - Example: `system("cd #{r2p2_dir} && bundle exec rake flash")`
 - The Rakefile in R2P2-ESP32 handles all ESP-IDF setup internally
 

@@ -6,7 +6,7 @@ Complete reference for `pra` CLI commands, configuration, and workflows.
 
 ## Environment Inspection Commands
 
-### `pra env show`
+### `ptrk env show`
 
 **Description**: Display current environment configuration
 
@@ -22,7 +22,7 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 ---
 
-### `pra env set ENV_NAME`
+### `ptrk env set ENV_NAME`
 
 **Description**: Switch to specified environment
 
@@ -37,29 +37,29 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 **Example**:
 ```bash
-pra env set development
+ptrk env set development
 # => Switching to development
 #    build/current -> build/34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/
 ```
 
 ---
 
-### `pra env latest`
+### `ptrk env latest`
 
 **Description**: Fetch latest versions and switch to them
 
 **Operation**:
 1. Fetch HEAD commits from each repo via GitHub API or `git ls-remote`
 2. Generate new environment name (e.g., `latest-20241105-143500`)
-3. Save to `.cache` via `pra cache fetch`
-4. Setup environment via `pra build setup`
-5. Switch via `pra env set`
+3. Save to `.cache` via `ptrk cache fetch`
+4. Setup environment via `ptrk build setup`
+5. Switch via `ptrk env set`
 
 ---
 
 ## R2P2-ESP32 Task Delegation Commands
 
-**Note**: The `pra build` command has been removed to avoid conflict with Build Environment Management commands. Use `rake build` directly in the R2P2-ESP32 directory instead.
+**Note**: The `ptrk build` command has been removed to avoid conflict with Build Environment Management commands. Use `rake build` directly in the R2P2-ESP32 directory instead.
 
 ### `pra flash [ENV_NAME]`
 
@@ -141,7 +141,7 @@ environments:
 
 ```bash
 # 1. Check environment
-pra env show
+ptrk env show
 
 # 2. Build (via R2P2-ESP32's Rakefile directly)
 cd build/current/R2P2-ESP32
@@ -159,7 +159,7 @@ pra monitor
 
 ```bash
 # 1. Fetch latest version
-pra env latest
+ptrk env latest
 # => Fetching latest from GitHub...
 #    Created environment: latest-20241105-143500
 #    Setting up environment...
@@ -171,7 +171,7 @@ rake build
 cd ../../..
 
 # 3. If issues found, revert to stable
-pra env set stable-2024-11
+ptrk env set stable-2024-11
 cd build/current/R2P2-ESP32
 rake build
 cd ../../..
@@ -184,15 +184,15 @@ cd ../../..
 # (edit files)
 
 # 2. Export changes to patch
-pra patch export
+ptrk patch export
 
 # 3. Git commit
 git add patch/ storage/home/
 git commit -m "Update patches and storage"
 
 # 4. Test application in another environment
-pra env set development
-pra build setup  # patches auto-applied
+ptrk env set development
+ptrk build setup  # patches auto-applied
 cd build/current/R2P2-ESP32
 rake build
 cd ../../..
@@ -209,27 +209,27 @@ cd ../../..
 git ls-remote https://github.com/picoruby/R2P2-ESP32.git HEAD
 
 # Clean cache and re-fetch
-pra cache clean R2P2-ESP32
-pra cache fetch latest
+ptrk cache clean R2P2-ESP32
+ptrk cache fetch latest
 ```
 
 ### Build Environment Missing
 
 ```bash
 # Check cache
-pra cache list
+ptrk cache list
 
 # Setup environment
-pra build setup ENV_NAME
+ptrk build setup ENV_NAME
 ```
 
 ### Patches Not Applied
 
 ```bash
 # Check diff
-pra patch diff
+ptrk patch diff
 
 # Re-apply
-pra build clean
-pra build setup ENV_NAME
+ptrk build clean
+ptrk build setup ENV_NAME
 ```

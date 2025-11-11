@@ -4,7 +4,7 @@ The patch system allows git-managed changes to be persisted and applied across e
 
 ---
 
-## `pra patch export [ENV_NAME]`
+## `ptrk patch export [ENV_NAME]`
 
 **Description**: Export changes from `build/{env}/` to `patch/`
 
@@ -22,7 +22,7 @@ The patch system allows git-managed changes to be persisted and applied across e
 ```bash
 # After editing build/current/R2P2-ESP32/storage/home/custom.rb
 
-pra patch export
+ptrk patch export
 # => Exporting changes from build/current/
 #    patch/R2P2-ESP32/storage/home/custom.rb (created)
 #    patch/picoruby-esp32/ (no changes)
@@ -32,7 +32,7 @@ pra patch export
 
 ---
 
-## `pra patch apply [ENV_NAME]`
+## `ptrk patch apply [ENV_NAME]`
 
 **Description**: Apply `patch/` to `build/{env}/`
 
@@ -47,7 +47,7 @@ pra patch export
 
 ---
 
-## `pra patch diff [ENV_NAME]`
+## `ptrk patch diff [ENV_NAME]`
 
 **Description**: Display diff between current changes in `build/{env}/` and existing patches
 
@@ -83,4 +83,4 @@ patch/
     └── (if changed)
 ```
 
-Patches are git-managed and automatically applied during `pra build setup`.
+Patches are git-managed and automatically applied during `ptrk build setup`.

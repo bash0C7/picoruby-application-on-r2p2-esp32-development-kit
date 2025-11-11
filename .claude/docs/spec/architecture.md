@@ -13,7 +13,7 @@ A build system for ESP32 + PicoRuby development that manages multiple versions o
 - Repositories saved in `.cache/` are **never modified**
 - Uniquely identified by commit hash + timestamp
 - New cache is always created when versions change
-- Old caches can be removed via `pra cache prune` when no longer needed
+- Old caches can be removed via `ptrk cache prune` when no longer needed
 
 ### 2. Environment Isolation
 
