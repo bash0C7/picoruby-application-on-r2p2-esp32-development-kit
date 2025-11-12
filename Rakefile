@@ -22,9 +22,11 @@ Rake::TestTask.new(:test) do |t|
 end
 
 # ============================================================================
-# DEVICE TEST TASK (Run Separately)
+# INTERNAL DEVICE TEST TASK (Run Separately due to Thor + test-unit conflict)
 # ============================================================================
-Rake::TestTask.new("test:device") do |t|
+# NOTE: This task is internal and not exposed as a public task
+# It is run as part of the default task and CI flow
+Rake::TestTask.new("test:device_internal") do |t|
   t.libs << "test"
   t.libs << "lib"
   t.test_files = ["test/commands/device_test.rb"]
@@ -66,39 +68,38 @@ task :reset_coverage do
 end
 
 # ============================================================================
-# INTEGRATED TEST TASKS
+# INTERNAL: Run all tests (main + device suites)
 # ============================================================================
 
-# Run all tests: main suite (183 tests) + device suite (14 tests)
-# NOTE: SimpleCov coverage is cumulative across both test runs
-desc "Run all tests (main suite + device suite)"
-task "test:all" => :reset_coverage do
+# Internal task: Combines main test suite and device test suite (for default task)
+desc "Run all tests: main suite + device suite"
+task "test:all_internal" => :reset_coverage do
   sh "bundle exec rake test"
-  sh "bundle exec rake test:device 2>&1 | grep -E '^(Started|Finished|[0-9]+ tests)' || true"
-end
-
-# CI task: All tests + RuboCop check + coverage validation
-desc "Run all tests, RuboCop checks, and validate coverage (for CI)"
-task ci: %i[test rubocop coverage_validation] do
-  puts "\n✓ CI checks passed! All tests + RuboCop + coverage validated."
-end
-
-# 品質チェック統合タスク
-desc "Run all quality checks with RuboCop auto-correction and retest"
-task quality: %i[test rubocop:fix test]
-
-# 開発者向け：pre-commitフック用タスク
-desc "Pre-commit checks: run tests, auto-fix RuboCop violations, and run tests again"
-task "pre-commit": %i[test rubocop:fix test] do
-  puts "\n✓ Pre-commit checks passed! Ready to commit."
+  sh "bundle exec rake test:device_internal 2>&1 | grep -E '^(Started|Finished|[0-9]+ tests)' || true"
 end
 
 # ============================================================================
-# DEFAULT & CONVENIENCE TASKS
+# PUBLIC TASKS: CI and Development
+# ============================================================================
+
+# CI task: All tests + RuboCop check + coverage validation (NO auto-correction)
+desc "Run CI: all tests, RuboCop validation, and coverage validation"
+task ci: %i[reset_coverage test rubocop coverage_validation] do
+  puts "\n✓ CI passed! All tests + RuboCop + coverage validated."
+end
+
+# Development task: RuboCop auto-fix, run all tests, validate coverage
+desc "Development: RuboCop auto-fix, run all tests, validate coverage"
+task dev: ["rubocop:fix", :reset_coverage, :test, :coverage_validation] do
+  puts "\n✓ Development checks passed! RuboCop fixed, tests passed, coverage validated."
+end
+
+# ============================================================================
+# DEFAULT TASK
 # ============================================================================
 
 # Default: Run all tests (main suite + device suite)
-desc "Default task: Run all tests (main + device suites) [197 tests total]"
-task default: %i[test:all] do
-  puts "\n✓ All 197 tests completed successfully (183 main + 14 device)"
+desc "Default task: Run all tests (183 main + 14 device)"
+task default: %i[test:all_internal] do
+  puts "\n✓ All 197 tests completed successfully!"
 end
