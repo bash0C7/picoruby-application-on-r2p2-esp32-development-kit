@@ -75,27 +75,62 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 
 #### Phase 1: Investigation & Design (1-2 days)
 
-- [ ] **Research rbs-inline usage patterns**
-  - Survey how other gems use rbs-inline (e.g., ruby/rbs examples)
-  - Evaluate inline annotation syntax vs separate .rbs files
-  - Document pros/cons of each approach
+**CRITICAL**: rbs-inline is becoming part of Ruby's standard tooling. This makes it the primary choice for type annotations, NOT YARD.
+
+- [ ] **Research rbs-inline deeply (HIGHEST PRIORITY)**
+  - **Background**: rbs-inline allows writing RBS as inline comments, auto-generates .rbs files
+  - **Future**: Will become Ruby language standard (part of core tooling)
+  - **Survey usage patterns**:
+    - Official examples: https://github.com/soutaro/rbs-inline
+    - Real-world gems using rbs-inline
+    - Best practices from Ruby core team
+  - **Syntax examples**:
+    ```ruby
+    # @rbs (String, count: Integer) -> Array[String]
+    def process(name, count:)
+      # Implementation
+    end
+
+    # @rbs @items: Array[String]
+    attr_reader :items
+    ```
+  - **Tools integration**:
+    - `rbs-inline` command: Generate .rbs from inline comments
+    - Steep integration: Use generated .rbs for type checking
+    - CI/CD: Auto-generate .rbs as part of build process
+  - Document findings in `.claude/docs/rbs-inline-research.md`
+
+- [ ] **Evaluate rbs-inline vs YARD integration strategy**
+  - **Key Question**: Should we use YARD at all, or go rbs-inline only?
+  - **Option A**: rbs-inline for types + YARD for documentation
+    - Pros: Best of both worlds (types + rich docs)
+    - Cons: Potential duplication, sync issues
+  - **Option B**: rbs-inline only, generate docs from RBS
+    - Pros: Single source of truth, no sync issues
+    - Cons: Less rich documentation than YARD
+  - **Recommendation**: Document decision with rationale
+  - Consider: RBS documentation generators (rbs-doc, steep docs)
 
 - [ ] **Research Steep configuration**
   - Review Steep setup for gem projects
   - Understand Steepfile configuration options
   - Evaluate integration with CI/CD (GitHub Actions)
+  - Test with rbs-inline generated .rbs files
 
-- [ ] **Design type annotation strategy**
-  - Decide: inline annotations vs .rbs files (recommend inline for picotorokko)
+- [ ] **Design type annotation strategy (rbs-inline first)**
+  - **Decision**: Use rbs-inline as primary annotation method
   - Prioritize files for type coverage (start with public API: `lib/picotorokko/cli.rb`, commands)
-  - Define type annotation guidelines in `.claude/docs/`
+  - Define rbs-inline annotation guidelines in `.claude/docs/type-annotation-guide.md`
   - Plan gradual rollout (which files first?)
+  - **Documentation strategy**: Decide if YARD is needed or RBS docs sufficient
 
 - [ ] **Create proof-of-concept**
-  - Add rbs-inline to one file (e.g., `lib/picotorokko/env.rb`)
-  - Configure Steep for that file
+  - Add rbs-inline annotations to one file (e.g., `lib/picotorokko/env.rb`)
+  - Run `rbs-inline` to generate .rbs file
+  - Configure Steep to use generated .rbs
   - Run `steep check` and verify it works
-  - Document setup process
+  - Compare with YARD: Does RBS provide enough documentation?
+  - Document setup process and lessons learned
 
 #### Phase 2: Core API Type Annotations (2-3 days)
 
@@ -149,6 +184,73 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
   - Add to CLAUDE.md development workflow
   - Include in PR review checklist
 
+#### Phase 5: RBS-Driven TDD Workflow Integration (CRITICAL)
+
+**Goal**: Integrate RBS type definitions into the core TDD cycle (Red-Green-Refactor)
+
+**Rationale**: Type-First TDD ensures type safety from the beginning and keeps types synchronized with implementation throughout development.
+
+- [ ] **Design Type-First TDD Workflow**
+  - Document the new cycle: Type → RED → GREEN → RuboCop → REFACTOR (+ Type Update) → COMMIT
+  - Define when to write types: Before tests (Type-First) or during refactor
+  - Document in `.claude/docs/type-first-tdd.md`
+
+- [ ] **Integrate RBS into Micro-Cycle (CLAUDE.md update)**
+  - **RED Phase**: Write type signature BEFORE test
+    ```ruby
+    # @rbs (String, Integer) -> Array[String]
+    def process_data(name, count)
+      # Implementation comes in GREEN phase
+    end
+    ```
+  - **GREEN Phase**: Implement to satisfy both test AND type
+    - Run `steep check` alongside `rake test`
+    - Fix type errors before moving to refactor
+  - **REFACTOR Phase**: Update types if signature changes
+    - Refactor implementation → Update RBS inline annotations
+    - Re-run `steep check` to verify type consistency
+    - Ensure types still match actual behavior
+
+- [ ] **Add Type Checking to Quality Gates**
+  - Update Micro-Cycle checklist in CLAUDE.md:
+    ```markdown
+    1. TYPE: Write RBS inline annotation for new method
+    2. RED: Write failing test
+       bundle exec rake test → ❌
+    3. GREEN: Implement minimal code
+       bundle exec rake test → ✅
+       steep check → ✅ (verify types match)
+    4. RUBOCOP: Auto-fix violations
+       bundle exec rubocop -A
+    5. REFACTOR: Improve code + update types if needed
+       steep check → ✅ (re-verify after refactor)
+    6. COMMIT: All gates pass
+       bundle exec rake ci → ✅
+    ```
+
+- [ ] **Create Type-Check Rake Task**
+  - Add `rake type` task: runs `steep check`
+  - Add `rake type:watch` for continuous type checking during development
+  - Integrate into `rake dev` workflow
+
+- [ ] **RBS/YARD Synchronization Strategy**
+  - Document: RBS is source of truth for types
+  - YARD `@param`/`@return` should reflect RBS signatures
+  - Add check script: Compare RBS types with YARD annotations
+  - Run as part of pre-commit verification
+
+- [ ] **Update CLAUDE.md with Type-First Workflow**
+  - Replace current Micro-Cycle with Type-First TDD cycle
+  - Add examples: "Adding a new command with types"
+  - Document: Types are part of "done" definition
+  - Emphasize: Types written BEFORE implementation (like tests)
+
+- [ ] **Test Type-First Workflow with Real Feature**
+  - Pick a small new feature (e.g., `ptrk config validate`)
+  - Follow Type → RED → GREEN → REFACTOR cycle
+  - Document pain points and improvements
+  - Iterate on workflow based on experience
+
 ---
 
 ### 📚 Priority 2: Gem Documentation Generation
@@ -161,13 +263,29 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 - Professional documentation hosting
 - Better discoverability for gem users
 
+**CRITICAL DEPENDENCY**: This priority depends on Priority 1 Phase 1 decision regarding rbs-inline vs YARD.
+
 #### Phase 1: Research & Design (1 day)
 
-- [ ] **Research documentation tools**
-  - **YARD** - Ruby standard, comment-based documentation
-  - **RDoc** - Built-in Ruby tool, simpler but less featured
-  - **Steep's RBS docs** - If using RBS, can generate docs from types
-  - **Jekyll/Docusaurus** - Static site generators for hosting
+**NOTE**: Start AFTER completing Priority 1 Phase 1 (rbs-inline research)
+
+- [ ] **Review Priority 1 Phase 1 decision on rbs-inline vs YARD**
+  - If rbs-inline only: Skip YARD setup, focus on RBS doc generators
+  - If rbs-inline + YARD: Proceed with YARD integration
+  - Document chosen strategy and rationale
+
+- [ ] **Research documentation tools (based on Priority 1 decision)**
+  - **Option A (rbs-inline only)**:
+    - **rbs-doc** - Generate documentation from RBS files
+    - **Steep's RBS docs** - Built-in RBS documentation
+    - **RubyDoc.info RBS support** - Check if supported
+  - **Option B (rbs-inline + YARD)**:
+    - **YARD** - Ruby standard, comment-based documentation
+    - **yard-rbs** - YARD plugin for RBS integration
+    - Synchronization strategy between rbs-inline and YARD
+  - **Common**:
+    - **RDoc** - Built-in Ruby tool (fallback option)
+    - **Jekyll/Docusaurus** - Static site generators for hosting
   - Document recommendations in `.claude/docs/documentation-generation.md`
 
 - [ ] **Survey existing documentation**
@@ -210,17 +328,41 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
   - Ensure all links work, examples render correctly
   - Iterate on YARD comments for clarity
 
-#### Phase 3: RBS Type Documentation Integration (1 day)
+#### Phase 3: RBS Documentation Integration (1 day)
 
-- [ ] **Configure YARD to read RBS types**
-  - Install yard-rbs plugin if available
-  - Or: Use Steep's RBS documentation generator
-  - Ensure type signatures appear in generated docs
+**NOTE**: Implementation depends on Priority 1 Phase 1 decision (rbs-inline only vs rbs-inline + YARD)
 
-- [ ] **Verify type/YARD consistency**
-  - Compare YARD `@param` annotations with RBS signatures
-  - Ensure they match (CI check if possible)
-  - Document any discrepancies
+- [ ] **Configure documentation generator for RBS**
+  - **If rbs-inline only**:
+    - Use rbs-doc or Steep's built-in RBS documentation
+    - Configure to read generated .rbs files from sig/ directory
+    - Ensure type signatures appear in generated docs
+    - Test documentation output quality
+  - **If rbs-inline + YARD**:
+    - Install yard-rbs plugin for RBS integration
+    - Configure YARD to read both inline comments and .rbs files
+    - Ensure type signatures from RBS appear in YARD docs
+    - Test combined documentation output
+
+- [ ] **Verify type/doc consistency (CRITICAL for Type-First TDD)**
+  - **Synchronization Policy**:
+    - rbs-inline annotations in source code = Single source of truth
+    - Generated .rbs files = Auto-generated, committed to repo
+    - Documentation = Generated from rbs-inline annotations (+ YARD if used)
+  - If using YARD:
+    - Compare YARD `@param`/`@return` with rbs-inline annotations
+    - Ensure they match (automated check via `scripts/check_rbs_yard_sync.rb`)
+    - Document any discrepancies
+    - Pre-commit check enforces synchronization
+
+- [ ] **Add type generation to commit workflow**
+  - Final verification before `git commit`:
+    1. `rake rbs:generate` → Generate .rbs files from rbs-inline annotations ✅
+    2. `steep check` → Types are valid ✅
+    3. (Optional) `scripts/check_rbs_yard_sync.rb` → RBS/YARD in sync ✅
+    4. `bundle exec rake ci` → All quality gates pass ✅
+  - Document in CLAUDE.md as mandatory step
+  - Add to Quality Gates section in TODO.md
 
 #### Phase 4: Automated Deployment (1 day)
 
@@ -278,8 +420,33 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
   - [ ] New/changed commands? → Update CLI reference
   - [ ] Directory structure changed? → Update guides (MRBGEMS_GUIDE.md, CI_CD_GUIDE.md)
   - [ ] Templates modified? → Update docs/github-actions/ + guides
-  - [ ] Public API changed? → Update YARD comments + RBS types
+  - [ ] Public API changed? → Update rbs-inline annotations + documentation comments
+  - [ ] rbs-inline annotations added/changed? → Run `rbs-inline` to regenerate .rbs files
+  - [ ] Generated .rbs files updated? → Run `steep check` to verify type validity
   ```
+
+- [ ] **Add rbs-inline Generation to Pre-Commit Workflow**
+  - **Strategy**: rbs-inline annotations in code → .rbs files generated automatically
+  - Create Rake task: `rake rbs:generate`
+    - Runs `rbs-inline` on all lib/ files
+    - Generates .rbs files in sig/ directory
+    - Outputs summary of generated types
+  - Add to commit checklist:
+    1. Write/update rbs-inline annotations in code
+    2. Run `rake rbs:generate` to update .rbs files
+    3. Run `steep check` to verify generated types
+    4. Commit both source code and generated .rbs files
+  - Document in CLAUDE.md as mandatory workflow
+
+- [ ] **Optional: Add Documentation Sync Check (if using YARD)**
+  - **NOTE**: Only needed if Priority 2 decides to use rbs-inline + YARD
+  - Create script: `scripts/check_rbs_yard_sync.rb`
+  - Parse rbs-inline annotations from code
+  - Parse YARD `@param`, `@return` tags (if present)
+  - Compare and report mismatches
+  - Add to commit checklist if YARD is used
+  - Initially: Warning only (don't block commits)
+  - Later: Make mandatory after stabilization
 
 - [ ] **Link to documentation-structure.md**
   - Add prominent reference in CLAUDE.md
@@ -347,10 +514,26 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 
 All features must meet these criteria before merging:
 
-- ✅ All tests passing (197+ tests)
-- ✅ RuboCop: 0 violations
-- ✅ Coverage: ≥85% line, ≥60% branch
+### Pre-Commit Checks (Local Development)
+
+- ✅ All tests passing (197+ tests): `bundle exec rake test`
+- ✅ RuboCop: 0 violations: `bundle exec rubocop`
+- ✅ Coverage: ≥85% line, ≥60% branch: `bundle exec rake ci`
+- ✅ **rbs-inline annotations added** (Priority 1+): Inline annotations for all new/modified public methods
+- ✅ **RBS files generated** (Priority 1+): `rake rbs:generate` creates/updates .rbs files in sig/
+- ✅ **Steep check passing** (Priority 1+): `steep check` returns no errors on generated .rbs
+- ✅ **RBS/YARD synchronization** (Priority 1+2, if using YARD): `scripts/check_rbs_yard_sync.rb` passes
+
+### Pre-Push Checks (Final Verification)
+
 - ✅ Documentation updated (SPEC.md, README.md, relevant guides)
 - ✅ YARD comments added for public methods (Priority 2+)
-- ✅ RBS type annotations added (Priority 1+)
-- ✅ Steep check passing (Priority 1+)
+- ✅ Architecture docs updated if design changed (docs/architecture/)
+- ✅ TODO.md updated (completed tasks removed, new issues added)
+
+### Commit Message Quality
+
+- ✅ Imperative mood ("Add feature" not "Added feature")
+- ✅ Concise first line (<50 chars)
+- ✅ Detailed body if needed (wrap at 72 chars)
+- ✅ References related issues/PRs if applicable
