@@ -75,7 +75,15 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 - **Phase 2+**: [`.claude/docs/type-annotation-guide.md`](https://github.com/picoruby/picotorokko/blob/main/.claude/docs/type-annotation-guide.md) — Annotation patterns, examples, workflow
 - **TDD Workflow**: [`.claude/docs/t-wada-style-tdd-guide.md`](https://github.com/picoruby/picotorokko/blob/main/.claude/docs/t-wada-style-tdd-guide.md) — How RBS integrates into t-wada style TDD
 
-**Status**: Phase 1 design complete. Phase 2+ implementation pending.
+**Status**: Phase 1 design complete. Phase 2 implementation in progress (infrastructure complete):
+- ✅ Phase 2 Step 1: Environment setup complete
+  - Dependencies added to gemspec (rbs ~> 3.4, steep ~> 1.8, rbs-inline ~> 0.11)
+  - Steepfile created with lib and test targets
+  - sig/ directory structure created
+  - Rake tasks added: `rake rbs:generate`, `rake steep`
+  - rbs-inline annotations added to CLI and Commands::Env
+- ⏳ Phase 2 Step 2: Continue annotations for remaining commands and modules
+- ⏳ Phase 2 Step 3: Resolve external library type definitions (Thor, YAML, etc)
 
 ---
 
