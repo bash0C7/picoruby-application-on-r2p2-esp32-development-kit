@@ -1,7 +1,4 @@
-require "test_helper"
-require "tmpdir"
-require "fileutils"
-require "stringio"
+require "test-unit"
 
 # ========================================================================
 # ⚠️  ONE TEST OMITTED (line 426-455)
@@ -30,8 +27,8 @@ class PraCommandsDeviceTest < PraTestCase
   # device flash コマンドのテスト
   sub_test_case "device flash command" do
     test "raises error when environment not found" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -48,8 +45,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "raises error when no current environment is set" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -66,8 +63,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "raises error when build environment not found" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -96,8 +93,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when flashing" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -127,8 +124,8 @@ class PraCommandsDeviceTest < PraTestCase
   # device monitor コマンドのテスト
   sub_test_case "device monitor command" do
     test "raises error when environment not found" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -145,8 +142,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "raises error when no current environment is set" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -163,8 +160,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when monitoring" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -191,8 +188,8 @@ class PraCommandsDeviceTest < PraTestCase
   # device build コマンドのテスト
   sub_test_case "device build command" do
     test "raises error when environment not found" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -209,8 +206,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when building" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -237,8 +234,8 @@ class PraCommandsDeviceTest < PraTestCase
   # device setup_esp32 コマンドのテスト
   sub_test_case "device setup_esp32 command" do
     test "raises error when environment not found" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -255,8 +252,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "shows message when setting up ESP32" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -283,8 +280,8 @@ class PraCommandsDeviceTest < PraTestCase
   # device tasks コマンドのテスト
   sub_test_case "device tasks command" do
     test "raises error when environment not found" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -301,8 +298,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "raises error when no current environment is set" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
 
           # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -325,8 +322,8 @@ class PraCommandsDeviceTest < PraTestCase
       # - Priority: LOW (display-only feature)
       omit "Thor tasks command breaks test-unit registration"
 
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -353,8 +350,8 @@ class PraCommandsDeviceTest < PraTestCase
   # method_missing による動的Rakeタスク委譲のテスト
   sub_test_case "rake task proxy" do
     test "delegates custom_task to R2P2-ESP32 rake task" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -378,8 +375,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "raises error when rake task does not exist" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -401,8 +398,8 @@ class PraCommandsDeviceTest < PraTestCase
     end
 
     test "delegates rake task with explicit env" do
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -442,8 +439,8 @@ class PraCommandsDeviceTest < PraTestCase
       # - See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]
       omit "Thor help command breaks test-unit registration - see TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]"
 
-      Dir.mktmpdir do |tmpdir|
-        with_fresh_project_root do
+      with_fresh_project_root do
+        Dir.mktmpdir do |tmpdir|
           Dir.chdir(tmpdir)
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
@@ -493,8 +490,7 @@ class PraCommandsDeviceTest < PraTestCase
     FileUtils.mkdir_p(r2p2_path)
 
     # テスト用 Rakefile をコピー
-    # NOTE: test/commands/device_test.rb から test/fixtures/ へのパスは ../fixtures
-    mock_rakefile = File.join(File.expand_path("..", __dir__), "fixtures", "R2P2-ESP32", "Rakefile")
+    mock_rakefile = File.expand_path("../fixtures/R2P2-ESP32/Rakefile", __dir__)
     FileUtils.cp(mock_rakefile, File.join(r2p2_path, "Rakefile"))
 
     [env_name, r2p2_path]
