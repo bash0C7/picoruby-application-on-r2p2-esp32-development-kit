@@ -120,10 +120,10 @@ All features must meet these criteria before merging:
 - ✅ All tests passing (197+ tests): `bundle exec rake test`
 - ✅ RuboCop: 0 violations: `bundle exec rubocop`
 - ✅ Coverage: ≥85% line, ≥60% branch: `bundle exec rake ci`
+- ✅ **Documentation updated** (Priority 3 Phase 1): If code changed, related docs reviewed and updated in same commit. See `.claude/docs/documentation-structure.md` for file mapping.
 - ✅ **rbs-inline annotations added** (Priority 1+): Inline annotations for all new/modified public methods
 - ✅ **RBS files generated** (Priority 1+): `rake rbs:generate` creates/updates .rbs files in sig/
 - ✅ **Steep check passing** (Priority 1+): `steep check` returns no errors on generated .rbs
-- ✅ **RBS/YARD synchronization** (Priority 1+2, if using YARD): `scripts/check_rbs_yard_sync.rb` passes
 
 ### Pre-Push Checks (Final Verification)
 
