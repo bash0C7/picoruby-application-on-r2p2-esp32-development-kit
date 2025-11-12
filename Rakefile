@@ -10,8 +10,10 @@ Rake::TestTask.new(:test) do |t|
   t.libs << "lib"
   test_files = FileList["test/**/*_test.rb"].sort
   # NOTE: device_test.rb is excluded from main suite to avoid test registration interference
-  # - It runs separately via test:device task
-  # - Default task runs: main suite (183 tests) + device suite (14 tests)
+  # VERIFIED: If device_test is included with help test enabled, 132+ tests fail to register
+  # - Help test execution breaks test-unit registration globally
+  # - Tests run: 65/197 (132 tests don't register)
+  # See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]
   test_files.delete_if { |f| f.include?("device_test.rb") }
 
   t.test_files = test_files
