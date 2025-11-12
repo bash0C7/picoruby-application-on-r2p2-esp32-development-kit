@@ -14,29 +14,28 @@ The name "picotorokko" draws inspiration from **torokko** (トロッコ), a simp
 - **Git Integration**: Clone and manage repositories with automatic submodule handling
 - **Patch Management**: Export, apply, and diff patches across environments
 - **Task Delegation**: Build/flash/monitor tasks transparently delegated to R2P2-ESP32's Rakefile
-- **Executor Abstraction**: Clean dependency injection for command execution with Open3 integration ✅ Phase 0 Complete
+- **Executor Abstraction**: Clean dependency injection for testable command execution with Open3 integration
+- **Template Engines**: AST-based template generation for Ruby, YAML, and C code
 
 ## Development Status
 
-### ✅ Phase 0: Infrastructure & System Mocking (COMPLETED)
+### ✅ Complete Infrastructure
 
-- Executor abstraction with ProductionExecutor (Open3) and MockExecutor (testing)
-- Pra::Env refactoring with dependency injection pattern
-- 3 git error handling tests re-enabled via MockExecutor
-- All 151 main tests + 14 device tests passing (165 total)
-- Coverage: 85.86% line, 64.11% branch
+**Core Components**:
+- Executor abstraction (ProductionExecutor for production, MockExecutor for testing)
+- AST-based template engines supporting Ruby, YAML, and C templates
+- Device test framework fully integrated with 197 total tests passing
+- Clean code quality: RuboCop validated, 87.14% line coverage, 65.37% branch coverage
 
-### ✅ AST-Based Template Engine (COMPLETED)
+**Test Suite**:
+- Main suite: 183 tests
+- Device suite: 14 tests
+- Total: 197 tests, all passing ✓
 
-- RubyTemplateEngine: Prism-based AST manipulation for .rb files
-- YamlTemplateEngine: Psych-based recursive placeholder replacement
-- CTemplateEngine: Simple string substitution for C templates
-- Full test coverage for all template engines
-
-### 🔮 Upcoming: Phase 1 Device Integration
-
-- Apply executor pattern to device.rb and device_test.rb
-- Unify test execution model for seamless development workflow
+**Development Workflow**:
+- Simplified Rake tasks for CI and development use
+- Test isolation via MockExecutor for system commands
+- Cumulative coverage tracking across all test suites
 
 ## Installation
 
@@ -194,22 +193,28 @@ bundle install
 #### 2. Run tests
 
 ```bash
-bundle exec rake test
+# Run all tests (183 main + 14 device)
+bundle exec rake
+
+# Or run specific test suites
+bundle exec rake test          # Main test suite only (183 tests)
 ```
 
-#### 3. Code Quality: RuboCop
-
-We use RuboCop for code style enforcement:
+#### 3. Development workflow: RuboCop auto-fix + tests + coverage
 
 ```bash
-bundle exec rubocop -A
+bundle exec rake dev
 ```
 
-#### 4. Run full quality suite (tests + RuboCop + coverage validation)
+This runs RuboCop auto-correction, all tests, and validates coverage in one command.
+
+#### 4. CI validation (RuboCop check + tests + coverage, no auto-fix)
 
 ```bash
 bundle exec rake ci
 ```
+
+This runs the complete CI checks without auto-correction (for CI/CD pipelines).
 
 #### 5. Build the gem
 

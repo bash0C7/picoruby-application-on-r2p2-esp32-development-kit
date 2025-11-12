@@ -436,11 +436,11 @@ class PraCommandsDeviceTest < PraTestCase
 
     test "help command displays available tasks" do
       # OMITTED: Thor's help command breaks test-unit registration globally
-      # - This test causes 108 other tests to fail to register when loaded with full test suite
+      # VERIFIED: When device_test is mixed with main tests, 132+ tests fail to register
       # - Root cause: Thor help + capture_stdout + mocking context interferes with test-unit hooks
       # - Priority: LOW (display-only feature, non-critical functionality)
       # - See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]
-      omit "Thor help command breaks test-unit registration - see TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]"
+      omit "Thor help command breaks test-unit registration - verified: 132+ tests fail to register when mixed with main suite"
 
       Dir.mktmpdir do |tmpdir|
         with_fresh_project_root do
