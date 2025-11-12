@@ -25,6 +25,31 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 
 ---
 
+## ⚠️ Known Issues (Unresolved)
+
+### [TODO-INFRASTRUCTURE-DEVICE-TEST] Thor help command breaks test-unit registration
+
+**Status**: Omitted (low priority)
+
+**Verification**: Commit 64df24f - Confirmed that Thor help command breaks test-unit registration:
+- Mixed device_test with main tests (removed delete_if)
+- Enabled help test (removed omit)
+- **Result**: Only 65/197 tests registered (132+ tests fail to register)
+- **Impact**: Help command cannot be tested alongside main test suite
+- **Current solution**: Keep device tests isolated via `test:device_internal` task
+
+**Reason for omit**:
+- Display-only feature (non-critical)
+- `help` command works manually
+- No user-facing impact (CI/CD unaffected)
+
+**Next steps if needed**:
+- Investigate test-unit + Thor hook interaction
+- Consider alternative testing strategy for device commands
+- May require refactoring test infrastructure
+
+---
+
 ## Completed Infrastructure
 
 - ✅ Executor abstraction (ProductionExecutor, MockExecutor)
