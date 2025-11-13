@@ -41,6 +41,7 @@ module Picotorokko
 
     private
 
+    # @rbs (String | nil) -> String
     def determine_project_root(name)
       base_path = options[:path] || Dir.pwd
 
@@ -51,12 +52,14 @@ module Picotorokko
       end
     end
 
+    # @rbs (String) -> void
     def validate_project_name!(name)
       return if /\A[a-zA-Z0-9_-]+\z/.match?(name)
 
       raise "Invalid project name: #{name}. Use alphanumeric characters, dashes, and underscores."
     end
 
+    # @rbs () -> void
     def create_directories
       directories = [
         "storage/home",
@@ -131,6 +134,7 @@ module Picotorokko
       File.write(output_path, content)
     end
 
+    # @rbs () -> void
     def copy_template_files
       # Copy template files (static files that don't need rendering)
       files_to_copy = [
@@ -153,6 +157,7 @@ module Picotorokko
       end
     end
 
+    # @rbs () -> void
     def print_success_message
       puts "* Created new PicoRuby project: #{project_name}"
       puts "  Location: #{project_root}"
