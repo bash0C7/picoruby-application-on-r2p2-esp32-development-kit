@@ -1,10 +1,9 @@
-# <%= @project_name %>
+# {{PROJECT_NAME}}
 
 A PicoRuby application for ESP32 development using the `picotorokko` (ptrk) build system.
 
-**Created**: <%= @created_at %>
-<% if @author %>**Author**: <%= @author %>
-<% end %>
+**Created**: {{CREATED_AT}}
+**Author**: {{AUTHOR}}
 
 ## Quick Start
 

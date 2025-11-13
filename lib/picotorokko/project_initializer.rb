@@ -1,6 +1,6 @@
 require "fileutils"
 require "yaml"
-require "erb"
+require_relative "template/engine"
 
 module Picotorokko
   # プロジェクト初期化ロジック（Thor依存なし）
@@ -70,7 +70,7 @@ module Picotorokko
     end
 
     def prepare_variables
-      author = options[:author] || detect_git_author
+      author = options[:author] || detect_git_author || ""
       now = Time.now
 
       {
@@ -92,71 +92,40 @@ module Picotorokko
     end
 
     def render_templates(variables)
-      # Template files to render with ERB
-      erb_templates = [
-        ".picoruby-env.yml.erb",
+      # Template files to render with Prism engine
+      template_files = [
+        ".picoruby-env.yml",
         ".gitignore",
-        "Gemfile.erb",
-        "README.md.erb",
-        "CLAUDE.md.erb",
+        "Gemfile",
+        "README.md",
+        "CLAUDE.md",
         "storage/home/app.rb"
       ]
 
-      erb_templates.each do |template_file|
+      template_files.each do |template_file|
         render_template(template_file, variables)
       end
     end
 
     def render_template(template_file, variables)
       template_path = File.join(TEMPLATES_DIR, template_file)
-      output_file = template_file.delete_suffix(".erb")
-      output_path = File.join(project_root, output_file)
+      output_path = File.join(project_root, template_file)
 
       unless File.exist?(template_path)
         puts "Warning: Template not found: #{template_path}"
         return
       end
 
-      # Read and render template
-      content = File.read(template_path)
-
-      # Simple ERB-like rendering with instance variables
-      content = render_erb(content, variables) if template_file.end_with?(".erb")
+      # Render template using Prism-based engine (supports .rb, .yml, .md, etc.)
+      content = Picotorokko::Template::Engine.render(template_path, variables)
 
       # Write to output
       FileUtils.mkdir_p(File.dirname(output_path))
       File.write(output_path, content)
     end
 
-    def render_erb(template_content, variables)
-      # Use ERB with a custom context
-      require "erb"
-
-      context = ERBContext.new(variables)
-      ERB.new(template_content).result(context.binding)
-    rescue LoadError
-      # Fallback: simple string interpolation
-      result = template_content
-      variables.each do |key, value|
-        result = result.gsub(/<%= @#{key} %>/, value.to_s)
-      end
-      result
-    end
-
-    # Context object for ERB template rendering
-    class ERBContext
-      attr_reader :binding
-
-      def initialize(variables)
-        variables.each do |key, value|
-          instance_variable_set("@#{key}", value)
-        end
-        @binding = instance_eval { ::Kernel.binding }
-      end
-    end
-
     def copy_template_files
-      # Copy non-ERB template files (static files that don't need rendering)
+      # Copy template files (static files that don't need rendering)
       files_to_copy = [
         "patch/README.md",
         "storage/home/.gitkeep",
