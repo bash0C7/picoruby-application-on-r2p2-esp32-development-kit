@@ -2699,6 +2699,386 @@ end
 
 **Verdict**: 🔴 Only for Ruby wizards
 
+---
+
+### 📝 Sample Code: Reality Marble in Action
+
+#### Example 1: Zero-Configuration Transparent Mocking
+
+**User writes** (no Reality Marble API calls):
+
+```ruby
+# test/git_test.rb
+require 'test/unit'
+require 'reality_marble'  # ← Only this line needed
+
+class GitTest < Test::Unit::TestCase
+  def test_git_clone_success
+    # User writes normal Ruby code, no mock setup!
+    system('git clone https://example.com/repo.git dest')
+
+    assert File.exist?('dest/.git')
+    assert File.read('dest/README.md').include?('Example')
+  end
+end
+```
+
+**Reality Marble auto-mocks** (behind the scenes):
+- `system('git clone ...')` → Returns `true` (default success)
+- `File.exist?('dest/.git')` → Returns `true` (default for .git paths)
+- `File.read('dest/README.md')` → Returns `"# Example\n..."` (default content)
+
+**Output**:
+```
+GitTest#test_git_clone_success: .
+Finished in 0.001s
+1 tests, 2 assertions, 0 failures
+```
+
+**How it works**:
+1. Reality Marble detects `git_test.rb` at load time
+2. Prism transforms `test_git_clone_success` method
+3. Refinements intercept `system()` and `File` methods
+4. Default smart mocks return sensible values
+
+---
+
+#### Example 2: Custom Expectations (Advanced Users)
+
+**User wants specific behavior**:
+
+```ruby
+# test/git_failure_test.rb
+require 'test/unit'
+require 'reality_marble'
+
+class GitFailureTest < Test::Unit::TestCase
+  # Optional: Set expectations before tests
+  def setup
+    # Configure what system() should return
+    RealityMarble.expect(Kernel, :system) do |cmd|
+      case cmd
+      when /git clone/ then false  # Simulate clone failure
+      when /git status/ then true
+      else nil  # Fall through to original
+      end
+    end
+
+    # Configure File.exist? behavior
+    RealityMarble.expect(File, :exist?) do |path|
+      case path
+      when /\.git$/ then false  # Simulate missing .git
+      when /README/ then true
+      else nil
+      end
+    end
+  end
+
+  def test_handles_clone_failure
+    # User code unchanged
+    result = system('git clone https://example.com/repo.git dest')
+
+    assert_equal false, result
+    assert !File.exist?('dest/.git')
+  end
+
+  def test_status_works
+    result = system('git status')
+
+    assert_equal true, result
+  end
+end
+```
+
+**Output**:
+```
+GitFailureTest#test_handles_clone_failure: .
+GitFailureTest#test_status_works: .
+Finished in 0.002s
+2 tests, 3 assertions, 0 failures
+```
+
+---
+
+#### Example 3: Trace/Spy Verification
+
+**User wants to verify calls**:
+
+```ruby
+# test/git_spy_test.rb
+require 'test/unit'
+require 'reality_marble'
+
+class GitSpyTest < Test::Unit::TestCase
+  def test_git_operations_sequence
+    # User code (no explicit spy setup)
+    system('git init')
+    system('git add .')
+    system('git commit -m "Initial commit"')
+
+    # Reality Marble automatically records all calls
+    trace = RealityMarble.current_trace
+
+    # Verify call sequence
+    assert_equal 3, trace[Kernel, :system].call_count
+
+    # Verify specific calls
+    assert trace[Kernel, :system].called_with?('git init')
+    assert trace[Kernel, :system].called_with?('git add .')
+    assert trace[Kernel, :system].called_with?(/git commit/)
+
+    # Verify call order
+    calls = trace[Kernel, :system].invocations
+    assert_equal 'git init', calls[0][:args][0]
+    assert_equal 'git add .', calls[1][:args][0]
+    assert_match /commit/, calls[2][:args][0]
+  end
+end
+```
+
+**Output**:
+```
+GitSpyTest#test_git_operations_sequence: .
+Finished in 0.001s
+1 tests, 6 assertions, 0 failures
+```
+
+---
+
+#### Example 4: Complex Filesystem Scenario
+
+**User tests file operations**:
+
+```ruby
+# test/config_loader_test.rb
+require 'test/unit'
+require 'reality_marble'
+
+class ConfigLoaderTest < Test::Unit::TestCase
+  def setup
+    # Configure filesystem expectations
+    RealityMarble.expect(File, :read) do |path|
+      case path
+      when 'config.yml' then "database:\n  host: localhost\n  port: 5432"
+      when 'secrets.yml' then "api_key: test_key_123"
+      else raise Errno::ENOENT, "No such file: #{path}"
+      end
+    end
+
+    RealityMarble.expect(File, :exist?) do |path|
+      ['config.yml', 'secrets.yml'].include?(path)
+    end
+
+    RealityMarble.expect(Dir, :glob) do |pattern|
+      case pattern
+      when '*.yml' then ['config.yml', 'secrets.yml']
+      else []
+      end
+    end
+  end
+
+  def test_load_configuration
+    # User's production code (calls File.read internally)
+    config_files = Dir.glob('*.yml')
+
+    assert_equal 2, config_files.length
+
+    config = File.read('config.yml')
+    assert config.include?('localhost')
+
+    secrets = File.read('secrets.yml')
+    assert secrets.include?('test_key_123')
+  end
+
+  def test_missing_file_error
+    # User tests error path
+    assert_raise(Errno::ENOENT) do
+      File.read('nonexistent.yml')
+    end
+  end
+end
+```
+
+**Output**:
+```
+ConfigLoaderTest#test_load_configuration: .
+ConfigLoaderTest#test_missing_file_error: .
+Finished in 0.002s
+2 tests, 4 assertions, 0 failures
+```
+
+---
+
+#### Example 5: Production Code Integration (Zero Changes)
+
+**User has existing production code**:
+
+```ruby
+# lib/repository_manager.rb
+class RepositoryManager
+  def clone_and_setup(url, dest)
+    puts "Cloning #{url}..."
+
+    # Reality Marble intercepts these calls when testing
+    unless system("git clone #{url} #{dest}")
+      raise "Clone failed"
+    end
+
+    Dir.chdir(dest) do
+      system("git checkout main")
+
+      if File.exist?('setup.sh')
+        system("bash setup.sh")
+      end
+    end
+
+    puts "Setup complete!"
+  end
+end
+```
+
+**User's test** (no production code changes):
+
+```ruby
+# test/repository_manager_test.rb
+require 'test/unit'
+require 'reality_marble'
+require_relative '../lib/repository_manager'
+
+class RepositoryManagerTest < Test::Unit::TestCase
+  def setup
+    RealityMarble.expect(Kernel, :system) do |cmd|
+      case cmd
+      when /git clone/ then true
+      when /git checkout/ then true
+      when /bash setup\.sh/ then true
+      else false
+      end
+    end
+
+    RealityMarble.expect(File, :exist?) do |path|
+      path == 'setup.sh'
+    end
+
+    RealityMarble.expect(Dir, :chdir) do |dir, &block|
+      # Simulate chdir without actually changing directory
+      block.call if block
+      nil
+    end
+  end
+
+  def test_successful_clone_and_setup
+    manager = RepositoryManager.new
+
+    # No exceptions = success
+    assert_nothing_raised do
+      manager.clone_and_setup('https://example.com/repo.git', 'dest')
+    end
+
+    # Verify system commands were called
+    trace = RealityMarble.current_trace
+    assert trace[Kernel, :system].called_with?(/git clone/)
+    assert trace[Kernel, :system].called_with?(/git checkout main/)
+    assert trace[Kernel, :system].called_with?(/bash setup\.sh/)
+  end
+
+  def test_clone_failure
+    # Override expectation for this test
+    RealityMarble.expect(Kernel, :system) do |cmd|
+      cmd.include?('git clone') ? false : true
+    end
+
+    manager = RepositoryManager.new
+
+    assert_raise(RuntimeError, "Clone failed") do
+      manager.clone_and_setup('https://example.com/repo.git', 'dest')
+    end
+  end
+end
+```
+
+**Output**:
+```
+RepositoryManagerTest#test_successful_clone_and_setup: .
+RepositoryManagerTest#test_clone_failure: .
+Cloning https://example.com/repo.git...
+Setup complete!
+Cloning https://example.com/repo.git...
+Finished in 0.003s
+2 tests, 5 assertions, 0 failures
+```
+
+---
+
+#### Example 6: Third-Party Gem Mocking (Killer Feature)
+
+**User wants to test code using Net::HTTP** (cannot modify gem):
+
+```ruby
+# test/api_client_test.rb
+require 'test/unit'
+require 'reality_marble'
+require 'net/http'
+
+class APIClientTest < Test::Unit::TestCase
+  def setup
+    # Mock Net::HTTP (third-party gem)
+    RealityMarble.expect(Net::HTTP, :get) do |uri|
+      case uri.to_s
+      when /users/ then '{"users": [{"id": 1, "name": "Alice"}]}'
+      when /posts/ then '{"posts": []}'
+      else '{"error": "Not found"}'
+      end
+    end
+  end
+
+  def test_fetch_users
+    # User's code calls Net::HTTP.get (third-party gem method)
+    response = Net::HTTP.get(URI('https://api.example.com/users'))
+
+    data = JSON.parse(response)
+    assert_equal 1, data['users'].length
+    assert_equal 'Alice', data['users'][0]['name']
+  end
+
+  def test_fetch_empty_posts
+    response = Net::HTTP.get(URI('https://api.example.com/posts'))
+
+    data = JSON.parse(response)
+    assert_equal [], data['posts']
+  end
+end
+```
+
+**Why this is powerful**:
+- ✅ No need to modify production code
+- ✅ No need to modify Net::HTTP gem
+- ✅ No need for HTTP stubbing libraries (webmock, vcr)
+- ✅ Reality Marble's Refinements reach into gem code
+
+**Output**:
+```
+APIClientTest#test_fetch_users: .
+APIClientTest#test_fetch_empty_posts: .
+Finished in 0.001s
+2 tests, 3 assertions, 0 failures
+```
+
+---
+
+### Key Takeaways from Examples
+
+1. **Zero configuration** works out-of-the-box with smart defaults
+2. **Custom expectations** give power users full control
+3. **Trace/spy** features are automatic (no manual setup)
+4. **Production code** requires NO changes (transparency)
+5. **Third-party gems** are mockable (Refinements reach them)
+6. **Complex scenarios** (filesystem, multiple mocks) are simple
+
+**The magic**: User writes normal Ruby test code, Reality Marble does the rest via Prism AST transformation + Refinements + TracePoint.
+
+---
+
 ### When to Use 案4
 
 **Use 案4 when**:
