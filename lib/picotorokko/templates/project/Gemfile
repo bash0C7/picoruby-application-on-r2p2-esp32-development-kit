@@ -1,7 +1,11 @@
 source "https://rubygems.org"
 
+# PicoRuby build system CLI
+# For released gem: gem "picotorokko"
+# For local development: gem "picotorokko", path: "../" (path to gem repo)
 gem "picotorokko"
 
 group :development do
+  # Ruby code quality checker configured for PicoRuby
   gem "rubocop", "~> 1.81", require: false
 end

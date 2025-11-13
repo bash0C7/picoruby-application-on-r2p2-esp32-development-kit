@@ -64,21 +64,45 @@ gem install picotorokko
 
 #### 1. Initialize a new project
 
+**Always specify a project name** to avoid initializing in the current directory:
+
 ```bash
 ptrk init my-project
 cd my-project
 ```
 
-Optional flags:
+**Optional flags**:
 - `--author "Your Name"` — Set project author (default: auto-detected from git config)
-- `--path /path/to/dir` — Create project in specified directory
+- `--path /path/to/dir` — Create project in specified directory (if omitted, uses current directory as base)
 - `--with-ci` — Include GitHub Actions workflow for CI/CD
-- `--with-mrbgem NAME` — Generate mrbgem template(s)
 
-**Example with options**:
+**Common usage patterns**:
+
+Default behavior (creates `./my-project/`):
 ```bash
-ptrk init my-project --with-ci --with-mrbgem MyGem --author "Alice"
+ptrk init my-project
+cd my-project
 ```
+
+Create in a specific directory:
+```bash
+ptrk init my-project --path /home/user/projects
+cd /home/user/projects/my-project
+```
+
+Create with CI/CD and custom author:
+```bash
+ptrk init my-project --with-ci --author "Alice"
+cd my-project
+```
+
+**Creating additional mrbgems** (after project initialization):
+```bash
+ptrk mrbgems generate MySensor
+ptrk mrbgems generate MyDisplay --author "Alice"
+```
+
+⚠️ **Important**: Always specify PROJECT_NAME. Running `ptrk init` without a name will initialize the current directory, not create a subdirectory.
 
 #### 2. Create a new environment
 
@@ -111,10 +135,25 @@ ptrk device build --env development
 #### Project Initialization
 
 - `ptrk init [PROJECT_NAME]` - Initialize a new PicoRuby project
+  - **[PROJECT_NAME]** — (Required) Name of the project. If omitted, shows usage guide
   - `--author "Name"` — Set author name (default: auto-detected from git config)
-  - `--path /dir` — Create project in specified directory
-  - `--with-ci` — Include GitHub Actions workflow template
-  - `--with-mrbgem NAME` — Generate mrbgem template(s) (can be used multiple times)
+  - `--path /dir` — Create project in specified directory (default: current directory)
+  - `--with-ci` — Include GitHub Actions workflow template for CI/CD
+
+  **Default mrbgem "app"**: Every project automatically includes a default `app` mrbgem for device-specific C functions. Use this for performance tuning — implement hot paths in C while keeping most code in Ruby.
+
+  **Creating additional mrbgems**: Use the dedicated command for more gems:
+  ```bash
+  ptrk mrbgems generate MySensor
+  ptrk mrbgems generate MyDisplay --author "Your Name"
+  ```
+
+  **Local Development**: If developing ptrk locally, edit the generated `Gemfile` to use path reference:
+  ```ruby
+  gem "picotorokko", path: "../path/to/picotorokko"
+  ```
+
+  **Note**: Always provide PROJECT_NAME to create a project in a subdirectory.
 
 #### Environment Management
 
