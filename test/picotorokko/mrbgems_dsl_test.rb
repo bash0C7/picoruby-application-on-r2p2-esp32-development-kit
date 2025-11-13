@@ -124,4 +124,48 @@ class PicotorokkoMrbgemsDslTest < PraTestCase
     assert_equal "test/gem2", gems[1][:source]
     assert_equal "main", gems[1][:branch]
   end
+
+  test "conditional evaluation with if" do
+    dsl_code = <<-RUBY
+      mrbgems do |conf|
+        conf.gem core: "sprintf"
+        conf.gem github: "esp32-wifi" if conf.build_config_files.include?("xtensa-esp")
+        conf.gem github: "rp2040-specific" if conf.build_config_files.include?("rp2040")
+      end
+    RUBY
+
+    gems = Picotorokko::MrbgemsDSL.new(dsl_code, "xtensa-esp").gems
+
+    assert_equal 2, gems.length
+    assert_equal "sprintf", gems[0][:source]
+    assert_equal "esp32-wifi", gems[1][:source]
+  end
+
+  test "conditional evaluation with unless" do
+    dsl_code = <<-RUBY
+      mrbgems do |conf|
+        conf.gem core: "fiber"
+        conf.gem github: "rp2040-only" unless conf.build_config_files.include?("xtensa-esp")
+      end
+    RUBY
+
+    gems = Picotorokko::MrbgemsDSL.new(dsl_code, "xtensa-esp").gems
+
+    assert_equal 1, gems.length
+    assert_equal "fiber", gems[0][:source]
+  end
+
+  test "conditional evaluation with different config name" do
+    dsl_code = <<-RUBY
+      mrbgems do |conf|
+        conf.gem github: "esp32-gem" if conf.build_config_files.include?("xtensa-esp")
+        conf.gem github: "rp2040-gem" if conf.build_config_files.include?("rp2040")
+      end
+    RUBY
+
+    gems = Picotorokko::MrbgemsDSL.new(dsl_code, "rp2040").gems
+
+    assert_equal 1, gems.length
+    assert_equal "rp2040-gem", gems[0][:source]
+  end
 end
