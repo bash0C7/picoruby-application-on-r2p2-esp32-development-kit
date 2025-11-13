@@ -169,12 +169,21 @@ module Picotorokko
 
     # @rbs () -> void
     def generate_mrbgems
+      # Always generate default 'app' mrbgem for device-specific tuning
+      generate_single_mrbgem("app")
+
+      # Generate additional mrbgems if specified
       # Thor converts "with-mrbgem" option to both :with_mrbgem and :"with-mrbgem" keys
       mrbgem_names = options[:with_mrbgem] || options["with_mrbgem"] ||
                      options[:"with-mrbgem"] || options["with-mrbgem"] || []
-      return if mrbgem_names.empty?
+
+      # Ensure mrbgem_names is always an array (Thor may return a single value)
+      mrbgem_names = Array(mrbgem_names).compact.uniq
 
       mrbgem_names.each do |name|
+        # Skip if this is the default 'app' mrbgem (already created above)
+        next if name.to_s.downcase == "app"
+
         generate_single_mrbgem(name)
       end
     end
@@ -187,9 +196,11 @@ module Picotorokko
 
       # Prepare template context
       c_prefix = name.downcase
+      # Convert name to CamelCase for valid Ruby class name
+      class_name = name.split(/[-_]/).map { |word| word.capitalize }.join
       template_context = {
         mrbgem_name: name,
-        class_name: name,
+        class_name: class_name,
         c_prefix: c_prefix,
         author_name: options[:author] || detect_git_author || ""
       }

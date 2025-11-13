@@ -358,8 +358,9 @@ class PraCommandsInitTest < PraTestCase
           initializer = Picotorokko::ProjectInitializer.new("test-project", {})
           initializer.initialize_project
 
-          # Check that mrbgems directory is not created
-          assert !Dir.exist?("test-project/mrbgems")
+          # Check that default 'app' mrbgem is created even without --with-mrbgem
+          assert Dir.exist?("test-project/mrbgems/app"), "Default 'app' mrbgem should be created"
+          assert File.exist?("test-project/mrbgems/app/mrbgem.rake"), "mrbgem.rake should exist"
         ensure
           Dir.chdir(original_dir)
         end

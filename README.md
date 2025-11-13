@@ -130,13 +130,20 @@ ptrk device build --env development
 #### Project Initialization
 
 - `ptrk init [PROJECT_NAME]` - Initialize a new PicoRuby project
-  - **[PROJECT_NAME]** — (Required) Name of the project. If omitted, initializes in current directory
+  - **[PROJECT_NAME]** — (Required) Name of the project. If omitted, shows usage guide
   - `--author "Name"` — Set author name (default: auto-detected from git config)
   - `--path /dir` — Create project in specified directory (default: current directory)
-  - `--with-ci` — Include GitHub Actions workflow template
-  - `--with-mrbgem NAME` — Generate mrbgem template(s) (can be used multiple times)
+  - `--with-ci` — Include GitHub Actions workflow template for CI/CD
+  - `--with-mrbgem NAME` — Generate additional application mrbgems (can be used multiple times)
 
-  **Note**: Always provide PROJECT_NAME to create a project in a subdirectory. Without it, the command will initialize the current directory itself.
+  **Default mrbgem "app"**: Every project automatically includes a default `app` mrbgem for device-specific C functions. Use this to optimize performance-critical Ruby code by implementing hot paths in C.
+
+  **Local Development**: If developing ptrk locally, edit the generated `Gemfile` to use path reference:
+  ```ruby
+  gem "picotorokko", path: "../path/to/picotorokko"
+  ```
+
+  **Note**: Always provide PROJECT_NAME to create a project in a subdirectory. The command will display usage guide if PROJECT_NAME is omitted.
 
 #### Environment Management
 
