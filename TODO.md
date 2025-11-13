@@ -181,20 +181,46 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 - RuboCop: 0 violations
 - All 3 commits on branch
 
-### Phase 4: Documentation (NEXT)
+### ✅ Phase 4: Documentation (COMPLETE)
 
-- [ ] Update README.md "Quick Start" section (start with `ptrk init` command)
-- [ ] Update SPEC.md with `ptrk init` command reference and full specification
-- [ ] Update docs/CI_CD_GUIDE.md (mention `--with-ci` option)
-- [ ] Create docs/PROJECT_INITIALIZATION_GUIDE.md (detailed user guide)
-- [ ] Add examples of generated project structure
+- ✅ Update README.md "Quick Start" section (start with `ptrk init` command)
+  - ✅ Commit: f2e407d - Updated Quick Start with ptrk init steps
+  - ✅ Added option flags documentation (--author, --path, --with-ci, --with-mrbgem)
+  - ✅ Updated development status (199 tests, 88.69% coverage)
+  - ✅ Added Project Initialization section to Commands Reference
+- ✅ Update SPEC.md with `ptrk init` command reference and full specification
+  - ✅ Comprehensive `ptrk init` command documentation (103 lines)
+  - ✅ Directory structure documentation with tree view
+  - ✅ Detailed examples for all option combinations
+  - ✅ Operation steps explained step-by-step
+- ✅ Update docs/CI_CD_GUIDE.md (mention `--with-ci` option)
+  - ✅ Commit: baa2e10 - Added Option A: ptrk init --with-ci (recommended)
+  - ✅ Option B for manual workflow copy (for existing projects)
+  - ✅ Clarified recommended approach for new projects
+- ✅ Create docs/PROJECT_INITIALIZATION_GUIDE.md (detailed user guide)
+  - ✅ Commit: 43d2335 - Comprehensive 386-line user guide
+  - ✅ Quick start examples with command variations
+  - ✅ Detailed option explanations with use cases
+  - ✅ Project structure walkthrough with descriptions
+  - ✅ Troubleshooting section with 5+ solutions
+  - ✅ Next steps guide after initialization
+  - ✅ Links to related documentation
 
-### Phase 5: User Testing (NEXT)
+**Documentation Summary** (Phase 4):
+- 7 commits total (code + docs)
+- 199 tests passing, 100% pass rate
+- 88.69% line coverage, 66.67% branch coverage
+- RuboCop: 0 violations
+- All documentation in English, consistent style
 
-- [ ] Complete walkthrough from new user perspective
-- [ ] Test in `playground/` experimental directory
-- [ ] Improve error messages based on feedback
-- [ ] Create FAQ for common issues
+### Phase 5: User Testing (PENDING)
+
+- [ ] Test ptrk init in playground/ (project with all options)
+- [ ] Verify all generated files are correct and functional
+- [ ] Test GitHub Actions workflow CI/CD execution
+- [ ] Verify mrbgem generation and compilation
+- [ ] Create user FAQ for common issues
+- [ ] Document any user experience improvements found
 
 **Success Criteria**:
 - New users can create complete projects with `ptrk init` command ✅
