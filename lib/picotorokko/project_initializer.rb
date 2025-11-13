@@ -145,15 +145,13 @@ module Picotorokko
 
     # Context object for ERB template rendering
     class ERBContext
+      attr_reader :binding
+
       def initialize(variables)
         variables.each do |key, value|
           instance_variable_set("@#{key}", value)
         end
         @binding = instance_eval { ::Kernel.binding }
-      end
-
-      def binding
-        @binding
       end
     end
 
