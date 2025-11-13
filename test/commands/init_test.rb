@@ -264,4 +264,67 @@ class PraCommandsInitTest < PraTestCase
       end
     end
   end
+
+  sub_test_case "init command with --with-mrbgem option" do
+    test "generates mrbgem when --with-mrbgem is enabled" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Initialize with --with-mrbgem option
+          initializer = Picotorokko::ProjectInitializer.new("test-project", { "with_mrbgem" => ["MyGem"] })
+          initializer.initialize_project
+
+          # Check that mrbgem directories are created
+          assert Dir.exist?("test-project/mrbgems/MyGem")
+          assert Dir.exist?("test-project/mrbgems/MyGem/mrblib")
+          assert Dir.exist?("test-project/mrbgems/MyGem/src")
+
+          # Check that template files are generated
+          assert File.exist?("test-project/mrbgems/MyGem/mrbgem.rake")
+          assert File.exist?("test-project/mrbgems/MyGem/mrblib/mygem.rb")
+          assert File.exist?("test-project/mrbgems/MyGem/src/mygem.c")
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "generates multiple mrbgems when --with-mrbgem has multiple names" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Initialize with multiple --with-mrbgem options
+          initializer = Picotorokko::ProjectInitializer.new("test-project", { "with_mrbgem" => ["First", "Second"] })
+          initializer.initialize_project
+
+          # Check that both mrbgem directories are created
+          assert Dir.exist?("test-project/mrbgems/First")
+          assert Dir.exist?("test-project/mrbgems/Second")
+          assert File.exist?("test-project/mrbgems/First/mrbgem.rake")
+          assert File.exist?("test-project/mrbgems/Second/mrbgem.rake")
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "does not generate mrbgem when --with-mrbgem is not specified" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Initialize without --with-mrbgem option
+          initializer = Picotorokko::ProjectInitializer.new("test-project", {})
+          initializer.initialize_project
+
+          # Check that mrbgems directory is not created
+          assert !Dir.exist?("test-project/mrbgems")
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+  end
 end

@@ -36,6 +36,9 @@ module Picotorokko
       # Copy non-template files
       copy_template_files
 
+      # Generate mrbgems if requested
+      generate_mrbgems
+
       print_success_message
     end
 
@@ -157,6 +160,58 @@ module Picotorokko
 
         FileUtils.mkdir_p(File.dirname(destination))
         FileUtils.cp(source, destination)
+      end
+    end
+
+    # @rbs () -> void
+    def generate_mrbgems
+      mrbgem_names = options[:with_mrbgem] || options["with_mrbgem"] || []
+      return if mrbgem_names.empty?
+
+      mrbgem_names.each do |name|
+        generate_single_mrbgem(name)
+      end
+    end
+
+    # @rbs (String) -> void
+    def generate_single_mrbgem(name)
+      mrbgem_dir = File.join(project_root, "mrbgems", name)
+      FileUtils.mkdir_p(File.join(mrbgem_dir, "mrblib"))
+      FileUtils.mkdir_p(File.join(mrbgem_dir, "src"))
+
+      # Prepare template context
+      c_prefix = name.downcase
+      template_context = {
+        mrbgem_name: name,
+        class_name: name,
+        c_prefix: c_prefix,
+        author_name: options[:author] || detect_git_author || ""
+      }
+
+      # Render and write template files
+      render_mrbgem_templates(mrbgem_dir, name, c_prefix, template_context)
+    end
+
+    # @rbs (String, String, String, Hash[Symbol, untyped]) -> void
+    def render_mrbgem_templates(mrbgem_dir, _name, c_prefix, context)
+      templates_dir = File.expand_path("templates/mrbgem_app", __dir__)
+
+      templates = [
+        { source: "mrbgem.rake.erb", dest: "mrbgem.rake" },
+        { source: "README.md.erb", dest: "README.md" },
+        { source: "mrblib/app.rb", dest: "mrblib/#{c_prefix}.rb" },
+        { source: "src/app.c.erb", dest: "src/#{c_prefix}.c" }
+      ]
+
+      templates.each do |template|
+        template_path = File.join(templates_dir, template[:source])
+        output_path = File.join(mrbgem_dir, template[:dest])
+
+        next unless File.exist?(template_path)
+
+        content = Picotorokko::Template::Engine.render(template_path, context)
+        FileUtils.mkdir_p(File.dirname(output_path))
+        File.write(output_path, content)
       end
     end
 
