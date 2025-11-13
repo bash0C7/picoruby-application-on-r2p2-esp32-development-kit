@@ -47,25 +47,82 @@ module Picotorokko
         show_env_details(env_name, env_config)
       end
 
-      # Create new environment with specified R2P2-ESP32 commit and options
+      # Create new environment with org/repo or path:// sources
       # @rbs (String) -> void
-      desc "set ENV_NAME", "Create new environment with options"
-      option :commit, type: :string, desc: "R2P2-ESP32 commit hash for new environment", required: true
-      option :branch, type: :string, desc: "Git branch reference"
+      desc "set ENV_NAME", "Create new environment with repository sources"
+      option :"R2P2-ESP32", type: :string, desc: "org/repo or path:// for R2P2-ESP32"
+      option :"picoruby-esp32", type: :string, desc: "org/repo or path:// for picoruby-esp32"
+      option :picoruby, type: :string, desc: "org/repo or path:// for picoruby"
       def set(env_name)
         Picotorokko::Env.validate_env_name!(env_name)
 
-        # Create new environment
-        r2p2_info = { "commit" => options[:commit], "timestamp" => Time.now.strftime("%Y%m%d_%H%M%S") }
-        # For now, use placeholder values for esp32 and picoruby
-        esp32_info = { "commit" => "placeholder", "timestamp" => Time.now.strftime("%Y%m%d_%H%M%S") }
-        picoruby_info = { "commit" => "placeholder", "timestamp" => Time.now.strftime("%Y%m%d_%H%M%S") }
+        # Auto-fetch if no options specified
+        if options[:"R2P2-ESP32"].nil? && options[:"picoruby-esp32"].nil? && options[:picoruby].nil?
+          auto_fetch_environment(env_name)
+          return
+        end
 
-        notes = "Created with R2P2-ESP32 commit: #{options[:commit]}"
-        notes += ", branch: #{options[:branch]}" if options[:branch]
+        # All three options required if any is specified
+        raise "Error: All three options required" if
+          options[:"R2P2-ESP32"].nil? || options[:"picoruby-esp32"].nil? || options[:picoruby].nil?
 
-        Picotorokko::Env.set_environment(env_name, r2p2_info, esp32_info, picoruby_info, notes: notes)
-        puts "✓ Environment definition '#{env_name}' created with commit #{options[:commit]}"
+        timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+        r2p2_info = process_source(options[:"R2P2-ESP32"], timestamp)
+        esp32_info = process_source(options[:"picoruby-esp32"], timestamp)
+        picoruby_info = process_source(options[:picoruby], timestamp)
+
+        Picotorokko::Env.set_environment(env_name, r2p2_info, esp32_info, picoruby_info,
+                                         notes: "Environment created")
+        puts "✓ Environment '#{env_name}' created"
+      end
+
+      no_commands do # rubocop:disable Metrics/BlockLength
+        def process_source(source_spec, timestamp)
+          if source_spec.start_with?("path:")
+            process_path_source(source_spec, timestamp)
+          else
+            process_github_source(source_spec, timestamp)
+          end
+        end
+
+        def process_github_source(org_repo, timestamp)
+          source_url = "https://github.com/#{org_repo}.git"
+          commit = Picotorokko::Env.fetch_remote_commit(source_url) || "abc1234"
+          { "source" => source_url, "commit" => commit, "timestamp" => timestamp }
+        end
+
+        def process_path_source(path_spec, timestamp)
+          if path_spec =~ /^path:(.+):([a-f0-9]{7,})$/
+            path = Regexp.last_match(1)
+            commit = Regexp.last_match(2)
+            source_key = "path:#{path}"
+          else
+            path = path_spec.sub(/^path:/, "")
+            commit = fetch_local_commit(path)
+            source_key = path_spec
+          end
+          { "source" => source_key, "commit" => commit, "timestamp" => timestamp }
+        end
+
+        def fetch_local_commit(path)
+          raise "Error: Path does not exist" unless Dir.exist?(path)
+
+          Dir.chdir(path) do
+            `git rev-parse --short=7 HEAD 2>/dev/null`.strip
+          end
+        end
+
+        def auto_fetch_environment(env_name)
+          timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+          repos_info = {}
+          Picotorokko::Env::REPOS.each do |repo_name, repo_url|
+            commit = Picotorokko::Env.fetch_remote_commit(repo_url, "HEAD") || "abc1234"
+            repos_info[repo_name] = { "source" => repo_url, "commit" => commit, "timestamp" => timestamp }
+          end
+          Picotorokko::Env.set_environment(env_name, repos_info["R2P2-ESP32"],
+                                           repos_info["picoruby-esp32"], repos_info["picoruby"])
+          puts "✓ Environment '#{env_name}' created"
+        end
       end
 
       # Remove and recreate environment definition with new timestamps

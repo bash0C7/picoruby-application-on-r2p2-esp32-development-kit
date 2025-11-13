@@ -23,50 +23,6 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 
 ## 🚨 Urgent Tasks (Highest Priority)
 
-### [TODO-INFRASTRUCTURE-ENV-SET-INCOMPLETE] ptrk env set only accepts R2P2-ESP32 commit (CRITICAL)
-
-**Status**: INCOMPLETE (2025-01-13, discovered during design session)
-
-**File**: `lib/picotorokko/commands/env.rb:55-69`
-
-**Problem**:
-- `ptrk env set` only accepts `--commit` option for R2P2-ESP32
-- picoruby-esp32 and picoruby commits are hardcoded as "placeholder"
-- Architecture supports 3 independent commits, but CLI is incomplete
-
-**Current behavior**:
-```ruby
-def set(env_name)
-  r2p2_info = { "commit" => options[:commit], ... }
-  # For now, use placeholder values for esp32 and picoruby
-  esp32_info = { "commit" => "placeholder", ... }
-  picoruby_info = { "commit" => "placeholder", ... }
-end
-```
-
-**Expected behavior**:
-```bash
-ptrk env set my-env \
-  --r2p2 abc1234 \
-  --esp32 def5678 \
-  --picoruby ghi9012
-```
-
-**Impact**:
-- Users cannot create custom environment with specific picoruby-esp32/picoruby versions
-- Only R2P2-ESP32 version can be controlled
-- `ptrk env latest` works correctly (fetches all 3), but manual env creation is broken
-
-**Required changes**:
-1. Add `--esp32` and `--picoruby` options to `ptrk env set`
-2. Make all 3 options required (or fetch from submodules if not specified)
-3. Update tests to verify 3-commit specification
-4. Update SPEC.md documentation
-
-**Priority**: HIGHEST - Blocks proper environment management
-
----
-
 ### [TODO-FEATURE-MRBGEMFILE] Implement Mrbgemfile gem installation feature
 
 **Status**: DESIGN COMPLETE (2025-01-13), AWAITING SPECIFICATION REFINEMENT

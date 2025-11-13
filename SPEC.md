@@ -399,22 +399,61 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 #### `ptrk env set ENV_NAME`
 
-**Description**: Switch to specified environment
+**Description**: Create new environment with repository sources (org/repo, GitHub org, or local paths)
 
 **Arguments**:
-- `ENV_NAME` - Environment name defined in `.picoruby-env.yml`
+- `ENV_NAME` - Environment name to create (alphanumeric, lowercase, hyphens, underscores)
+
+**Options** (all required if any specified, optional if all omitted):
+- `--R2P2-ESP32 SOURCE` - Repository source
+- `--picoruby-esp32 SOURCE` - Repository source
+- `--picoruby SOURCE` - Repository source
+
+**Source Formats**:
+- `org/repo` - GitHub repository (auto-converts to `https://github.com/org/repo.git`)
+- `path:/absolute/path` - Local Git repository (fetches HEAD commit automatically)
+- `path:/absolute/path:commit` - Local Git repository with explicit commit hash
 
 **Operation**:
-1. Load environment definition from `.picoruby-env.yml`
-2. Check if corresponding `build/{env-hash}/` exists
-3. Relink `build/current` symlink
-4. Update `current` in `.picoruby-env.yml`
+1. If no options specified: Auto-fetches latest from default GitHub repos
+2. If options specified: All three options are required
+3. `org/repo` format is converted to GitHub URLs
+4. `path://` sources fetch HEAD commit (or use explicit commit if provided)
+5. Stores source URLs and commit hashes in `.picoruby-env.yml`
 
-**Example**:
+**Examples**:
 ```bash
-ptrk env set development
-# => Switching to development
-#    build/current -> build/34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/
+# Auto-fetch latest from GitHub
+ptrk env set latest
+
+# Create with GitHub org/repo
+ptrk env set prod \
+  --R2P2-ESP32 picoruby/R2P2-ESP32 \
+  --picoruby-esp32 picoruby/picoruby-esp32 \
+  --picoruby picoruby/picoruby
+
+# Use fork from different organization
+ptrk env set my-fork \
+  --R2P2-ESP32 myorg/R2P2-ESP32 \
+  --picoruby-esp32 myorg/picoruby-esp32 \
+  --picoruby myorg/picoruby
+
+# Local repositories (auto-fetches HEAD)
+ptrk env set local \
+  --R2P2-ESP32 path:/home/user/R2P2-ESP32 \
+  --picoruby-esp32 path:/home/user/picoruby-esp32 \
+  --picoruby path:/home/user/picoruby
+
+# Local repositories with explicit commits
+ptrk env set specific \
+  --R2P2-ESP32 path:/home/user/R2P2-ESP32:abc1234 \
+  --picoruby-esp32 path:/home/user/esp32:def5678 \
+  --picoruby path:/home/user/picoruby:ghi9012
+```
+
+**Output**:
+```
+✓ Environment 'prod' created
 ```
 
 ---
