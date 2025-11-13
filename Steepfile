@@ -4,21 +4,13 @@
 D = Steep::Diagnostic
 
 target :lib do
-  signature "sig"
+  signature "sig", "sig/rbs_collection"
 
   check "lib"
 
-  # External gem type definitions (from stdlib and bundled gems)
-  library "pathname"
-  library "optparse"
-  library "thor"
-  library "yaml"
-  library "fileutils"
-  library "open-uri"
-  library "net/http"
-  library "tempfile"
-  library "fileutils"
-  library "logger"
+  # External gem type definitions via RBS Collection
+  # Note: RBS Collection provides types for 54 gems including Thor, FileUtils, YAML, etc.
+  # Generated from: rbs collection install
 
   # Ignore version file (typically just constant)
   ignore "lib/picotorokko/version.rb"
@@ -34,14 +26,9 @@ target :lib do
 end
 
 target :test do
-  signature "sig", "sig/test"
+  signature "sig", "sig/rbs_collection", "sig/test"
 
   check "test"
-
-  library "test-unit"
-  library "tmpdir"
-  library "fileutils"
-  library "pathname"
 
   # Test code is checked but with relaxed rules
   configure_code_diagnostics do |hash|

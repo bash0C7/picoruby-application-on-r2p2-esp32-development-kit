@@ -1,3 +1,5 @@
+# rbs_inline: enabled
+
 require "thor"
 require_relative "version"
 require_relative "env"

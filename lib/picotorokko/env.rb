@@ -1,3 +1,5 @@
+# rbs_inline: enabled
+
 require "English"
 require "fileutils"
 require "yaml"
