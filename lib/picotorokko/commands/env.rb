@@ -47,21 +47,26 @@ module Picotorokko
         show_env_details(env_name, env_config)
       end
 
-      # Create new environment with specified R2P2-ESP32 commit and options
+      # Create new environment with specified commit hashes for all three repositories
       # @rbs (String) -> void
       desc "set ENV_NAME", "Create new environment with options"
       option :commit, type: :string, desc: "R2P2-ESP32 commit hash for new environment", required: true
+      option :esp32, type: :string, desc: "picoruby-esp32 commit hash (default: placeholder)"
+      option :picoruby, type: :string, desc: "picoruby commit hash (default: placeholder)"
       option :branch, type: :string, desc: "Git branch reference"
       def set(env_name)
         Picotorokko::Env.validate_env_name!(env_name)
 
-        # Create new environment
-        r2p2_info = { "commit" => options[:commit], "timestamp" => Time.now.strftime("%Y%m%d_%H%M%S") }
-        # For now, use placeholder values for esp32 and picoruby
-        esp32_info = { "commit" => "placeholder", "timestamp" => Time.now.strftime("%Y%m%d_%H%M%S") }
-        picoruby_info = { "commit" => "placeholder", "timestamp" => Time.now.strftime("%Y%m%d_%H%M%S") }
+        # Create new environment with three separate commits
+        timestamp = Time.now.strftime("%Y%m%d_%H%M%S")
+        r2p2_info = { "commit" => options[:commit], "timestamp" => timestamp }
+        esp32_info = { "commit" => options[:esp32] || "placeholder", "timestamp" => timestamp }
+        picoruby_info = { "commit" => options[:picoruby] || "placeholder", "timestamp" => timestamp }
 
+        # Build notes with all specified commits
         notes = "Created with R2P2-ESP32 commit: #{options[:commit]}"
+        notes += ", picoruby-esp32 commit: #{options[:esp32]}" if options[:esp32]
+        notes += ", picoruby commit: #{options[:picoruby]}" if options[:picoruby]
         notes += ", branch: #{options[:branch]}" if options[:branch]
 
         Picotorokko::Env.set_environment(env_name, r2p2_info, esp32_info, picoruby_info, notes: notes)

@@ -236,6 +236,81 @@ class PraCommandsEnvTest < PraTestCase
         end
       end
     end
+
+    test "creates environment with all three commit options" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
+
+          # set with all three options
+          output = capture_stdout do
+            Picotorokko::Commands::Env.start(['set', 'full-env', '--commit', 'r2p2abc1234', '--esp32', 'esp32def5678',
+                                              '--picoruby', 'picoruby999'])
+          end
+
+          # Verify environment was created with all three commits
+          env_config = Picotorokko::Env.get_environment('full-env')
+          assert_not_nil(env_config)
+          assert_equal('r2p2abc1234', env_config['R2P2-ESP32']['commit'])
+          assert_equal('esp32def5678', env_config['picoruby-esp32']['commit'])
+          assert_equal('picoruby999', env_config['picoruby']['commit'])
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "creates environment with --esp32 option only" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
+
+          # set with --commit and --esp32 only
+          output = capture_stdout do
+            Picotorokko::Commands::Env.start(['set', 'partial-env', '--commit', 'r2p2abc1234', '--esp32',
+                                              'esp32def5678'])
+          end
+
+          # Verify esp32 commit is set, picoruby remains placeholder
+          env_config = Picotorokko::Env.get_environment('partial-env')
+          assert_not_nil(env_config)
+          assert_equal('r2p2abc1234', env_config['R2P2-ESP32']['commit'])
+          assert_equal('esp32def5678', env_config['picoruby-esp32']['commit'])
+          assert_equal('placeholder', env_config['picoruby']['commit'])
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "creates environment with --picoruby option only" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
+
+          # set with --commit and --picoruby only
+          output = capture_stdout do
+            Picotorokko::Commands::Env.start(['set', 'pico-env', '--commit', 'r2p2abc1234', '--picoruby',
+                                              'picoruby999'])
+          end
+
+          # Verify picoruby commit is set, esp32 remains placeholder
+          env_config = Picotorokko::Env.get_environment('pico-env')
+          assert_not_nil(env_config)
+          assert_equal('r2p2abc1234', env_config['R2P2-ESP32']['commit'])
+          assert_equal('placeholder', env_config['picoruby-esp32']['commit'])
+          assert_equal('picoruby999', env_config['picoruby']['commit'])
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
   end
 
   # env reset コマンドのテスト

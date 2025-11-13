@@ -399,22 +399,45 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 #### `ptrk env set ENV_NAME`
 
-**Description**: Switch to specified environment
+**Description**: Create new environment definition with specified commit hashes
 
 **Arguments**:
-- `ENV_NAME` - Environment name defined in `.picoruby-env.yml`
+- `ENV_NAME` - Environment name to create (alphanumeric, lowercase, hyphens, underscores)
+- `--commit HASH` - **Required**: R2P2-ESP32 commit hash
+- `--esp32 HASH` - Optional: picoruby-esp32 commit hash (default: `placeholder`)
+- `--picoruby HASH` - Optional: picoruby commit hash (default: `placeholder`)
+- `--branch NAME` - Optional: Git branch reference
 
 **Operation**:
-1. Load environment definition from `.picoruby-env.yml`
-2. Check if corresponding `build/{env-hash}/` exists
-3. Relink `build/current` symlink
-4. Update `current` in `.picoruby-env.yml`
+1. Validate environment name (alphanumeric, lowercase)
+2. Create environment definition with three repository commits
+3. Store in `.picoruby-env.yml` under `environments[ENV_NAME]`
+4. Record creation timestamp and notes
 
-**Example**:
+**Examples**:
 ```bash
-ptrk env set development
-# => Switching to development
-#    build/current -> build/34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/
+# Create environment with R2P2-ESP32 only (esp32/picoruby default to placeholder)
+ptrk env set dev --commit abc1234def567
+
+# Create environment with all three commits specified
+ptrk env set prod \
+  --commit r2p2abc1234 \
+  --esp32 esp32def5678 \
+  --picoruby picoruby999
+
+# Create with branch information
+ptrk env set feature-branch --commit abc1234def567 --branch feature/xyz
+
+# Create with partial commits (mixed placeholders)
+ptrk env set staging \
+  --commit abc1234def567 \
+  --esp32 esp32def5678
+# => picoruby remains "placeholder"
+```
+
+**Output**:
+```
+✓ Environment definition 'prod' created with commit r2p2abc1234
 ```
 
 ---
