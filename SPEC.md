@@ -399,45 +399,61 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 #### `ptrk env set ENV_NAME`
 
-**Description**: Create new environment definition with specified commit hashes
+**Description**: Create new environment with repository sources (org/repo, GitHub org, or local paths)
 
 **Arguments**:
 - `ENV_NAME` - Environment name to create (alphanumeric, lowercase, hyphens, underscores)
-- `--commit HASH` - **Required**: R2P2-ESP32 commit hash
-- `--esp32 HASH` - Optional: picoruby-esp32 commit hash (default: `placeholder`)
-- `--picoruby HASH` - Optional: picoruby commit hash (default: `placeholder`)
-- `--branch NAME` - Optional: Git branch reference
+
+**Options** (all required if any specified, optional if all omitted):
+- `--R2P2-ESP32 SOURCE` - Repository source
+- `--picoruby-esp32 SOURCE` - Repository source
+- `--picoruby SOURCE` - Repository source
+
+**Source Formats**:
+- `org/repo` - GitHub repository (auto-converts to `https://github.com/org/repo.git`)
+- `path:/absolute/path` - Local Git repository (fetches HEAD commit automatically)
+- `path:/absolute/path:commit` - Local Git repository with explicit commit hash
 
 **Operation**:
-1. Validate environment name (alphanumeric, lowercase)
-2. Create environment definition with three repository commits
-3. Store in `.picoruby-env.yml` under `environments[ENV_NAME]`
-4. Record creation timestamp and notes
+1. If no options specified: Auto-fetches latest from default GitHub repos
+2. If options specified: All three options are required
+3. `org/repo` format is converted to GitHub URLs
+4. `path://` sources fetch HEAD commit (or use explicit commit if provided)
+5. Stores source URLs and commit hashes in `.picoruby-env.yml`
 
 **Examples**:
 ```bash
-# Create environment with R2P2-ESP32 only (esp32/picoruby default to placeholder)
-ptrk env set dev --commit abc1234def567
+# Auto-fetch latest from GitHub
+ptrk env set latest
 
-# Create environment with all three commits specified
+# Create with GitHub org/repo
 ptrk env set prod \
-  --commit r2p2abc1234 \
-  --esp32 esp32def5678 \
-  --picoruby picoruby999
+  --R2P2-ESP32 picoruby/R2P2-ESP32 \
+  --picoruby-esp32 picoruby/picoruby-esp32 \
+  --picoruby picoruby/picoruby
 
-# Create with branch information
-ptrk env set feature-branch --commit abc1234def567 --branch feature/xyz
+# Use fork from different organization
+ptrk env set my-fork \
+  --R2P2-ESP32 myorg/R2P2-ESP32 \
+  --picoruby-esp32 myorg/picoruby-esp32 \
+  --picoruby myorg/picoruby
 
-# Create with partial commits (mixed placeholders)
-ptrk env set staging \
-  --commit abc1234def567 \
-  --esp32 esp32def5678
-# => picoruby remains "placeholder"
+# Local repositories (auto-fetches HEAD)
+ptrk env set local \
+  --R2P2-ESP32 path:/home/user/R2P2-ESP32 \
+  --picoruby-esp32 path:/home/user/picoruby-esp32 \
+  --picoruby path:/home/user/picoruby
+
+# Local repositories with explicit commits
+ptrk env set specific \
+  --R2P2-ESP32 path:/home/user/R2P2-ESP32:abc1234 \
+  --picoruby-esp32 path:/home/user/esp32:def5678 \
+  --picoruby path:/home/user/picoruby:ghi9012
 ```
 
 **Output**:
 ```
-✓ Environment definition 'prod' created with commit r2p2abc1234
+✓ Environment 'prod' created
 ```
 
 ---
