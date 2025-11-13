@@ -25,35 +25,22 @@ rake dev          # Development: RuboCop auto-fix + tests + coverage
 
 ### [TODO-FEATURE-MRBGEMFILE] Implement Mrbgemfile gem installation feature
 
-**Status**: DESIGN COMPLETE (2025-01-13), AWAITING SPECIFICATION REFINEMENT
+**Status**: ✅ DESIGN COMPLETE (2025-01-14), READY FOR IMPLEMENTATION
 
-**Design Document**: `TODO-mrbgems-install-feature.md` (633 lines, comprehensive)
+**Design Document**: `TODO-mrbgems-install-feature.md` (updated 2025-01-14)
 
-**⚠️ CRITICAL PREREQUISITE - MUST DO BEFORE IMPLEMENTATION**:
-**User MUST review and finalize Open Questions in TODO-mrbgems-install-feature.md**
-
-Required decisions:
-1. **Mrbgemfile DSL syntax refinement**:
-   - Support `version:` parameter?
-   - Support gem groups (like Bundler)?
-   - Validation strategy for gem source URLs?
-
-2. **CMake string format**:
-   - Current: Raw CMake strings (flexible)
-   - Alternative: Structured hash format?
-
-3. **Error handling strategy**:
-   - DSL syntax error: fail immediately or collect all errors?
-   - Missing build_config: skip or error?
-   - Duplicate gem: skip, warn, or error?
-
-4. **ptrk env set improvements** (see above task)
+**✅ All Open Questions Resolved (2025-01-14)**:
+- **CMake insertion**: `idf_component_register` SRCS section (mechanical scan algorithm)
+- **C file detection**: User-specified `cmake:` parameter (no automation needed)
+- **DSL syntax**: Minimal feature set (no version/groups/gemspec - YAGNI principle)
+- **Error handling**: Fail Fast on syntax errors, explicit errors on missing files, warn on duplicates
+- See TODO-mrbgems-install-feature.md "Resolved Decisions" for complete rationale
 
 **Implementation phases**:
-- Phase 1: Mrbgemfile DSL (11 TDD steps)
+- Phase 1: Mrbgemfile DSL (11 TDD steps, ~1.5-2 hours)
   - MrbgemsDSL parser (Ruby DSL matching conf.gem syntax)
   - BuildConfigApplier (insert conf.gem into build_config/*.rb)
-  - CMakeApplier (append cmake: directives to CMakeLists.txt)
+  - CMakeApplier (insert into idf_component_register SRCS section)
   - Integration into `ptrk device build`
 
 - Phase 2: ptrk init auto-fetch (8 TDD steps)
@@ -66,11 +53,14 @@ Required decisions:
   - Create docs/MRBGEMS_GUIDE.md
 
 **Next action**:
-1. 🚨 **MANDATORY**: Review TODO-mrbgems-install-feature.md "Open Questions" section
-2. 🚨 **MANDATORY**: Make decisions on all critical questions (DSL syntax, CMake format, error handling)
-3. Begin Phase 1 implementation with TDD
-
-**DO NOT START IMPLEMENTATION UNTIL OPEN QUESTIONS ARE RESOLVED**
+1. ✅ Open Questions resolved (2025-01-14)
+2. 🚀 **BEGIN Phase 1 implementation** with t-wada style TDD:
+   - Steps 1.1-1.5: MrbgemsDSL parser (5 TDD cycles)
+   - Steps 1.6-1.7: BuildConfigApplier (2 TDD cycles)
+   - Step 1.8: CMakeApplier with mechanical scanning (7 test scenarios)
+   - Step 1.9: Device#build integration (1 TDD cycle)
+   - Steps 1.10-1.11: RuboCop + Coverage validation + Commit
+3. 📝 After implementation: Update SPEC.md, README.md, create MRBGEMS_GUIDE.md
 
 ---
 

@@ -54,53 +54,30 @@
 # Mrbgemfile (project root)
 # PicoRuby/mruby mrbgem dependency management
 
-mrbgems do |config|
-  # config: build_config file name without extension (e.g., "xtensa-esp", "rp2040")
+mrbgems do |conf|
+  # conf.build_config_files: build_config filenames without extension (e.g., ["xtensa-esp", "rp2040"])
 
   # GitHub source
-  gem github: "ksbmyk/picoruby-ws2812", branch: "main"
-  conf.gem github: "bash0C7/picoruby-mpu6886", branch: "main"  # conf.gem also works
+  conf.gem github: "ksbmyk/picoruby-ws2812", branch: "main"
+  conf.gem github: "bash0C7/picoruby-mpu6886", branch: "main" 
 
   # Commit hash fixed version
-  gem github: "picoruby/stable-gem", ref: "abc1234"
+  conf.gem github: "picoruby/stable-gem", ref: "abc1234"
 
   # mruby core mrbgems
-  gem core: "sprintf"
-  gem core: "fiber"
+  conf.gem core: "sprintf"
+  conf.gem core: "fiber"
 
   # Local filesystem
-  gem path: "./local-gems/my-sensor"
+  conf.gem path: "./local-gems/my-sensor"
 
   # Git repository (non-GitHub)
-  gem git: "https://gitlab.com/custom/gem.git", branch: "develop"
+  conf.gem git: "https://gitlab.com/custom/gem.git", branch: "develop"
 
   # Target-specific gems (user controls with if/unless)
-  if config == "xtensa-esp"
-    gem github: "picoruby/atom-matrix-led", branch: "main"
-  end
-
-  unless config == "rp2040"
-    gem github: "picoruby/esp32-wifi", branch: "main"
-  end
-
-  # CMake: Single line
-  gem github: "picoruby/sensor",
-      branch: "main",
-      cmake: "target_sources(picoruby_app PRIVATE ${CMAKE_CURRENT_LIST_DIR}/components/picoruby-esp32/picoruby/mrbgems/sensor/src/sensor.c)"
-
-  # CMake: Multi-line (heredoc)
-  gem github: "picoruby/complex-driver",
-      branch: "main",
-      cmake: <<~CMAKE
-        target_sources(picoruby_app PRIVATE
-          ${CMAKE_CURRENT_LIST_DIR}/components/picoruby-esp32/picoruby/mrbgems/complex-driver/src/main.c
-          ${CMAKE_CURRENT_LIST_DIR}/components/picoruby-esp32/picoruby/mrbgems/complex-driver/src/util.c
-        )
-        target_include_directories(picoruby_app PRIVATE
-          ${CMAKE_CURRENT_LIST_DIR}/components/picoruby-esp32/picoruby/mrbgems/complex-driver/include
-        )
-      CMAKE
-end
+  conf.gem github: "picoruby/atom-matrix-led", branch: "main" if conf.build_config_files.include?("xtensa-esp")
+  conf.gem github: "picoruby/esp32-wifi", branch: "main" unless conf.build_config_files.include?("rp2040")
+ end
 ```
 
 **Open Questions** (User will refine):
