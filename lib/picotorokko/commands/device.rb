@@ -95,6 +95,30 @@ module Picotorokko
       end
 
       # Transparently delegate undefined commands to R2P2-ESP32 Rakefile
+      #
+      # Implements Ruby's method_missing to provide transparent delegation of unknown
+      # commands to the R2P2-ESP32 Rakefile. This allows the ptrk device command to
+      # expose any Rake task defined in R2P2-ESP32 without hardcoding them.
+      #
+      # **Security**: Uses whitelist validation by parsing the Rakefile AST with Prism
+      # to ensure only legitimate Rake tasks can be executed. Prevents arbitrary command
+      # injection through the command name.
+      #
+      # **Workflow**:
+      # 1. Parse --env option from args (default: 'current')
+      # 2. Resolve environment name and validate R2P2 build path exists
+      # 3. Extract available Rake tasks from R2P2-ESP32/Rakefile via AST parsing
+      # 4. Validate requested task is in the whitelist (if available)
+      # 5. Delegate to R2P2-ESP32 Rakefile via rake command
+      #
+      # **Example**:
+      #   ptrk device flash --env development
+      #   ptrk device monitor --env stable-2024-11
+      #   ptrk device custom_task --env latest
+      #
+      # @param method_name [Symbol] The task name to delegate
+      # @param args [Array] Arguments including --env option
+      # @raise [Thor::UndefinedCommandError] If task not found in whitelist
       # @rbs (*untyped) -> void
       def method_missing(method_name, *args)
         # Ignore Thor internal method calls
@@ -252,9 +276,50 @@ module Picotorokko
     end
 
     # AST-based Rake task extractor for secure, static analysis
+    #
+    # **Purpose**: Safely extract Rake task names from a Rakefile without executing it.
+    # Uses the Prism Ruby parser to analyze the AST (Abstract Syntax Tree) instead of
+    # relying on `rake -T`, which requires the full Rakefile to be executable.
+    #
+    # **Security Model**: Static AST analysis prevents any code execution, making it safe
+    # to analyze untrusted or partially-working Rakefiles. No shell escape needed.
+    #
+    # **Supported Task Patterns**:
+    # 1. Direct task definition:
+    #    ```ruby
+    #    task :build
+    #    task "flash"
+    #    ```
+    #
+    # 2. Dynamically generated tasks:
+    #    ```ruby
+    #    %w[esp32 rp2040].each do |target|
+    #      task "setup_#{target}"
+    #    end
+    #    # Expands to: setup_esp32, setup_rp2040
+    #    ```
+    #
+    # **Limitations**: Does not support:
+    # - Rake::TaskLib subclasses (require execution)
+    # - Tasks defined in included files
+    # - Complex string interpolation beyond simple variable expansion
+    #
+    # **Algorithm**:
+    # 1. Visit all call nodes in AST
+    # 2. Find `task()` calls with task name argument
+    # 3. For block iteration patterns, extract array elements and expand with variable
+    # 4. Return sorted, unique task names
+    #
+    # @example Usage in device.rb:available_rake_tasks
+    #   result = Prism.parse(File.read("Rakefile"))
+    #   extractor = RakeTaskExtractor.new
+    #   result.value.accept(extractor)
+    #   extractor.tasks  # => ["build", "flash", "monitor", ...]
+    #
     class RakeTaskExtractor < Prism::Visitor
       attr_reader :tasks
 
+      # Initialize task extractor with empty task list
       # @rbs () -> void
       def initialize
         super
