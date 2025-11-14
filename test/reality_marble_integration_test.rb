@@ -2,57 +2,105 @@ require "test_helper"
 require "reality_marble"
 
 class RealityMarbleIntegrationTest < Test::Unit::TestCase
-  # reality_marble gem の基本機能を検証
-  sub_test_case "Reality Marble mocking" do
-    test "mocks File.exist? method" do
-      marble = RealityMarble.chant { expect(File, :exist?) { |path| path == "/mock/path" } }
-      marble.activate { assert_mock_file_exists }
-    end
+  # Reality Marble gem の基本機能を検証（新しいネイティブシンタックスAPI）
+  sub_test_case "Reality Marble singleton method mocking" do
+    test "mocks File.exist? method with define_singleton_method" do
+      test_class = File
 
-    test "mocks multiple expectations" do
       marble = RealityMarble.chant do
-        expect(File, :exist?) { |path| path.start_with?("/etc/") }
-        expect(Dir, :glob) { |_pattern| ["/etc/config"] }
+        test_class.define_singleton_method(:exist?) do |_path|
+          "/mock/path"
+        end
       end
-      marble.activate { assert_mock_multi_expectations }
+
+      # Before activate: should not be mocked
+      original_result = test_class.exist?(__FILE__)
+
+      # During activate: should be mocked
+      marble.activate do
+        assert_equal "/mock/path", test_class.exist?("/any/path")
+      end
+
+      # After activate: should be restored
+      assert_equal original_result, test_class.exist?(__FILE__)
     end
 
-    test "context resets after deactivation" do
-      marble = RealityMarble.chant { expect(File, :exist?) { true } }
-      marble.activate { assert File.exist?("/any/path") }
+    test "mocks multiple class methods" do
+      test_class = Class.new
 
-      # リセット後は元の動作に戻る
-      assert_false File.exist?("/nonexistent")
+      marble = RealityMarble.chant do
+        test_class.define_singleton_method(:add) do |a, b|
+          a + b
+        end
+
+        test_class.define_singleton_method(:multiply) do |a, b|
+          a * b
+        end
+      end
+
+      result = marble.activate do
+        assert_equal 15, test_class.add(10, 5)
+        assert_equal 50, test_class.multiply(10, 5)
+        { add: 15, multiply: 50 }
+      end
+
+      assert_equal({ add: 15, multiply: 50 }, result)
+    end
+
+    test "context automatically resets after activation" do
+      test_class = Class.new
+
+      marble = RealityMarble.chant do
+        test_class.define_singleton_method(:value) { 42 }
+      end
+
+      marble.activate { assert_equal 42, test_class.value }
+
+      # After activation, method should be removed
+      assert_raises(NoMethodError) { test_class.value }
     end
   end
 
   # picotorokko テストでの実用例
-  sub_test_case "Usage with picotorokko" do
-    test "mocks Dir operations for testing" do
-      marble = RealityMarble.chant { expect(Dir, :glob) { |_pattern| ["/mock/dir1", "/mock/dir2"] } }
-      marble.activate { assert_mock_dir_operations }
+  sub_test_case "Usage with Dir and file system mocking" do
+    test "mocks Dir.glob for testing file discovery" do
+      test_class = Dir
+
+      marble = RealityMarble.chant do
+        test_class.define_singleton_method(:glob) do |_pattern|
+          ["/mock/dir1/file.txt", "/mock/dir2/file.txt"]
+        end
+      end
+
+      marble.activate do
+        result = Dir.glob("/mock/**/*.txt")
+        assert_equal ["/mock/dir1/file.txt", "/mock/dir2/file.txt"], result
+      end
+    end
+
+    test "captures state during mock execution" do
+      call_count = { count: 0 }
+
+      marble = RealityMarble.chant(capture: { counters: call_count }) do |cap|
+        File.define_singleton_method(:read) do |_path|
+          cap[:counters][:count] += 1
+          "mocked content"
+        end
+      end
+
+      marble.activate do
+        File.read("/any/path")
+        File.read("/another/path")
+        assert_equal 2, call_count[:count]
+      end
+
+      # Counter should remain at 2 after activation
+      assert_equal 2, call_count[:count]
     end
   end
 
   teardown do
-    # コンテキストをリセット
+    # Context cleanup
     RealityMarble::Context.reset_current
-  end
-
-  private
-
-  def assert_mock_file_exists
-    assert File.exist?("/mock/path")
-    assert_false File.exist?("/other/path")
-  end
-
-  def assert_mock_multi_expectations
-    assert File.exist?("/etc/hosts")
-    assert_equal ["/etc/config"], Dir.glob("/etc/*")
-  end
-
-  def assert_mock_dir_operations
-    result = Dir.glob("/mock/*")
-    assert_equal ["/mock/dir1", "/mock/dir2"], result
   end
 end

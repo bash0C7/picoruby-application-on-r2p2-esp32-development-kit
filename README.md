@@ -400,18 +400,24 @@ Refer to `.claude/docs/testing-guidelines.md` for TDD + RuboCop integration work
 
 ### Testing with Reality Marble
 
-[Reality Marble](lib/reality_marble) is a powerful mocking gem integrated into picotorokko's test suite, enabling elegant method mocking with context-based activation:
+[Reality Marble](lib/reality_marble) is a powerful mocking gem integrated into picotorokko's test suite. It uses native Ruby syntax for elegant method mocking with automatic cleanup:
 
 #### Basic Usage
+
+Reality Marble uses native Ruby `define_singleton_method` to define mocks:
 
 ```ruby
 require "reality_marble"
 
 class MyTest < Test::Unit::TestCase
   test "mocks File operations" do
-    RealityMarble.chant do
-      expect(File, :exist?) { |path| path == "/expected/path" }
-    end.activate do
+    marble = RealityMarble.chant do
+      File.define_singleton_method(:exist?) do |path|
+        path == "/expected/path"
+      end
+    end
+
+    marble.activate do
       assert File.exist?("/expected/path")
       assert_false File.exist?("/other/path")
     end
@@ -423,31 +429,61 @@ class MyTest < Test::Unit::TestCase
 end
 ```
 
-#### Testing System Commands
+#### Method Lifecycle
+
+Methods defined during `chant` are automatically:
+- **Stored** during chant block execution
+- **Removed** after chant block (before activation)
+- **Reapplied** during activation block
+- **Cleaned up** after activation block
 
 ```ruby
-test "mocks system execution" do
-  RealityMarble.chant do
-    expect(system, :call) { |cmd| cmd.include?("bundle") }
-  end.activate do
-    # System call is mocked within this block
-    result = system("bundle check")
-    assert result
+test "methods are safely scoped to activation block" do
+  test_class = Class.new
+
+  marble = RealityMarble.chant do
+    test_class.define_singleton_method(:value) { 42 }
+  end
+
+  # Before activation: method does not exist
+  assert_raises(NoMethodError) { test_class.value }
+
+  # During activation: method is available
+  marble.activate do
+    assert_equal 42, test_class.value
+  end
+
+  # After activation: method is removed again
+  assert_raises(NoMethodError) { test_class.value }
+end
+```
+
+#### Capturing State
+
+Use the `capture` option to share state with mock methods:
+
+```ruby
+test "captures and modifies state during mock execution" do
+  call_log = { count: 0 }
+
+  marble = RealityMarble.chant(capture: { log: call_log }) do |cap|
+    Dir.define_singleton_method(:glob) do |pattern|
+      cap[:log][:count] += 1
+      ["/mock/file#{cap[:log][:count]}.txt"]
+    end
+  end
+
+  marble.activate do
+    Dir.glob("*.txt")
+    Dir.glob("*.txt")
+    assert_equal 2, call_log[:count]
   end
 end
 ```
 
-#### Advanced Patterns
-
-Reality Marble supports:
-- **Pattern matching**: Match method calls by arguments
-- **Multiple expectations**: Chain multiple `expect()` calls
-- **Auto-reset**: Automatic context cleanup after block exit
-- **Composable patterns**: Combine expectations for complex scenarios
-
-For complete documentation and additional recipes, see:
-- [Reality Marble API Documentation](lib/reality_marble/docs/API.md)
-- [Usage Recipes](lib/reality_marble/docs/RECIPES.md)
+For complete documentation, examples, and design rationale, see:
+- [Reality Marble README](lib/reality_marble/README.md)
+- [API Documentation](lib/reality_marble/docs/API.md)
 - [Examples](lib/reality_marble/examples/)
 
 ## License
