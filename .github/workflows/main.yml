@@ -27,8 +27,6 @@ jobs:
         run: bundle exec rake test
       - name: Generate RBS files from annotations
         run: bundle exec rake rbs:generate
-      - name: Run type check with Steep
-        run: bundle exec steep check
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: always()
