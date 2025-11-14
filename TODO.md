@@ -139,9 +139,72 @@ All tests passing (197 total). Covered 88.69% line coverage.
 
 **Strategy**: Integrate documentation checks into dev workflow (CLAUDE.md + Quality Gates). Escalate to Claude Skill (Phase 2) and CI validation (Phase 4) later.
 
-**Status**: Phase 1 complete (CLAUDE.md integration).
+**Status**: ✅ Phase 1 COMPLETE (Session 3 verification complete)
+- CLAUDE.md: Documentation Check integrated into before-commit workflow
+- tdd-rubocop-cycle.md: Phase 4 includes documentation verification
+- testing-guidelines.md: Quality Gates includes documentation update requirement
+- documentation-structure.md: Complete file change → docs mapping table
+- TODO.md: Quality Gates updated with documentation requirements
+
+**Available Documentation Mapping**: `.claude/docs/documentation-structure.md` (lines 201-256)
+- Quick reference table: Trigger files → Target documents
+- Priority levels: MUST / SHOULD / OPTIONAL
+- Implementation examples with actionable steps
+
+**Next Phase (Phase 2)**: Claude Skill for Documentation Sync
+- Automated `git diff` analysis to detect changed files
+- Suggest corresponding documentation updates
+- Generate documentation update checklist
 
 **Reference**: [`.claude/docs/documentation-automation-design.md`](https://github.com/picoruby/picotorokko/blob/main/.claude/docs/documentation-automation-design.md)
+
+---
+
+## 🎁 Option 3: Gem 0.1.0 Publish to RubyGems (Requires Special Instruction)
+
+**⚠️ IMPORTANT: This action requires explicit user confirmation before execution**
+
+**Purpose**: Release picotorokko gem v0.1.0 to RubyGems.org for community use
+
+**Current Status**: READY FOR PUBLICATION
+- ✅ Version: 0.1.0 (stable)
+- ✅ CHANGELOG.md: Complete feature list
+- ✅ release.yml: Workflow ready (`gh workflow run release.yml`)
+- ✅ All quality gates passing (221 tests, RuboCop clean, coverage 86.32%)
+- ✅ .rbs files committed to sig/generated/
+- ✅ RubyDoc.info link in README.md
+
+**Execution Steps** (manual, not automated):
+```bash
+# 1. Ensure you're on main branch and all changes pushed
+git checkout main
+git pull origin main
+
+# 2. Trigger the release workflow
+gh workflow run release.yml -f version=0.1.0
+
+# 3. Monitor the workflow
+gh run list --workflow=release.yml
+
+# 4. Verify gem published
+gem search picotorokko  # Should show: picotorokko (0.1.0)
+
+# 5. Verify RubyDoc.info documentation generated
+# Visit: https://rubydoc.info/gems/picotorokko/
+# (May take 5-10 minutes after gem push)
+```
+
+**What Happens Automatically**:
+1. Version bumped to 0.1.0 in lib/picotorokko/version.rb
+2. Git tag v0.1.0 created and pushed
+3. Gem built: `picotorokko-0.1.0.gem`
+4. Pushed to RubyGems.org (requires RUBYGEMS_API_KEY secret)
+5. GitHub Release created with release notes
+
+**After Publication**:
+- Update version.rb to 0.2.0-dev for next development cycle
+- Create GitHub issues for Priority 2 Phase 3 & Priority 3 Phase 2 work
+- Monitor community feedback and issues
 
 ---
 
