@@ -13,4 +13,27 @@ class PicotorokkoProjectInitializerTest < PraTestCase
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
+
+  test "initialize_project handles setup_default_environment gracefully" do
+    tmpdir = Dir.mktmpdir
+    project_name = "test_project"
+
+    begin
+      # Mock setup_default_environment to avoid network calls
+      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
+      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
+        # Simulate successful completion without network call
+      end
+
+      initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
+      # Should complete without error even with setup_default_environment mocked
+      initializer.initialize_project
+
+      # Verify project structure was created
+      assert Dir.exist?(File.join(tmpdir, project_name, "storage", "home"))
+    ensure
+      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
+      FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
+    end
+  end
 end

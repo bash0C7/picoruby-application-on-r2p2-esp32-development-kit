@@ -39,6 +39,13 @@ module Picotorokko
       # Generate mrbgems if requested
       generate_mrbgems
 
+      # Setup default environment with latest repo versions
+      begin
+        setup_default_environment
+      rescue StandardError => e
+        warn("Warning: Failed to setup default environment: #{e.message}")
+      end
+
       print_success_message
     end
 
