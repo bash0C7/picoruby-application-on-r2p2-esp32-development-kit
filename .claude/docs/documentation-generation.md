@@ -210,99 +210,119 @@ API documentation is automatically generated from type annotations:
 
 ### Phase 3: ローカル生成可能化 ✅ COMPLETE (Session 3 - 2025-11-14)
 
-**Objective**: ローカル開発時に documentation 確認可能 (YARD を使用)
+**Objective**: ローカル開発時に documentation 確認可能
+
+**戦略**: rbs-inline annotations + RBS ファイルのみ使用（YARD 不使用）
 
 **実装完了**:
 ```bash
-# YARD 追加
-gem install yard  # or: bundle install (YARD in gemspec)
+# RBS ファイル生成
+bundle exec rake rbs:generate
 
-# ローカルでドキュメント生成
-bundle exec rake doc:generate
+# 型チェック
+bundle exec steep check
 
 # 生成されたドキュメント
-# - HTML: doc/index.html
-# - Output: 66.28% documented (26 files, 109 methods)
+# - RBS files: sig/generated/*.rbs (5 files)
+# - Type validation: 0 errors
 ```
+
+**設計原則** (picotorokko gem と同様):
+- ✅ **rbs-inline annotations**: ソースコード内 (@rbs コメント)
+- ✅ **RBS ファイル**: 自動生成 (sig/generated/)
+- ✅ **Type Checking**: Steep で検証
+- ✅ **HTML Documentation**: RubyDoc.info が RBS から自動生成
+- ❌ **YARD 不使用**: 複数のコメント形式は管理負荷が高い
 
 **実装詳細**:
 
-**Step 1: YARD を開発依存に追加** ✅
+**Step 1: rbs-inline annotations をソースコード内に記述** ✅
 ```ruby
-# picotorokko.gemspec
-spec.add_development_dependency "yard", "~> 0.9"
-```
-
-**Step 2: Rakefile に Rake task 追加** ✅
-```ruby
-# Rakefile
-begin
-  require "yard"
-  YARD::Rake::YardocTask.new do |t|
-    t.files   = ["lib/**/*.rb", "exe/**/*"]
-    t.options = ["--output-dir", "doc", "--readme", "README.md", "--markup", "markdown"]
-  end
-rescue LoadError
-  # YARD not installed
-  task :yard do
-    puts "⚠️  YARD not available. Install with: gem install yard"
-  end
-end
-
-namespace :doc do
-  desc "Generate API documentation with YARD"
-  task :generate => :yard do
-    puts "✓ API documentation generated in doc/"
-  end
+# @rbs (String) -> Integer
+def some_method(name)
+  # ...
 end
 ```
 
-**Step 3: gemspec に documentation_uri 設定** ✅
-```ruby
-spec.metadata["documentation_uri"] = "https://rubydoc.info/gems/picotorokko/"
-```
-
-**Step 4: .gitignore 確認** ✅
-```
-doc/       # YARD generated docs (already in .gitignore)
-.yardoc/   # YARD cache (already in .gitignore)
-```
-
-**使用方法**:
+**Step 2: RBS ファイル生成** ✅
 ```bash
-# ローカルでドキュメント生成
-bundle exec rake doc:generate
-
-# 生成されたドキュメント確認
-open doc/index.html  # macOS
-xdg-open doc/index.html  # Linux
-
-# RubyDoc.info（自動生成、gem publish 時）
-# https://rubydoc.info/gems/picotorokko/
+bundle exec rake rbs:generate
+# → sig/generated/*.rbs ファイル生成
 ```
 
-**マトリックス**:
-- Files: 26
-- Modules: 10 (5 undocumented)
-- Classes: 27 (3 undocumented)
-- Methods: 109 (43 undocumented)
-- **Documentation Coverage: 66.28%**
+**Step 3: 型チェック実行** ✅
+```bash
+bundle exec steep check
+# → 0 errors (production code)
+```
 
-**注記**: rbs-inline コメント (@rbs) と YARD コメント（説明文）は分離設計
-- @rbs: 型チェック用（Steep で検証）
-- YARD: HTML ドキュメント用（説明・使用例）
-- YARD は @rbs タグを認識しないため警告が出ますが、ドキュメント生成に問題はありません
+**Step 4: RBS ファイルを git に commit** ✅
+```bash
+git add sig/generated/
+git commit -m "chore: Update RBS files from annotations"
+```
 
-**Phase 3 実装による変更**:
-- ✅ ローカルで doc 生成可能
-- ✅ doc/ ディレクトリに HTML ドキュメント出力
-- ✅ RubyDoc.info への自動デプロイ（gem publish 時）
-- ✅ gemspec に documentation_uri メタデータ設定
+**使用方法** (開発ワークフロー):
+```bash
+# 1. コード変更 + rbs-inline annotations 追加
+$EDITOR lib/picotorokko/commands/env.rb
+  # @rbs の追加
 
-**後続の考慮項目**:
-- YARD コメント追加（オプション）: メソッドに説明文を追加すれば coverage 向上
-- CI 統合: GitHub Actions で doc 生成を自動化
-- doc/ ディレクトリ: .gitignore に登録済み（生成物なので commit 不要）
+# 2. RBS ファイル生成
+bundle exec rake rbs:generate
+
+# 3. 型チェック
+bundle exec steep check
+
+# 4. テスト + RuboCop
+bundle exec rake ci
+
+# 5. Commit
+git add lib/picotorokko/commands/env.rb sig/generated/
+git commit -m "feat: Add new method + type annotations"
+```
+
+**GitHub Actions 統合** (Priority 2 Phase 4):
+```yaml
+# .github/workflows/main.yml
+- name: Generate RBS files from annotations
+  run: bundle exec rake rbs:generate
+- name: Run type check with Steep
+  run: bundle exec steep check
+```
+
+**マトリックス** (既存データ):
+- RBS Files: 5 (sig/generated/)
+- Type Check: 0 errors
+- Coverage: 86.32% line, 65.12% branch
+
+**ドキュメント生成フロー**:
+1. **Development**: rbs-inline annotations + RBS generation
+   - ローカル: `bundle exec rake rbs:generate`
+   - 検証: `bundle exec steep check`
+2. **CI/CD**: GitHub Actions で自動検証
+   - RBS 生成 & 型チェック実行
+   - RBS ファイルが最新か確認
+3. **Publishing**: gem push → RubyDoc.info 自動生成
+   - RBS ファイルから HTML ドキュメント生成
+   - URL: https://rubydoc.info/gems/picotorokko/
+
+**設計の利点**:
+- ✅ Single Source of Truth: rbs-inline annotations のみ
+- ✅ No Comment Duplication: YARD コメント不要
+- ✅ Automatic Sync: 型定義とドキュメント常に同期
+- ✅ Type Safety: Steep による継続的な検証
+- ✅ RubyGems Standard: RBS ベースのドキュメント
+
+**Note on Phase 3 Revision**:
+- 当初 YARD を検討したが、picotorokko gem との一貫性のため rbs-inline のみに統一
+- rbs-doc や Steep RBS docs の不在を確認
+- RBS → HTML 変換は RubyDoc.info に委譲（Phase 4+は不要）
+
+**後続フェーズ**:
+- Phase 4: CI 統合完了（このフェーズで実施）
+- Phase 5: 追加の型アノテーション充実（オプション）
+- Phase 6: RubyDoc.info への gem publish（Option 3）
 
 ---
 
