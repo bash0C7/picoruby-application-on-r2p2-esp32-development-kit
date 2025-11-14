@@ -398,6 +398,58 @@ end
 
 Refer to `.claude/docs/testing-guidelines.md` for TDD + RuboCop integration workflow details.
 
+### Testing with Reality Marble
+
+[Reality Marble](lib/reality_marble) is a powerful mocking gem integrated into picotorokko's test suite, enabling elegant method mocking with context-based activation:
+
+#### Basic Usage
+
+```ruby
+require "reality_marble"
+
+class MyTest < Test::Unit::TestCase
+  test "mocks File operations" do
+    RealityMarble.chant do
+      expect(File, :exist?) { |path| path == "/expected/path" }
+    end.activate do
+      assert File.exist?("/expected/path")
+      assert_false File.exist?("/other/path")
+    end
+  end
+
+  teardown do
+    RealityMarble::Context.reset_current
+  end
+end
+```
+
+#### Testing System Commands
+
+```ruby
+test "mocks system execution" do
+  RealityMarble.chant do
+    expect(system, :call) { |cmd| cmd.include?("bundle") }
+  end.activate do
+    # System call is mocked within this block
+    result = system("bundle check")
+    assert result
+  end
+end
+```
+
+#### Advanced Patterns
+
+Reality Marble supports:
+- **Pattern matching**: Match method calls by arguments
+- **Multiple expectations**: Chain multiple `expect()` calls
+- **Auto-reset**: Automatic context cleanup after block exit
+- **Composable patterns**: Combine expectations for complex scenarios
+
+For complete documentation and additional recipes, see:
+- [Reality Marble API Documentation](lib/reality_marble/docs/API.md)
+- [Usage Recipes](lib/reality_marble/docs/RECIPES.md)
+- [Examples](lib/reality_marble/examples/)
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
