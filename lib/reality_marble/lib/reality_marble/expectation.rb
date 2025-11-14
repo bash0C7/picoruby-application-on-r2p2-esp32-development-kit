@@ -1,6 +1,7 @@
 module RealityMarble
   # Expectation: Define conditions and return values for mocked methods
   class Expectation
+    KEYWORD_PARAM_TYPES = %i[key keydef].freeze
     attr_reader :target_class, :method_name, :matchers, :return_value, :block, :exception
 
     def initialize(target_class, method_name, &block)
@@ -8,6 +9,9 @@ module RealityMarble
       @method_name = method_name
       @matchers = []
       @return_value = nil
+      @return_sequence = []
+      @sequence_index = 0
+      @call_count = 0
       @block = block
       @exception = nil
     end
@@ -29,12 +33,19 @@ module RealityMarble
       self
     end
 
-    # Set return value for this expectation
+    # Set return value(s) for this expectation
     #
-    # @param value [Object] The value to return
+    # @param values [Object] One or more values to return in sequence
     # @return [self]
-    def returns(value)
-      @return_value = value
+    def returns(*values)
+      if values.size == 1
+        @return_value = values.first
+        @return_sequence = []
+      else
+        @return_sequence = values
+        @return_value = nil
+        @sequence_index = 0
+      end
       self
     end
 
@@ -68,14 +79,33 @@ module RealityMarble
     # Get the return value for this expectation
     #
     # @param args [Array] Arguments (used to select matching return value)
+    # @param marble [Marble] The marble context (optional)
     # @return [Object]
-    def call_with(args)
+    def call_with(args, marble: nil)
       if @exception
         raise @exception[:class], @exception[:message] if @exception[:message]
 
         raise @exception[:class]
       elsif @block
-        @block.call(*args)
+        # Detect if block accepts keyword parameters
+        block_params = @block.parameters
+        has_count = block_params.any? { |type, name| KEYWORD_PARAM_TYPES.include?(type) && name == :count }
+        has_marble = block_params.any? { |type, name| KEYWORD_PARAM_TYPES.include?(type) && name == :marble }
+
+        if has_count || has_marble
+          kwargs = {}
+          kwargs[:count] = @call_count if has_count
+          kwargs[:marble] = marble if has_marble
+          @call_count += 1
+          @block.call(*args, **kwargs)
+        else
+          @block.call(*args)
+        end
+      elsif @return_sequence.any?
+        # Return sequence value, or last value if exhausted
+        value = @return_sequence[@sequence_index]
+        @sequence_index = [@sequence_index + 1, @return_sequence.size - 1].min
+        value
       else
         @return_value
       end
