@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
     ls.readlines("\x0", chomp: true).reject do |f|
       (f == gemspec) ||
-        f.start_with?(*%w[bin/ test/ spec/ features/ .git .github appveyor Gemfile lib/reality_marble])
+        f.start_with?(*%w[bin/ test/ spec/ features/ .git .github appveyor Gemfile])
     end
   end
   spec.bindir = "exe"
@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "thor", "~> 1.3"
 
   # Development dependencies
+  spec.add_development_dependency "reality_marble", git: "https://github.com/bash0C7/reality_marble.git"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "test-unit", "~> 3.0"
   spec.add_development_dependency "rubocop", "~> 1.81"
