@@ -1085,6 +1085,275 @@ Expected output: Type definitions for external libraries (Thor, Prism) are unava
 
 ---
 
+## Device Testing with Picotest
+
+### Overview
+
+PicoRuby applications can be tested on actual devices (ESP32) using the Picotest framework. The `ptrk device --test` command enables:
+
+- Test code compilation and deployment to devices
+- Test execution on ESP32 with Picotest doubles for mocking
+- Result parsing from serial output
+- Integration with CI/CD pipelines
+
+### Workflow
+
+```
+Development
+├─ 1. ptrk init my-app          # Generate project with test template
+├─ 2. Edit test/app_test.rb     # Write tests using Picotest
+├─ 3. ptrk device build --test  # Build with test code
+├─ 4. ptrk device flash         # Flash to ESP32
+└─ 5. ptrk device monitor --test # Run & parse results
+
+CI/CD
+├─ 1. ptrk device build --test  # Verify build succeeds
+├─ 2. Upload firmware artifact  # For later testing on hardware
+└─ (Later) Physical hardware runs tests
+```
+
+### Directory Structure
+
+```
+project-root/
+├── storage/home/
+│   ├── app.rb              # Application entry point
+│   ├── sensor.rb           # Application code
+│   └── lib/
+│       └── helper.rb       # Optional libraries
+│
+├── test/
+│   ├── app_test.rb         # Tests for app.rb
+│   ├── sensor_test.rb      # Tests for sensor.rb
+│   └── lib/
+│       └── helper_test.rb  # Tests for lib/helper.rb
+│
+└── Mrbgemfile              # Must include: conf.gem core: "picoruby-picotest"
+```
+
+### Test File Structure
+
+```ruby
+# test/sensor_test.rb
+class SensorTest < Picotest::Test
+  def setup
+    # Runs before each test (optional)
+  end
+
+  def test_read_temperature
+    # Stub C extension method (ADC hardware)
+    stub_any_instance_of(ADC).read_raw { 750 }
+
+    # Create object and test logic
+    sensor = Sensor.new(27)
+    result = sensor.read_temperature
+
+    # Assertion
+    assert_equal 25.0, result
+  end
+
+  def teardown
+    # Runs after each test (optional)
+    # Picotest doubles automatically cleaned up
+  end
+end
+```
+
+### Picotest Doubles (Mocking)
+
+#### Stub (Replace Return Value)
+
+```ruby
+# Stub single instance
+adc = ADC.new(27)
+stub(adc).read_raw { 750 }
+assert_equal 750, adc.read_raw
+
+# Stub all instances of a class
+stub_any_instance_of(GPIO).read { 1 }
+gpio1 = GPIO.new(5, GPIO::IN)
+gpio2 = GPIO.new(10, GPIO::IN)
+assert_equal 1, gpio1.read
+assert_equal 1, gpio2.read
+```
+
+#### Mock (Replace Return Value + Verify Call Count)
+
+```ruby
+# Mock with exact call count
+mock_any_instance_of(I2C).write(2) { true }
+
+i2c = I2C.new(0, sda: 21, scl: 22)
+i2c.write(0x50, [0x01])  # 1st call
+i2c.write(0x51, [0x02])  # 2nd call
+
+# Teardown verifies: write was called exactly 2 times
+# If not, test fails
+```
+
+#### Conditional Stubs
+
+```ruby
+stub_any_instance_of(I2C).read do |address, length|
+  case address
+  when 0x50 then [0x12, 0x34]
+  when 0x51 then [0xAA, 0xBB]
+  else [0x00]
+  end
+end
+
+i2c = I2C.new(0, sda: 21, scl: 22)
+assert_equal [0x12, 0x34], i2c.read(0x50, 2)
+assert_equal [0xAA, 0xBB], i2c.read(0x51, 2)
+```
+
+### Command Reference
+
+#### Build with Test Code
+
+```bash
+ptrk device build --test [--env ENV_NAME]
+```
+
+**What it does**:
+1. Copy `test/` to `build/.../storage/home/test/`
+2. Inject Picotest runner into `storage/home/app.rb`
+3. Verify `picoruby-picotest` in Mrbgemfile
+4. Build firmware normally (delegate to R2P2-ESP32 Rake)
+
+#### Flash Test Firmware
+
+```bash
+ptrk device flash [--env ENV_NAME]
+```
+
+Standard flash (same as without `--test`).
+
+#### Monitor with Test Result Parsing
+
+```bash
+ptrk device monitor --test [--env ENV_NAME]
+```
+
+**What it does**:
+1. Monitor serial output from ESP32
+2. Parse Picotest results (detect PASS/FAIL)
+3. Display formatted summary with pass rate
+4. Exit with code 0 (pass) or 1 (fail) for CI/CD
+
+### Serial Output Format
+
+```
+Running SensorTest...
+  test_read_temperature . PASS
+
+Running MotorTest...
+  test_forward FF FAIL
+  test_backward . PASS
+
+Summary
+SensorTest:
+  success: 1, failure: 0, exception: 0, crash: 0
+
+MotorTest:
+  success: 1, failure: 1, exception: 0, crash: 0
+
+Total: success: 2, failure: 1, exception: 0, crash: 0
+
+=== Picotest completed (exit code: 1) ===
+```
+
+**Output Symbols**:
+- `.` = Test passed (PASS)
+- `F` = Test failed (assertion failed)
+- `E` = Test exception (unhandled error)
+- `C` = Test crashed (process exit code != 0)
+
+### Requirements
+
+#### Mrbgemfile
+
+Must include Picotest framework:
+
+```ruby
+# Mrbgemfile
+mrbgems do |conf|
+  conf.gem core: "picoruby-picotest"
+  # ... other gems
+end
+```
+
+#### Test File Naming
+
+- Directory: `test/`
+- Files: `*_test.rb` (suffix required)
+- Classes: Inherit from `Picotest::Test`
+- Methods: Start with `test_` (prefix required)
+
+#### Available Assertions
+
+```ruby
+assert(condition)                              # Check truthiness
+assert_equal(expected, actual)                 # Check equality
+assert_nil(obj)                                # Check nil
+assert_false(condition)                        # Check falsiness
+assert_raise(ExceptionClass) { block }         # Check exception
+assert_in_delta(expected, actual, delta)       # Float tolerance
+```
+
+### Implementation Details: ptrkコマンド側
+
+#### ptrk device build --test
+
+1. **prepare_test_build(r2p2_path)**
+   - `copy_test_files(r2p2_path)` - Copy test/ to storage/home/test/
+   - `inject_test_runner(r2p2_path)` - Add runner code to app.rb
+   - `verify_picotest_in_mrbgemfile` - Check dependency exists
+
+2. **Testランナーコード注入**
+   - Picotestライブラリロード
+   - test/*_test.rb ファイルロード
+   - Picotest::Runner.run() 実行
+   - 結果をシリアル出力
+
+#### ptrk device monitor --test
+
+1. **PicotestResultParser**
+   - Parse "Running ClassName..." (test class start)
+   - Parse "test_method . PASS" (test result)
+   - Parse "Total: success: N, failure: M, ..." (summary)
+   - Calculate exit code (0 if all pass, 1 if any fail)
+
+2. **Output Formatting**
+   - Color code: GREEN for pass, RED for fail
+   - Display per-class summary
+   - Show overall pass rate
+   - Exit with code for CI/CD
+
+### Best Practices
+
+1. **Test Organization**
+   - One test file per application file
+   - Group related tests in same class
+   - Descriptive test method names
+
+2. **Test Isolation**
+   - Use `setup` to create fresh objects
+   - Use `teardown` to cleanup (if needed)
+   - Avoid test interdependencies
+
+3. **Hardware Abstraction**
+   - Stub all hardware methods (GPIO, I2C, ADC, SPI)
+   - Test business logic separately from hardware
+   - Use mocks to verify hardware interaction
+
+4. **Coverage**
+   - Test happy paths and edge cases
+   - Test error handling
+   - Test boundary conditions
+
+---
+
 ## Implementation Details for Gem Developers
 
 For architectural decisions, implementation strategies, and detailed component specifications backing this user-facing specification, see [`.claude/docs/spec/`](./.claude/docs/spec/).
