@@ -2,5 +2,5 @@ source "https://rubygems.org"
 
 gemspec
 
-# Development dependencies
-gem "reality_marble", path: "lib/reality_marble"
+# Development gem with git source override
+gem "reality_marble", git: "https://github.com/bash0C7/reality_marble.git"
