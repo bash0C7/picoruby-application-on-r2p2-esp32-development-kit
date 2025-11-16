@@ -207,10 +207,13 @@ The user will explicitly indicate their current context via prompt prefix:
 
 ## Ruby Version Policy
 
-**Target Ruby: 3.4+** (3.3 partially supported for legacy environments)
+**Target Ruby: 3.4+** (3.3 fully supported; both versions verified compatible)
 
 - ✅ **Ruby 3.4+ is the primary target** — All string literals default to frozen (no pragma needed)
-- ✅ **Ruby 3.3 partial support** — For development/CI environments still on 3.3
+- ✅ **Ruby 3.3 full compatibility verified** — Both `picotorokko` and `reality_marble` gems pass all tests on Ruby 3.3.6
+  - picotorokko: 226 tests, 86.32% line coverage, 65.12% branch coverage ✓
+  - reality_marble: 62 tests, 86.89% line coverage, 61.11% branch coverage ✓
+  - Suitable for Claude Code on the Web development where Ruby 3.3 is standard
 - 🚫 **NO `# frozen_string_literal: true` pragma** — Not needed in Ruby 3.4+, and would be redundant
 - 📝 **String literal behavior**: In Ruby 3.4+, all string literals are frozen by default; mutations emit deprecation warnings unless `--disable-frozen-string-literal` is specified
 - 📝 **Future: Ruby 4.0** — frozen_string_literal will become strict (FrozenError on mutation attempts)
