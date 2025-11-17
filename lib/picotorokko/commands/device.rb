@@ -281,6 +281,26 @@ module Picotorokko
         warn "Warning: Failed to parse Rakefile: #{e.message}" if ENV["DEBUG"]
         []
       end
+
+      # Build rake command with appropriate prefix (bundle exec or not)
+      # Detects Gemfile in R2P2-ESP32 directory to determine if bundler is needed
+      # @rbs (String, String) -> String
+      def build_rake_command(r2p2_path, task_name)
+        raise "Error: task_name cannot be empty" if task_name.to_s.empty?
+
+        gemfile_path = File.join(r2p2_path, "Gemfile")
+        # Validate Gemfile: must be a regular file and readable
+        if File.exist?(gemfile_path)
+          raise "Error: Gemfile is not a regular file: #{gemfile_path}" unless File.file?(gemfile_path)
+          raise "Error: Gemfile is not readable: #{gemfile_path}" unless File.readable?(gemfile_path)
+
+          rake_cmd = "bundle exec rake"
+        else
+          rake_cmd = "rake"
+        end
+
+        "cd #{Shellwords.escape(r2p2_path)} && #{rake_cmd} #{task_name}"
+      end
     end
 
     # AST-based Rake task extractor for secure, static analysis
@@ -347,26 +367,6 @@ module Picotorokko
       end
 
       private
-
-      # Build rake command with appropriate prefix (bundle exec or not)
-      # Detects Gemfile in R2P2-ESP32 directory to determine if bundler is needed
-      # @rbs (String, String) -> String
-      def build_rake_command(r2p2_path, task_name)
-        raise "Error: task_name cannot be empty" if task_name.to_s.empty?
-
-        gemfile_path = File.join(r2p2_path, "Gemfile")
-        # Validate Gemfile: must be a regular file and readable
-        if File.exist?(gemfile_path)
-          raise "Error: Gemfile is not a regular file: #{gemfile_path}" unless File.file?(gemfile_path)
-          raise "Error: Gemfile is not readable: #{gemfile_path}" unless File.readable?(gemfile_path)
-
-          rake_cmd = "bundle exec rake"
-        else
-          rake_cmd = "rake"
-        end
-
-        "cd #{Shellwords.escape(r2p2_path)} && #{rake_cmd} #{task_name}"
-      end
 
       # Standard task definition: task :name or task "name"
       # @rbs (Prism::CallNode) -> void
