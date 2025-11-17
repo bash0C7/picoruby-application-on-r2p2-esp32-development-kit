@@ -34,7 +34,9 @@
       "Bash(RESULT=$?)",
       "Bash(echo:*)",
       "Bash(gh run list:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(gem list:*)",
+      "Bash(bundle info:*)"
     ],
     "deny": [],
     "ask": []
