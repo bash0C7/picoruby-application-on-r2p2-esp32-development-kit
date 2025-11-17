@@ -1648,8 +1648,50 @@ class PraCommandsEnvTest < PraTestCase
     test "fetch_repo_info handles git show failure" do
       # NOTE: This test verifies that if git commands succeed but return empty output,
       # we get a proper error instead of ArgumentError from Time.parse
-      # Implementation should validate git command outputs before using them
-      omit "[TODO-ISSUE-6-IMPL]: Requires implementation to validate empty git output before Time.parse"
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Create a real git repo
+          test_repo_path = File.join(tmpdir, 'source-repo')
+          FileUtils.mkdir_p(test_repo_path)
+          Dir.chdir(test_repo_path) do
+            system('git init', out: File::NULL, err: File::NULL)
+            system('git config user.email "test@example.com"')
+            system('git config user.name "Test User"')
+            File.write('test.txt', 'content')
+            system('git add .', out: File::NULL, err: File::NULL)
+            system('git commit -m "initial"', out: File::NULL, err: File::NULL)
+          end
+
+          env = Picotorokko::Commands::Env.new
+
+          # Test with valid repo but we'll stub git show to return empty
+          # Implementation should validate output and raise proper error
+          error = assert_raises(RuntimeError) do
+            # Mock git show to return empty
+            original_backtick = Kernel.instance_method(:`)
+            Kernel.define_singleton_method(:`) do |cmd|
+              if cmd.include?('git show')
+                "" # Return empty to simulate git show failure
+              else
+                original_backtick.bind(self).call(cmd)
+              end
+            end
+
+            begin
+              env.send(:fetch_repo_info, "test-repo", test_repo_path)
+            ensure
+              Kernel.define_singleton_method(:`) { |cmd| original_backtick.bind(self).call(cmd) }
+            end
+          end
+
+          # Should get error about timestamp, not ArgumentError from Time.parse
+          assert_match(/Failed to get timestamp/, error.message)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
     end
   end
 
