@@ -173,7 +173,7 @@ module Picotorokko
       # Fetch remote commit hash from git repository URL
       # @rbs (String, String) -> String | nil
       def fetch_remote_commit(repo_url, ref = "HEAD")
-        output = `git ls-remote #{Shellwords.escape(repo_url)} #{Shellwords.escape(ref)} 2>/dev/null`
+        output = `git ls-remote #{Shellwords.escape(repo_url)} #{Shellwords.escape(ref)}`
         return nil if output.empty?
 
         output.split.first[0..6] # 7-digit commit hash
@@ -269,6 +269,33 @@ module Picotorokko
         raise "Failed to get timestamp from git repository: #{repo_path}" if timestamp_str.empty?
 
         Time.parse(timestamp_str).strftime("%Y%m%d_%H%M%S")
+      end
+
+      # Fetch repository information from remote URL
+      # Clones repo, gets commit info, then cleans up
+      # @rbs (String, String) -> Hash[String, String]
+      def fetch_repo_info(repo_name, repo_url)
+        Dir.mktmpdir do |tmpdir|
+          clone_path = File.join(tmpdir, repo_name)
+
+          # Clone repository
+          clone_cmd = "git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(clone_path)}"
+          unless system(clone_cmd, out: File::NULL, err: File::NULL)
+            raise "Command failed: #{clone_cmd}"
+          end
+
+          # Get commit hash
+          short_hash = `git -C #{Shellwords.escape(clone_path)} rev-parse --short=7 HEAD`.strip
+          raise "Failed to get commit hash from #{repo_url}" if short_hash.empty?
+
+          # Get timestamp
+          timestamp_str = `git -C #{Shellwords.escape(clone_path)} show -s --format=%ci HEAD`.strip
+          raise "Failed to get timestamp from #{repo_url}" if timestamp_str.empty?
+
+          timestamp = Time.parse(timestamp_str).strftime("%Y%m%d_%H%M%S")
+
+          { "commit" => short_hash, "timestamp" => timestamp }
+        end
       end
 
       # Check if repository has .gitmodules file

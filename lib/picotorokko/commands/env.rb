@@ -500,10 +500,20 @@ module Picotorokko
         # Create build directory if it doesn't exist
         FileUtils.mkdir_p(build_path)
 
-        # Clone each repository
-        Picotorokko::Env::REPOS.each do |repo_name, repo_url|
-          puts "  Cloning #{repo_name}..."
-          clone_and_checkout_repo(repo_name, repo_url, build_path, repos_info)
+        # Track cloned repos for rollback on failure
+        cloned_repos = []
+
+        begin
+          # Clone each repository
+          Picotorokko::Env::REPOS.each do |repo_name, repo_url|
+            puts "  Cloning #{repo_name}..."
+            clone_and_checkout_repo(repo_name, repo_url, build_path, repos_info)
+            cloned_repos << File.join(build_path, repo_name)
+          end
+        rescue StandardError
+          # Rollback: remove all cloned repos on failure
+          cloned_repos.each { |path| FileUtils.rm_rf(path) }
+          raise
         end
       end
 
@@ -513,14 +523,19 @@ module Picotorokko
         commit_info = repos_info[repo_name]
         commit_sha = commit_info["commit"]
 
-        # Skip if already cloned
-        return if Dir.exist?(target_path)
+        # Skip if already cloned AND valid (has .git directory)
+        return if Dir.exist?(target_path) && File.directory?(File.join(target_path, ".git"))
 
-        # Clone repository
-        system("git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(target_path)} 2>/dev/null")
+        # Remove incomplete clone if exists
+        FileUtils.rm_rf(target_path)
 
-        # Checkout specific commit (suppress errors silently)
-        system("cd #{Shellwords.escape(target_path)} && git checkout #{Shellwords.escape(commit_sha)} 2>/dev/null")
+        # Clone repository - check return value
+        clone_cmd = "git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(target_path)}"
+        raise "Clone failed: #{repo_name} from #{repo_url}" unless system(clone_cmd)
+
+        # Checkout specific commit - check return value
+        checkout_cmd = "cd #{Shellwords.escape(target_path)} && git checkout #{Shellwords.escape(commit_sha)}"
+        raise "Checkout failed: #{repo_name} to commit #{commit_sha}" unless system(checkout_cmd)
 
         puts "    ✓ #{repo_name}: #{commit_sha}"
       end

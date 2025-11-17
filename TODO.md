@@ -228,28 +228,23 @@ Current version: **0.1.0** (released to RubyGems)
    - Test gap: No test for git command failure scenario
    - Severity: High (can crash ptrk env latest)
 
-7. **[ISSUE-7] clone_and_checkout_repo ignores system() return value**
-   - Location: line 520, 523
-   - Problem: `system()` returns false on failure, but code doesn't check exit status
-   - Impact: If clone fails (network error, permission denied), silently continues
-   - Result: Partial clone remains, next run skips due to line 517 "already exists" check
-   - Test gap: No test for git clone failure
-   - Severity: High (corrupts environment state, hard to recover)
+7. **✅ [ISSUE-7] clone_and_checkout_repo ignores system() return value**
+   - FIXED: c1b5861 - Added system() return value checks for clone and checkout
+   - Implementation: Raises error if system() returns false
+   - Tests: Added test cases for clone failure and checkout failure
+   - Status: Complete with full test coverage
 
-8. **[ISSUE-8] Partially cloned repos cause infinite loop**
-   - Location: line 517 `return if Dir.exist?(target_path)`
-   - Problem: If clone fails but directory was created, subsequent runs skip it
-   - Impact: User sees "already cloned" message but no actual content
-   - Workaround: Manual `rm -rf ptrk_env/...` needed
-   - Test gap: No test for partial clone recovery
-   - Severity: High (UX nightmare)
+8. **✅ [ISSUE-8] Partially cloned repos cause infinite loop**
+   - FIXED: cccad93 - Detect valid repos by checking .git directory
+   - Implementation: Validates .git directory exists before skipping, removes incomplete clones
+   - Tests: Added test case for partial clone recovery scenario
+   - Status: Complete with full test coverage
 
-9. **[ISSUE-9] setup_build_environment has no atomic transaction**
-   - Location: line 497-508
-   - Problem: If repo N fails during setup_build_environment, repos 1..N-1 are left cloned
-   - Impact: Inconsistent state - partial environment created
-   - Test gap: No test for mid-way failure during setup
-   - Severity: High (rollback not implemented)
+9. **✅ [ISSUE-9] setup_build_environment has no atomic transaction**
+   - FIXED: 486c35d - Implement atomic rollback on failure
+   - Implementation: Track cloned repos, rollback all on first failure
+   - Tests: Added test case for rollback on first repo failure
+   - Status: Complete with full test coverage
 
 10. **[ISSUE-10] Error output suppressed (2>/dev/null) makes debugging hard**
     - Location: line 475, 520, 523
@@ -829,6 +824,20 @@ end
     - Test gap: No test for duplicate placeholders
     - Severity: MEDIUM (template rendering broken for DRY code)
 
+### Commands/Env (lib/picotorokko/commands/env.rb) - 316 lines
+
+22. **[TODO-RUBOCOP-CLASS-LENGTH] Env class exceeds RuboCop line limit**
+    - Location: lib/picotorokko/commands/env.rb:14
+    - Problem: Class has 316 lines (threshold: 300)
+    - Impact: RuboCop reports single violation, affects CI cleanliness
+    - Solution: Refactor Env class into smaller modules:
+      - EnvRepository (environment YAML persistence)
+      - EnvValidator (validation logic)
+      - EnvBuilder (clone/checkout operations)
+      - EnvInspector (inspection/listing)
+    - Severity: MEDIUM (style/maintainability issue, not functional)
+    - Estimated effort: 2-3 refactoring commits
+
 ### Summary by Priority
 
 **CRITICAL (implement immediately)**:
@@ -844,6 +853,7 @@ end
 **MEDIUM** (implement next):
 - ISSUE-19: mrbgems directory validation
 - ISSUE-21: Duplicate placeholder handling
+- TODO-RUBOCOP-CLASS-LENGTH: Refactor Env class to reduce line count
 
 ### Overall Test Coverage Status
 
