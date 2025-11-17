@@ -279,7 +279,8 @@ module Picotorokko
           clone_path = File.join(tmpdir, repo_name)
 
           # Clone repository
-          clone_cmd = "git clone --depth 1 #{Shellwords.escape(repo_url)} #{Shellwords.escape(clone_path)}"
+          clone_cmd = "git clone --filter=blob:none --depth 1 " \
+                      "#{Shellwords.escape(repo_url)} #{Shellwords.escape(clone_path)}"
           unless system(clone_cmd, out: File::NULL, err: File::NULL)
             raise "Command failed: #{clone_cmd}"
           end
