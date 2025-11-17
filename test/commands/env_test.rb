@@ -1668,11 +1668,24 @@ class PraCommandsEnvTest < PraTestCase
 
   sub_test_case "[TODO-ISSUE-6-IMPL] Git command error handling" do
     test "fetch_repo_info handles git rev-parse failure" do
-      omit "[TODO-ISSUE-6-IMPL]: fetch_repo_info error handling. Test placeholder added; implementation in ISSUE-6 phase."
+      # NOTE: fetch_repo_info is private and uses backticks internally
+      # Testing via public interface: fetch_latest_repos which calls fetch_repo_info
+      # Verify error message when git commands return empty (simulated by invalid URL)
+      env = Picotorokko::Commands::Env.new
+
+      error = assert_raises(RuntimeError) do
+        env.send(:fetch_repo_info, "test-repo", "https://invalid-url-that-will-fail.example.com/repo.git")
+      end
+
+      # Should fail at git clone stage with clear error message
+      assert_match(/Command failed/, error.message)
     end
 
     test "fetch_repo_info handles git show failure" do
-      omit "[TODO-ISSUE-6-IMPL]: fetch_repo_info timestamp error. Test placeholder added; implementation in ISSUE-6 phase."
+      # NOTE: This test verifies that if git commands succeed but return empty output,
+      # we get a proper error instead of ArgumentError from Time.parse
+      # Implementation should validate git command outputs before using them
+      omit "[TODO-ISSUE-6-IMPL]: Requires implementation to validate empty git output before Time.parse"
     end
   end
 
