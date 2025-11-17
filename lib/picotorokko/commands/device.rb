@@ -161,18 +161,21 @@ module Picotorokko
 
       private
 
+      # @rbs (String) -> String
+      def validate_env_value(value)
+        raise "Error: --env option requires a non-empty environment name" if value.empty?
+
+        value
+      end
+
       # --env option を args から抽出
       # @rbs (Array[untyped]) -> (String | nil)
       def parse_env_from_args(args)
         return nil if args.empty?
 
-        # 連続する2つのarg: ['--env', 'value'] または 1つのarg: ['--env=value']
         args.each_with_index do |arg, index|
-          if arg == "--env" && args[index + 1]
-            return args[index + 1]
-          elsif arg.start_with?("--env=")
-            return arg.split("=", 2)[1]
-          end
+          return validate_env_value(args[index + 1]) if arg == "--env" && args[index + 1]
+          return validate_env_value(arg.split("=", 2)[1]) if arg.start_with?("--env=")
         end
 
         nil
@@ -349,8 +352,19 @@ module Picotorokko
       # Detects Gemfile in R2P2-ESP32 directory to determine if bundler is needed
       # @rbs (String, String) -> String
       def build_rake_command(r2p2_path, task_name)
+        raise "Error: task_name cannot be empty" if task_name.to_s.empty?
+
         gemfile_path = File.join(r2p2_path, "Gemfile")
-        rake_cmd = File.exist?(gemfile_path) ? "bundle exec rake" : "rake"
+        # Validate Gemfile: must be a regular file and readable
+        if File.exist?(gemfile_path)
+          raise "Error: Gemfile is not a regular file: #{gemfile_path}" unless File.file?(gemfile_path)
+          raise "Error: Gemfile is not readable: #{gemfile_path}" unless File.readable?(gemfile_path)
+
+          rake_cmd = "bundle exec rake"
+        else
+          rake_cmd = "rake"
+        end
+
         "cd #{Shellwords.escape(r2p2_path)} && #{rake_cmd} #{task_name}"
       end
 
