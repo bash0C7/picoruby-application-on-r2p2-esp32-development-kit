@@ -185,7 +185,7 @@ module Picotorokko
         return if Dir.exist?(dest_path)
 
         puts "Cloning #{repo_url} to #{dest_path}..."
-        cmd = "git clone --depth 1 #{Shellwords.escape(repo_url)} #{Shellwords.escape(dest_path)}"
+        cmd = "git clone --filter=blob:none #{Shellwords.escape(repo_url)} #{Shellwords.escape(dest_path)}"
         executor.execute(cmd)
 
         # 指定コミットにチェックアウト
@@ -279,7 +279,7 @@ module Picotorokko
           clone_path = File.join(tmpdir, repo_name)
 
           # Clone repository
-          clone_cmd = "git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(clone_path)}"
+          clone_cmd = "git clone --depth 1 #{Shellwords.escape(repo_url)} #{Shellwords.escape(clone_path)}"
           unless system(clone_cmd, out: File::NULL, err: File::NULL)
             raise "Command failed: #{clone_cmd}"
           end
