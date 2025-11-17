@@ -1747,7 +1747,38 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "partially cloned repos handled on retry" do
-      omit "[TODO-ISSUE-8-IMPL]: Partial clone recovery. Test placeholder added; implementation in ISSUE-8 phase."
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Create a real git repo for source
+          source_repo = File.join(tmpdir, 'source')
+          FileUtils.mkdir_p(source_repo)
+          Dir.chdir(source_repo) do
+            system('git init > /dev/null 2>&1')
+            system('git config user.email "test@example.com"')
+            system('git config user.name "Test User"')
+            File.write('test.txt', 'content')
+            system('git add . > /dev/null 2>&1')
+            system('git commit -m "initial" > /dev/null 2>&1')
+          end
+
+          # First: partial clone (create empty directory to simulate failure)
+          target_path = File.join(tmpdir, 'target')
+          FileUtils.mkdir_p(target_path)
+
+          env_cmd = Picotorokko::Commands::Env.new
+          # Should recover and successfully clone
+          env_cmd.send(:clone_and_checkout_repo, 'test-repo', source_repo,
+                       tmpdir, { 'test-repo' => { 'commit' => 'HEAD' } })
+
+          # Verify it was cloned properly (has .git)
+          assert_true(File.exist?(File.join(target_path, '.git')))
+          assert_true(File.exist?(File.join(target_path, 'test.txt')))
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
     end
   end
 

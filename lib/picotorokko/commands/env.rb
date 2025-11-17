@@ -513,8 +513,11 @@ module Picotorokko
         commit_info = repos_info[repo_name]
         commit_sha = commit_info["commit"]
 
-        # Skip if already cloned
-        return if Dir.exist?(target_path)
+        # Skip if already cloned AND valid (has .git directory)
+        return if Dir.exist?(target_path) && File.directory?(File.join(target_path, ".git"))
+
+        # Remove incomplete clone if exists
+        FileUtils.rm_rf(target_path)
 
         # Clone repository - check return value
         clone_cmd = "git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(target_path)}"
