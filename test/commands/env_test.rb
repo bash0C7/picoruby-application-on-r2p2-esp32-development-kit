@@ -640,11 +640,14 @@ class PraCommandsEnvTest < PraTestCase
           # 一時ディレクトリにダミーのgitリポジトリを作成
           # コマンド引数から最後の引数（デスティネーションパス）を抽出
           # シェルワード形式（引用符付き）に対応
-          if cmd =~ /git clone.* (\S+)\s+2>/
+          if cmd =~ /git clone.* (\S+)(?:\s*2>)?$/
             dest_path = $1.gsub(/['"]/, '') # 引用符を削除
             FileUtils.mkdir_p(dest_path)
             FileUtils.mkdir_p(File.join(dest_path, '.git'))
           end
+          true
+        elsif cmd.include?('git checkout')
+          # Mock git checkout - always succeed for stubs
           true
         else
           original_system.bind(self).call(*args)
@@ -1691,15 +1694,56 @@ class PraCommandsEnvTest < PraTestCase
 
   sub_test_case "[TODO-ISSUE-7-IMPL] Clone/checkout state corruption" do
     test "clone_and_checkout_repo raises error on clone failure" do
-      omit "[TODO-ISSUE-7-IMPL]: clone_and_checkout_repo error handling. Test placeholder added; implementation in ISSUE-7 phase."
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Test with invalid repo URL that will fail
+          env_cmd = Picotorokko::Commands::Env.new
+          error = assert_raise(RuntimeError) do
+            env_cmd.send(:clone_and_checkout_repo, "test-repo",
+                         "https://invalid-url-that-wont-exist-12345.example.com/repo.git",
+                         tmpdir, { "test-repo" => { "commit" => "abc1234" } })
+          end
+          assert_match(/Clone failed/, error.message)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
     end
 
     test "clone_and_checkout_repo raises error on checkout failure" do
-      omit "[TODO-ISSUE-7-IMPL]: clone_and_checkout_repo checkout error. Test placeholder added; implementation in ISSUE-7 phase."
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Create a real git repo, then try to checkout invalid commit
+          test_repo_path = File.join(tmpdir, 'source-repo')
+          FileUtils.mkdir_p(test_repo_path)
+          Dir.chdir(test_repo_path) do
+            system('git init', out: File::NULL, err: File::NULL)
+            system('git config user.email "test@example.com"')
+            system('git config user.name "Test User"')
+            File.write('test.txt', 'content')
+            system('git add .', out: File::NULL, err: File::NULL)
+            system('git commit -m "initial"', out: File::NULL, err: File::NULL)
+          end
+
+          env_cmd = Picotorokko::Commands::Env.new
+          error = assert_raise(RuntimeError) do
+            env_cmd.send(:clone_and_checkout_repo, "test-repo", test_repo_path,
+                         tmpdir, { "test-repo" => { "commit" => "nonexistent99" } })
+          end
+          assert_match(/Checkout failed/, error.message)
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
     end
 
     test "setup_build_environment rolls back on first failure" do
-      omit "[TODO-ISSUE-9-IMPL]: Atomic transaction for setup_build_environment. Test placeholder added; implementation in ISSUE-9 phase."
+      omit "[TODO-ISSUE-9-IMPL]: Atomic transaction for setup_build_environment. " \
+           "Test placeholder added; implementation in ISSUE-9 phase."
     end
 
     test "partially cloned repos handled on retry" do

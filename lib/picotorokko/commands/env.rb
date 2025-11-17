@@ -516,11 +516,13 @@ module Picotorokko
         # Skip if already cloned
         return if Dir.exist?(target_path)
 
-        # Clone repository
-        system("git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(target_path)} 2>/dev/null")
+        # Clone repository - check return value
+        clone_cmd = "git clone #{Shellwords.escape(repo_url)} #{Shellwords.escape(target_path)}"
+        raise "Clone failed: #{repo_name} from #{repo_url}" unless system(clone_cmd)
 
-        # Checkout specific commit (suppress errors silently)
-        system("cd #{Shellwords.escape(target_path)} && git checkout #{Shellwords.escape(commit_sha)} 2>/dev/null")
+        # Checkout specific commit - check return value
+        checkout_cmd = "cd #{Shellwords.escape(target_path)} && git checkout #{Shellwords.escape(commit_sha)}"
+        raise "Checkout failed: #{repo_name} to commit #{commit_sha}" unless system(checkout_cmd)
 
         puts "    ✓ #{repo_name}: #{commit_sha}"
       end
