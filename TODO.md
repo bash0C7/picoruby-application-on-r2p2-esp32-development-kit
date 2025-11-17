@@ -159,3 +159,120 @@ bundle exec rake test
 ```
 
 Current version: **0.1.0** (released to RubyGems)
+
+---
+
+## 🐛 [TODO-CODE-QUALITY-ISSUES] Found During Coverage Analysis (Session Latest)
+
+### ProjectInitializer Issues (lib/picotorokko/project_initializer.rb)
+
+1. **[ISSUE-1] detect_git_author returns empty string instead of nil**
+   - Location: line 126-131
+   - Problem: `git config user.name` returns empty string when not set, but `.strip` doesn't convert to nil
+   - Impact: `prepare_variables` (line 112) treats empty string as valid author, shows empty field in templates
+   - Test gap: No test for missing git user.name (only test with partial config exists)
+   - Severity: Low (cosmetic, doesn't break initialization)
+
+2. **[ISSUE-2] validate_project_name! rejects valid mixed-case names**
+   - Location: line 88 `\A[a-zA-Z0-9_-]+\z`
+   - Problem: Regex allows UPPERCASE letters but convention expects lowercase+dashes
+   - Example: "TestProject" is accepted but "test-project" is recommended
+   - Test gap: Tests added for uppercase rejection, but spec doesn't clarify intent
+   - Severity: Low (follows project conventions, but documentation mismatch)
+
+3. **[ISSUE-3] render_template silently skips missing templates**
+   - Location: line 157-160
+   - Problem: When template file doesn't exist, just prints warning and returns without error
+   - Impact: Project created with incomplete files (missing .gitignore, README.md, etc.)
+   - Test gap: No test for missing template file scenario
+   - Severity: High (silent data loss, hard to debug)
+
+4. **[ISSUE-4] with_ci option checking is overly complex**
+   - Location: line 186
+   - Problem: Checks 4 different keys (`:with_ci`, `"with_ci"`, `:"with-ci"`, `"with-ci"`)
+   - Question: Why? Thor should normalize this to one form. Indicates unclear option handling.
+   - Test gap: Only tests default case, not --with-ci explicitly
+   - Severity: Medium (works but maintainability issue)
+
+5. **[ISSUE-5] No error handling for template rendering failures**
+   - Location: line 163 `Picotorokko::Template::Engine.render()`
+   - Problem: If template engine throws exception (invalid syntax, etc), whole init fails
+   - Example: Bad ERB syntax in template causes silent crash
+   - Test gap: No test for render engine failure
+   - Severity: High (can brick initialization)
+
+### Env.rb Issues (lib/picotorokko/commands/env.rb)
+
+6. **[ISSUE-6] fetch_repo_info doesn't handle git command failures**
+   - Location: line 482-484
+   - Problem: `git rev-parse` and `git show` failures not checked, just uses empty/malformed strings
+   - Impact: If Git command fails, timestamp parsing at line 484 may crash with ArgumentError
+   - Test gap: No test for git command failure scenario
+   - Severity: High (can crash ptrk env latest)
+
+7. **[ISSUE-7] clone_and_checkout_repo ignores system() return value**
+   - Location: line 520, 523
+   - Problem: `system()` returns false on failure, but code doesn't check exit status
+   - Impact: If clone fails (network error, permission denied), silently continues
+   - Result: Partial clone remains, next run skips due to line 517 "already exists" check
+   - Test gap: No test for git clone failure
+   - Severity: High (corrupts environment state, hard to recover)
+
+8. **[ISSUE-8] Partially cloned repos cause infinite loop**
+   - Location: line 517 `return if Dir.exist?(target_path)`
+   - Problem: If clone fails but directory was created, subsequent runs skip it
+   - Impact: User sees "already cloned" message but no actual content
+   - Workaround: Manual `rm -rf ptrk_env/...` needed
+   - Test gap: No test for partial clone recovery
+   - Severity: High (UX nightmare)
+
+9. **[ISSUE-9] setup_build_environment has no atomic transaction**
+   - Location: line 497-508
+   - Problem: If repo N fails during setup_build_environment, repos 1..N-1 are left cloned
+   - Impact: Inconsistent state - partial environment created
+   - Test gap: No test for mid-way failure during setup
+   - Severity: High (rollback not implemented)
+
+10. **[ISSUE-10] Error output suppressed (2>/dev/null) makes debugging hard**
+    - Location: line 475, 520, 523
+    - Problem: All git errors are silently discarded, only exit codes visible
+    - Impact: User can't see actual error (network timeout vs auth failure vs disk full)
+    - Workaround: None - have to strace or add debug output
+    - Severity: Medium (operational issue)
+
+### Device.rb Issues (lib/picotorokko/commands/device.rb)
+
+11. **[ISSUE-11] parse_env_from_args treats empty --env= as valid**
+    - Location: line 174 `arg.split("=", 2)[1]`
+    - Problem: `--env=` returns empty string "", not nil (should reject)
+    - Impact: `ptrk device build --env=` silently uses empty env name
+    - Test gap: No test for `--env=` edge case
+    - Severity: Medium (invalid input accepted, cryptic error later)
+
+12. **[ISSUE-12] build_rake_command vulnerable to empty task_name**
+    - Location: line 354
+    - Problem: If `task_name` is empty string, generates `rake ` which is invalid
+    - Impact: Calling build_rake_command with empty task fails with cryptic rake error
+    - Test gap: No test for empty task_name
+    - Severity: Low (internal use only, but bad defensive programming)
+
+13. **[ISSUE-13] No validation of Gemfile existence before bundle exec**
+    - Location: line 353 `File.exist?(gemfile_path)`
+    - Problem: Checks existence but what if Gemfile is corrupted/unreadable?
+    - Impact: `bundle exec rake` may fail with unclear "Gemfile not found" error
+    - Test gap: No test for corrupted Gemfile case
+    - Severity: Low (rare, user would need to investigate bundle)
+
+### Testing/Coverage Gaps Summary
+
+**Need to add tests for**:
+- ✅ ProjectInitializer: Missing template file handling, template engine failure
+- ✅ Env.rb: Git command failures (clone, checkout, rev-parse, show), partial clone recovery
+- ✅ Device.rb: Empty task_name, empty --env= value
+- ✅ Error paths: No rollback/cleanup for partially failed operations
+- ✅ Integration: Full ptrk init → ptrk env latest → ptrk device build flow with failures at each step
+
+**Impact on Coverage**:
+- Current: 86.12% line / 64.59% branch
+- Missing: Most error paths and edge case branches
+- Estimated to add: 10-15 tests to reach 90%+ coverage

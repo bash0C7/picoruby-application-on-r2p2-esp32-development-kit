@@ -192,4 +192,45 @@ class PicotorokkoProjectInitializerTest < PraTestCase
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
+
+  test "validate_project_name! rejects uppercase letters" do
+    initializer = Picotorokko::ProjectInitializer.new("TestProject")
+    assert_raise(RuntimeError) do
+      initializer.send(:validate_project_name!, "TestProject")
+    end
+  end
+
+  test "validate_project_name! rejects special characters" do
+    initializer = Picotorokko::ProjectInitializer.new("test-project!")
+    assert_raise(RuntimeError) do
+      initializer.send(:validate_project_name!, "test-project!")
+    end
+  end
+
+  test "validate_project_name! rejects dots in name" do
+    initializer = Picotorokko::ProjectInitializer.new("test.project")
+    assert_raise(RuntimeError) do
+      initializer.send(:validate_project_name!, "test.project")
+    end
+  end
+
+  test "detect_git_author handles git command failure gracefully" do
+    tmpdir = Dir.mktmpdir
+    project_name = "test_project"
+
+    begin
+      # Create a temporary git repo with no user.name configured
+      Dir.chdir(tmpdir) do
+        `git init --quiet`
+        `git config --local user.email "test@example.com"` # Only email, no name
+      end
+
+      initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
+      author = initializer.send(:detect_git_author)
+      # Should return nil or empty string when git config user.name is not set
+      assert(author.nil? || author.empty?, "Should handle missing git user.name gracefully")
+    ensure
+      FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
+    end
+  end
 end
