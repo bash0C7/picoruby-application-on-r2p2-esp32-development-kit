@@ -276,3 +276,109 @@ Current version: **0.1.0** (released to RubyGems)
 - Current: 86.12% line / 64.59% branch
 - Missing: Most error paths and edge case branches
 - Estimated to add: 10-15 tests to reach 90%+ coverage
+
+---
+
+## 📊 [TODO-LARGE-METHOD-COVERAGE-GAPS] Other Untested Code Outside Session Scope
+
+### Env.rb Module (lib/picotorokko/env.rb) - 364 lines
+
+**CRITICAL - Zero Test Coverage:**
+
+14. **[ISSUE-14] traverse_submodules_and_validate - 37 lines, COMPLETELY UNTESTED**
+    - Location: line 229-265
+    - Complexity: 3-level nested submodule traversal with depth tracking
+    - Error paths not tested:
+      - `git config submodule.*.path` failures
+      - Missing submodule commits
+      - Deep submodule warnings (depth > 2)
+      - Git command timeouts
+    - Impact: Users won't know if their R2P2-ESP32 clone is incomplete
+    - Test gap: 0 tests for this 37-line method
+    - Severity: CRITICAL (core functionality untested)
+
+15. **[ISSUE-15] Untested path/cache infrastructure methods**
+    - Methods not tested: `validate_env_name!`, `clone_with_submodules`, `get_commit_hash`, `get_timestamp`
+    - Problem: Core directory structure methods have no test coverage
+    - Impact: Silent failures if paths are malformed
+    - Test gap: ~8 methods untested
+    - Severity: HIGH (silent data loss potential)
+
+### BuildConfigApplier (lib/picotorokko/build_config_applier.rb) - 158 lines
+
+16. **[ISSUE-16] Invalid Ruby syntax not handled**
+    - Location: line 23 (rescue clause at end of render)
+    - Problem: If config file has syntax errors, silently returns unchanged
+    - Impact: User doesn't know their mrbgem config wasn't applied
+    - Test gap: No test for invalid Ruby in config
+    - Severity: HIGH (silent failure)
+
+17. **[ISSUE-17] Block depth tracking fails with mixed do...end/{...}**
+    - Location: line 74-83 (find_build_block_end_line)
+    - Problem: Depth counting assumes consistent block syntax, can fail with:
+      - `do...end` and `{...}` on same line
+      - Lambdas/procs mixing with build block
+    - Impact: Incorrect line detection, mrbgem config inserted in wrong place
+    - Test gap: No test for mixed block syntax
+    - Severity: HIGH (data corruption possible)
+
+### Commands/Mrbgems (lib/picotorokko/commands/mrbgems.rb) - 103 lines
+
+18. **[ISSUE-18] No fallback when git config user.name missing**
+    - Location: line 46
+    - Problem: Uses `git config user.name` with no error handling
+    - Impact: If git not configured, crashes with empty author
+    - Test gap: No test for missing git config
+    - Severity: MEDIUM (rare, but breaks on fresh git setups)
+
+19. **[ISSUE-19] No validation for mrbgems directory already existing as file**
+    - Location: line 53
+    - Problem: Creates directory without checking if path is already a file
+    - Impact: `mkdir_p` fails cryptically if `mrbgems/` exists as file not dir
+    - Test gap: No test for this edge case
+    - Severity: MEDIUM (UX issue)
+
+### Template/RubyEngine (lib/picotorokko/template/ruby_engine.rb) - 105 lines
+
+20. **[ISSUE-20] Placeholder mapping doesn't handle underscores correctly**
+    - Location: line 87 (constant_name.downcase)
+    - Problem: `TEMPLATE_CLASS_NAME_APP` becomes `class_name_app` but expects `classNameApp` or different format
+    - Impact: Placeholders with underscores don't match variables
+    - Test gap: No test for underscore handling
+    - Severity: MEDIUM (template variable naming broken)
+
+21. **[ISSUE-21] Multiple identical placeholders on same line not handled**
+    - Location: line 116-124 (apply_replacements)
+    - Problem: Simple string replacement doesn't account for offset shifts
+    - Impact: If same placeholder appears twice on line, second replacement is offset
+    - Test gap: No test for duplicate placeholders
+    - Severity: MEDIUM (template rendering broken for DRY code)
+
+### Summary by Priority
+
+**CRITICAL (implement immediately)**:
+- ISSUE-14: `traverse_submodules_and_validate` - 37 lines, 0 tests
+- ISSUE-16: Invalid Ruby syntax handling
+- ISSUE-17: Block depth tracking with mixed syntax
+
+**HIGH** (implement soon):
+- ISSUE-15: Path/cache methods untested
+- ISSUE-18: Git config fallback missing
+- ISSUE-20: Placeholder underscore mapping broken
+
+**MEDIUM** (implement next):
+- ISSUE-19: mrbgems directory validation
+- ISSUE-21: Duplicate placeholder handling
+
+### Overall Test Coverage Status
+
+| File | Lines | Public Methods | Tested | Untested | Gap % |
+|------|-------|---|---|---|---|
+| env.rb | 364 | 28 | 16 | 12 | 43% |
+| build_config_applier.rb | 158 | 2 | 2 | 0 (edge cases) | 15% |
+| commands/rubocop.rb | 126 | 2 | 2 | 0 (I/O errors) | 5% |
+| commands/mrbgems.rb | 103 | 1 | 1 | 0 (edge cases) | 10% |
+| template/ruby_engine.rb | 105 | 2 | 2 | 0 (edge cases) | 10% |
+| **TOTAL** | **3196** | **N/A** | **High-level** | **Low-level** | **~25-30%** |
+
+**Estimated additional tests needed**: 30-40 tests to reach 95%+ coverage across all modules
