@@ -173,7 +173,7 @@ module Picotorokko
       # Fetch remote commit hash from git repository URL
       # @rbs (String, String) -> String | nil
       def fetch_remote_commit(repo_url, ref = "HEAD")
-        output = `git ls-remote #{Shellwords.escape(repo_url)} #{Shellwords.escape(ref)} 2>/dev/null`
+        output = `git ls-remote #{Shellwords.escape(repo_url)} #{Shellwords.escape(ref)}`
         return nil if output.empty?
 
         output.split.first[0..6] # 7-digit commit hash
