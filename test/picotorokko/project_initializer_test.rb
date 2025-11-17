@@ -1,4 +1,5 @@
 require_relative "../test_helper"
+require "reality_marble"
 
 class PicotorokkoProjectInitializerTest < PraTestCase
   test "ProjectInitializer has setup_default_environment method" do
@@ -253,6 +254,36 @@ class PicotorokkoProjectInitializerTest < PraTestCase
   end
 
   test "render_template raises error when template engine fails" do
-    omit "[TODO-ISSUE-5-IMPL]: Template rendering error handling. Tests added; implementation in ISSUE-5 phase."
+    tmpdir = nil
+    begin
+      tmpdir = Dir.mktmpdir("ptrk_test")
+
+      # Create a valid template file (content doesn't matter, we'll mock the engine)
+      template_dir = File.join(Picotorokko::ProjectInitializer::TEMPLATES_DIR)
+      FileUtils.mkdir_p(template_dir)
+      test_template_path = File.join(template_dir, "test_template.md")
+      File.write(test_template_path, "{{PROJECT_NAME}}")
+
+      initializer = Picotorokko::ProjectInitializer.new("test-project", { path: tmpdir })
+
+      # Mock Template::Engine.render to raise an error
+      marble = RealityMarble.chant do
+        Picotorokko::Template::Engine.define_singleton_method(:render) do |_path, _vars|
+          raise StandardError, "Template rendering failed: invalid syntax"
+        end
+      end
+
+      marble.activate do
+        error = assert_raises(Picotorokko::Error) do
+          initializer.send(:render_template, "test_template.md", {})
+        end
+
+        assert_match(/Template rendering failed/, error.message)
+        assert_match(/test_template.md/, error.message)
+      end
+    ensure
+      File.delete(test_template_path) if test_template_path && File.exist?(test_template_path)
+      FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
+    end
   end
 end

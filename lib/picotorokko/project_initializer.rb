@@ -162,6 +162,8 @@ module Picotorokko
       # Write to output
       FileUtils.mkdir_p(File.dirname(output_path))
       File.write(output_path, content)
+    rescue StandardError => e
+      raise Picotorokko::Error, "Template rendering failed for #{template_file}: #{e.message}"
     end
 
     # @rbs () -> void
