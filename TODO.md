@@ -279,6 +279,463 @@ Current version: **0.1.0** (released to RubyGems)
 
 ---
 
+## 🔧 [TODO-DETAILED-IMPLEMENTATION-CONTEXT] Complete Test Strategy & Fix Approaches
+
+### ISSUE-1 & ISSUE-6: Git Command Failure Handling
+
+**Code Context** (ProjectInitializer#detect_git_author):
+```ruby
+# Line 126-131
+def detect_git_author
+  output = `git config user.name 2>/dev/null`.strip
+  output.empty? ? "Unknown Author" : output  # BUG: Returns empty string, not nil
+end
+```
+
+**Code Context** (Env#fetch_repo_info):
+```ruby
+# Line 482-484
+def fetch_repo_info(repo_path)
+  commit_hash = `git -C #{repo_path} rev-parse HEAD 2>/dev/null`.strip
+  timestamp = Time.parse(`git -C #{repo_path} show -s --format=%ci HEAD 2>/dev/null`.strip)
+  # BUG: No error checking on backticks - can return empty string causing ArgumentError
+end
+```
+
+**Call Chain**:
+- `ptrk init` → ProjectInitializer#initialize → prepare_variables → detect_git_author (ISSUE-1)
+- `ptrk env latest` → Env#setup_build_environment → fetch_repo_info (ISSUE-6)
+
+**Test Strategy**:
+```ruby
+# Test detect_git_author returns "Unknown Author" when git config not set
+test "detect_git_author returns default when git config user.name missing" do
+  marble = RealityMarble.chant do
+    Kernel.define_singleton_method(:`) do |cmd|
+      return "" if cmd.include?("git config user.name")
+      `#{cmd}` # fallback to real command
+    end
+  end
+  marble.activate do
+    author = ProjectInitializer.new.send(:detect_git_author)
+    assert_equal "Unknown Author", author
+  end
+end
+
+# Test fetch_repo_info handles git command failure gracefully
+test "fetch_repo_info handles git rev-parse failure" do
+  marble = RealityMarble.chant do
+    Kernel.define_singleton_method(:`) do |cmd|
+      return "" if cmd.include?("rev-parse")
+      `#{cmd}`
+    end
+  end
+  marble.activate do
+    assert_raises(ArgumentError) { Env.new.send(:fetch_repo_info, "/fake/path") }
+  end
+end
+```
+
+**Fix Approach**:
+- ISSUE-1: Change condition to: `output.empty? ? nil : output` (or raise error)
+- ISSUE-6: Use begin/rescue with proper error message: `rescue => e then raise "Git command failed: #{e.message}"`
+
+**Real User Impact**:
+- ISSUE-1: Author field shows empty in generated `CLAUDE.md`, templates display correctly but confusingly
+- ISSUE-6: `ptrk env latest` crashes with "invalid date format" error, environment partially cloned
+
+**Risk**: Medium (affects initialization and environment setup)
+
+---
+
+### ISSUE-3 & ISSUE-5: Template Rendering Silent Failures
+
+**Code Context** (ProjectInitializer#render_template):
+```ruby
+# Line 157-165
+def render_template(template_name)
+  template_path = File.join(TEMPLATE_DIR, template_name)
+  return unless File.exist?(template_path)  # ISSUE-3: Silent return on missing file
+
+  content = File.read(template_path)
+  rendered = Picotorokko::Template::Engine.render(content, @variables)  # ISSUE-5: No rescue
+  File.write(output_path, rendered)
+rescue => e  # This rescue is too late - render failure not caught
+  puts "Template rendering failed: #{e.message}"
+end
+```
+
+**Call Chain**:
+- `ptrk init my-project` → ProjectInitializer#initialize → render_all_templates → render_template (each file)
+- Missing template = incomplete project created
+
+**Test Strategy**:
+```ruby
+test "render_template raises error when template file missing" do
+  # Ensure template doesn't exist
+  File.stubs(:exist?).with(anything).returns(false)
+
+  initializer = ProjectInitializer.new("test-project")
+  assert_raises(Picotorokko::TemplateNotFoundError) do
+    initializer.send(:render_template, "missing.erb")
+  end
+end
+
+test "render_template propagates template engine errors" do
+  bad_template_content = "<%= undefined_var %>"  # Will error in rendering
+  File.stubs(:read).returns(bad_template_content)
+
+  assert_raises(Picotorokko::TemplateRenderError) do
+    initializer.send(:render_template, "bad.erb")
+  end
+end
+```
+
+**Fix Approach**:
+```ruby
+def render_template(template_name)
+  template_path = File.join(TEMPLATE_DIR, template_name)
+  raise Picotorokko::TemplateNotFoundError, "Template #{template_name} not found" unless File.exist?(template_path)
+
+  content = File.read(template_path, encoding: "UTF-8")
+  rendered = Picotorokko::Template::Engine.render(content, @variables)
+  File.write(output_path, rendered)
+rescue Picotorokko::Template::RenderError => e
+  raise Picotorokko::TemplateRenderError, "Failed to render #{template_name}: #{e.message}"
+end
+```
+
+**Real User Impact**:
+- ISSUE-3: `ptrk init my-project` succeeds but creates project missing `.gitignore`, `README.md`, `.rubocop.yml`
+- User wonders why templates are incomplete, has to manually add files
+- ISSUE-5: Corrupted template with bad ERB syntax = silent failure, broken project
+
+**Risk**: High (data loss, broken initialization)
+
+---
+
+### ISSUE-7, ISSUE-8, ISSUE-9: Clone/Checkout State Corruption
+
+**Code Context** (Env#clone_and_checkout_repo):
+```ruby
+# Line 517-530
+def clone_and_checkout_repo(repo_url, target_path, branch = nil)
+  return if Dir.exist?(target_path)  # ISSUE-8: Partially cloned repos skip silently
+
+  system("git clone --recursive #{repo_url} #{target_path} 2>/dev/null")  # ISSUE-7: Ignore $?
+
+  if branch
+    system("git -C #{target_path} checkout #{branch} 2>/dev/null")  # ISSUE-7: Ignore $?
+  end
+end
+
+def setup_build_environment(repos)
+  repos.each do |repo|  # ISSUE-9: If repo N fails, repos 1..N-1 are cloned, repos N+1 not attempted
+    clone_and_checkout_repo(repo[:url], repo[:path], repo[:branch])
+    # No rollback, no atomic guarantee
+  end
+end
+```
+
+**Call Chain**:
+- `ptrk env latest` → Env#setup_build_environment → clone_and_checkout_repo (for each repo)
+- Network failure mid-clone = partial directory created
+- Next run sees directory, skips it = broken state
+
+**Test Strategy**:
+```ruby
+test "clone_and_checkout_repo raises error when git clone fails" do
+  marble = RealityMarble.chant do
+    Kernel.define_singleton_method(:system) do |cmd, *args|
+      return false if cmd.include?("git clone")  # Simulate clone failure
+      Kernel.system(cmd, *args)  # fallback
+    end
+  end
+
+  marble.activate do
+    assert_raises(Picotorokko::CloneFailedError) do
+      env.send(:clone_and_checkout_repo, "https://bad.url/repo.git", "/tmp/test", nil)
+    end
+  end
+end
+
+test "setup_build_environment rolls back on first failure" do
+  repos = [
+    { url: "https://repo1.git", path: "/tmp/r1", branch: "main" },
+    { url: "https://repo2.git", path: "/tmp/r2", branch: "main" }  # Will fail
+  ]
+
+  # Setup so repo2 clone fails
+  marble = RealityMarble.chant do
+    Kernel.define_singleton_method(:system) do |cmd, *args|
+      return false if cmd.include?("repo2.git")
+      Kernel.system(cmd, *args)
+    end
+  end
+
+  marble.activate do
+    assert_raises(Picotorokko::SetupFailedError) do
+      env.send(:setup_build_environment, repos)
+    end
+    # Verify rollback: /tmp/r1 should not exist (rolled back)
+    assert_false Dir.exist?("/tmp/r1")
+  end
+end
+```
+
+**Fix Approach**:
+```ruby
+def clone_and_checkout_repo(repo_url, target_path, branch = nil)
+  raise Picotorokko::CloneFailedError, "Repository already exists" if Dir.exist?(target_path)
+
+  success = system("git clone --recursive #{repo_url} #{target_path}")
+  raise Picotorokko::CloneFailedError, "Clone failed: #{repo_url}" unless success
+
+  if branch
+    success = system("git -C #{target_path} checkout #{branch}")
+    raise Picotorokko::CheckoutFailedError, "Checkout failed: #{branch}" unless success
+  end
+end
+
+def setup_build_environment(repos)
+  cloned_repos = []
+  begin
+    repos.each do |repo|
+      clone_and_checkout_repo(repo[:url], repo[:path], repo[:branch])
+      cloned_repos << repo[:path]
+    end
+  rescue => e
+    # Rollback: Remove all cloned repos
+    cloned_repos.each { |path| FileUtils.rm_rf(path) }
+    raise Picotorokko::SetupFailedError, "Environment setup failed: #{e.message}"
+  end
+end
+```
+
+**Real User Impact**:
+- `ptrk env latest` fails mid-way (network timeout during R2P2-ESP32 clone)
+- Partial directory created, picoruby not cloned
+- Next run: "Environment already exists" → User confused why build fails
+- Workaround: Manual `rm -rf ptrk_env/latest` needed
+
+**Risk**: High (operational, requires manual intervention)
+
+---
+
+### ISSUE-14: traverse_submodules_and_validate - CRITICAL
+
+**Code Context** (Env#traverse_submodules_and_validate):
+```ruby
+# Line 229-265 (37 lines, ZERO test coverage)
+def traverse_submodules_and_validate(repo_path, max_depth = 2, current_depth = 0)
+  return if current_depth > max_depth
+  warn "Submodule depth #{current_depth} exceeds recommended" if current_depth > 2
+
+  submodule_lines = `git -C #{repo_path} config --file .gitmodules --name-only --get-regexp path`.split("\n")
+
+  submodule_lines.each do |line|
+    # Parse "submodule.picoruby-esp32.path" → path value
+    submodule_path = `git -C #{repo_path} config --file .gitmodules --get #{line}`.strip
+    full_path = File.join(repo_path, submodule_path)
+
+    # Validate submodule commit exists
+    submodule_commit = `git -C #{repo_path} ls-tree HEAD #{submodule_path}`.match(/\h{40}/)&.[](0)
+    raise "Missing submodule commit" unless submodule_commit
+
+    # Recurse
+    traverse_submodules_and_validate(full_path, max_depth, current_depth + 1)
+  end
+end
+```
+
+**Call Chain**:
+- `ptrk env latest` → Env#setup_build_environment → validate_repo_structure → traverse_submodules_and_validate
+- R2P2-ESP32 has nested submodules: picoruby-esp32 (→ picoruby)
+
+**Test Strategy** (highly complex):
+```ruby
+test "traverse_submodules_and_validate detects broken submodules" do
+  # Create temp git repos with submodule structure
+  Dir.mktmpdir do |tmpdir|
+    repo_path = File.join(tmpdir, "repo")
+    submodule_path = File.join(tmpdir, "submodule")
+
+    # Setup real submodule scenario
+    system("cd #{submodule_path} && git init && echo content > file.txt && git add . && git commit -m init")
+    system("cd #{repo_path} && git init && git submodule add #{submodule_path} sub")
+
+    # Now test: broken submodule (missing commit)
+    submodule_commit = `git -C #{repo_path} ls-tree HEAD sub | awk '{print $3}'`
+    broken_commit_ref = submodule_commit.to_s.gsub(/./, "0")  # Replace with fake hash
+    system("git -C #{repo_path} update-index --cacheinfo 160000 #{broken_commit_ref} sub")
+
+    # Should raise error for broken submodule
+    assert_raises(Picotorokko::SubmoduleValidationError) do
+      env.send(:traverse_submodules_and_validate, repo_path)
+    end
+  end
+end
+```
+
+**Fix Approach**:
+```ruby
+def traverse_submodules_and_validate(repo_path, max_depth = 2, current_depth = 0)
+  return if current_depth > max_depth
+  warn "⚠️ Submodule depth #{current_depth} exceeds recommended (#{max_depth})" if current_depth > 2
+
+  begin
+    submodule_lines = `git -C #{repo_path} config --file .gitmodules --name-only --get-regexp path 2>&1`.split("\n")
+
+    submodule_lines.each do |line|
+      submodule_path = `git -C #{repo_path} config --file .gitmodules --get #{line}`.strip
+      full_path = File.join(repo_path, submodule_path)
+
+      # Validate submodule commit exists and is accessible
+      ls_tree = `git -C #{repo_path} ls-tree HEAD #{submodule_path} 2>&1`
+      raise Picotorokko::SubmoduleValidationError, "Submodule #{submodule_path} commit not found" unless ls_tree.include?("160000")
+
+      # Recurse safely
+      traverse_submodules_and_validate(full_path, max_depth, current_depth + 1)
+    end
+  rescue => e
+    raise Picotorokko::SubmoduleValidationError, "Submodule traversal failed at depth #{current_depth}: #{e.message}"
+  end
+end
+```
+
+**Real User Impact**:
+- `ptrk env latest` succeeds but R2P2-ESP32 build fails later because submodules were never validated
+- User gets confusing "branch not found" error during build, not during environment setup
+- Time lost debugging build instead of catching error during clone
+
+**Risk**: CRITICAL (core functionality untested, hard to debug)
+
+---
+
+### ISSUE-16 & ISSUE-17: BuildConfigApplier Silent Failures
+
+**Code Context** (BuildConfigApplier#render):
+```ruby
+# Line 15-35
+def render(mrbgems_list)
+  build_config_path = @r2p2_path / "build_config/picoruby.rb"
+  original_content = File.read(build_config_path)
+
+  build_block_start = find_build_block_start_line(original_content)
+  build_block_end = find_build_block_end_line(original_content, build_block_start)
+
+  # Insert mrbgems configuration
+  lines = original_content.split("\n")
+  new_config = generate_mrbgems_config(mrbgems_list)
+  lines.insert(build_block_end - 1, new_config)
+
+  updated_content = lines.join("\n")
+  File.write(build_config_path, updated_content)
+rescue => e  # ISSUE-16: Catch-all rescue silently swallows errors
+  # No logging, no re-raise
+end
+
+def find_build_block_end_line(content, start_line)
+  # ISSUE-17: Simple depth counting fails with mixed syntax
+  lines = content.split("\n")
+  depth = 0
+  (start_line..lines.size).each do |i|
+    line = lines[i]
+    depth += line.count("{") - line.count("}")  # Only counts {}, not do...end
+    return i if depth == 0
+  end
+end
+```
+
+**Test Strategy**:
+```ruby
+test "render catches and logs syntax errors in build config" do
+  applier = BuildConfigApplier.new("/fake/path")
+  File.stubs(:read).returns("if true\n  # Unclosed block")  # Invalid Ruby
+
+  assert_raises(Picotorokko::BuildConfigError) do
+    applier.render([])
+  end
+end
+
+test "find_build_block_end_line handles mixed do...end and brace syntax" do
+  content = <<~RUBY
+    Picotorokko::Mrbgems.build do |conf|
+      conf.gem core: "sprintf"
+      [1,2,3].each { |x| puts x }  # Brace on same line as do...end
+    end
+  RUBY
+
+  applier = BuildConfigApplier.new("/fake/path")
+  start_line = applier.send(:find_build_block_start_line, content)
+  end_line = applier.send(:find_build_block_end_line, content, start_line)
+
+  assert_equal 4, end_line  # Correctly identifies "end" line
+end
+```
+
+**Fix Approach**:
+```ruby
+def render(mrbgems_list)
+  build_config_path = @r2p2_path / "build_config/picoruby.rb"
+  original_content = File.read(build_config_path, encoding: "UTF-8")
+
+  build_block_start = find_build_block_start_line(original_content)
+  build_block_end = find_build_block_end_line(original_content, build_block_start)
+
+  lines = original_content.split("\n")
+  new_config = generate_mrbgems_config(mrbgems_list)
+  lines.insert(build_block_end - 1, new_config)
+
+  updated_content = lines.join("\n")
+
+  # Validate syntax before writing
+  begin
+    RubyVM::AbstractSyntaxTree.parse(updated_content)
+  rescue SyntaxError => e
+    raise Picotorokko::BuildConfigSyntaxError, "Invalid Ruby in updated config: #{e.message}"
+  end
+
+  File.write(build_config_path, updated_content)
+rescue Picotorokko::BuildConfigError => e
+  raise
+rescue => e
+  raise Picotorokko::BuildConfigError, "Failed to apply mrbgems config: #{e.message}"
+end
+
+def find_build_block_end_line(content, start_line)
+  lines = content.split("\n")
+  depth = 0
+  block_type = nil  # Track 'do' vs '{'
+
+  (start_line..lines.size).each do |i|
+    line = lines[i]
+
+    # Count do...end blocks
+    depth += line.count(/\bdo\b/) - line.count(/\bend\b/)
+
+    # Count brace blocks (but exclude in strings/comments)
+    line.each_char.with_index do |ch, idx|
+      next if line[0...idx].count('"') % 2 == 1  # Skip if in string
+      depth += 1 if ch == "{"
+      depth -= 1 if ch == "}"
+    end
+
+    return i if depth == 0
+  end
+
+  raise Picotorokko::BuildBlockNotFoundError, "Could not find end of build block"
+end
+```
+
+**Real User Impact**:
+- ISSUE-16: User runs `ptrk mrbgems add my-sensor`, config corrupted silently, build fails later
+- ISSUE-17: Multiple inline blocks in build_config = mrbgem config inserted in wrong place, build fails during linking
+
+**Risk**: High (data corruption, hard to debug)
+
+---
+
 ## 📊 [TODO-LARGE-METHOD-COVERAGE-GAPS] Other Untested Code Outside Session Scope
 
 ### Env.rb Module (lib/picotorokko/env.rb) - 364 lines
