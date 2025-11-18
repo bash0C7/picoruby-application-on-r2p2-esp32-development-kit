@@ -265,12 +265,15 @@ Current version: **0.1.0** (released to RubyGems)
 
 ### Device.rb Issues (lib/picotorokko/commands/device.rb)
 
-11. **[ISSUE-11] parse_env_from_args treats empty --env= as valid**
-    - Location: line 174 `arg.split("=", 2)[1]`
-    - Problem: `--env=` returns empty string "", not nil (should reject)
-    - Impact: `ptrk device build --env=` silently uses empty env name
-    - Test gap: No test for `--env=` edge case
-    - Severity: Medium (invalid input accepted, cryptic error later)
+11. **✅ [ISSUE-11] parse_env_from_args treats empty --env= as valid** - FIXED
+    - Location: lib/picotorokko/commands/device.rb:165-169, 173-182
+    - Fix: Added validate_env_value helper that checks for empty values
+    - Implementation:
+      - Line 165-169: `validate_env_value` raises error if value is empty
+      - Line 178: `--env=` format validated via `validate_env_value(arg.split("=", 2)[1])`
+      - Line 177: `--env ""` format validated via `validate_env_value(args[index + 1])`
+    - Tests: test/commands/env_test.rb:1730-1744 (4 assertions covering both formats)
+    - Status: Complete with validation and comprehensive test coverage
 
 12. **[ISSUE-12] build_rake_command vulnerable to empty task_name**
     - Location: line 354
