@@ -23,9 +23,10 @@ Rake::TestTask.new(:test) do |t|
   t.ruby_opts = ["-W1"]
 
   # Parallel test execution: uses test-unit's multi-worker capability
-  # 4 workers balance between parallelization and system load
+  # --parallel: Enable parallel execution mode
+  # --n-workers=4: Use 4 worker threads (balances parallelization vs system load)
   # Tests use Dir.mktmpdir which is independent per test, low coupling risk
-  t.options = "--max-workers=4"
+  t.options = "--parallel --n-workers=4"
 end
 
 # ============================================================================
