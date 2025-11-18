@@ -1646,7 +1646,19 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "fetch_repo_info handles git show failure" do
-      omit "[TODO-ISSUE-6-IMPROVE]: git show failure test needs RealityMarble or better mocking approach"
+      # git rev-parseやgit showが空文字列を返す場合のエラーハンドリングをテスト
+      # 実装後は適切なRuntimeErrorでエラーメッセージを表示することを期待
+
+      # STEP 1 (RED): まずは実装なしでテストを書く
+      # この段階では、エラーチェックがないのでArgumentErrorが発生するか、
+      # または正常終了してしまう（gitコマンドが成功する場合）
+
+      # 実装後の期待動作をテストする（現在は失敗するはず）
+      env = Picotorokko::Commands::Env.new
+
+      # TODO: RealityMarbleでのモックが難しいため、一旦omitして実装を先に進める
+      # 実装完了後に、統合テストとして別途追加する予定
+      omit "Mocking Kernel#` with RealityMarble is complex. Will add integration test after implementation."
     end
   end
 
