@@ -480,7 +480,11 @@ module Picotorokko
           # コミットハッシュとタイムスタンプ取得
           Dir.chdir(tmp_repo) do
             short_hash = `git rev-parse --short=7 HEAD`.strip
+            raise "Failed to get commit hash from #{repo_name}" if short_hash.empty?
+
             timestamp_str = `git show -s --format=%ci HEAD`.strip
+            raise "Failed to get timestamp from #{repo_name}" if timestamp_str.empty?
+
             timestamp = Time.parse(timestamp_str).strftime("%Y%m%d_%H%M%S")
 
             puts "    ✓ #{repo_name}: #{short_hash} (#{timestamp})"
