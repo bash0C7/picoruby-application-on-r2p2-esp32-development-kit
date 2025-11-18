@@ -1042,7 +1042,27 @@ end
 **Current state safety**: `Dir.mktmpdir` blocks are independent per test, low coupling risk
 
 **Verification checklist** (REQUIRED):
-1. **Flakiness verification** (CRITICAL):
+
+**1. Concurrency & Output Collision Detection** (CRITICAL):
+   - **SimpleCov .resultset.json collision**:
+     - SimpleCov 0.22.0 uses `.resultset.json.lock` for result merging
+     - ✅ Lock mechanism should prevent simultaneous writes
+     - **VERIFY**: Run 4-worker test and check coverage/coverage.xml is generated correctly
+   - **ENV["PTRK_USER_ROOT"] in parallel context**:
+     - Current: Set once in test_helper.rb (shared across all tests, created at setup)
+     - Risk: ❌ Multiple workers may use same tmpdir concurrently
+     - **VERIFY**: Run with TEST_WORKERS=4, check for "already exists", "permission denied" errors
+     - Note: Each test also creates separate `Dir.mktmpdir` blocks (should be isolated per test)
+   - **stdout/stderr interleaving**:
+     - Test-unit parallel execution may mix output from different workers
+     - Expected: Some output mixing is OK, but assertions/failures must be clear
+     - **VERIFY**: Check test output for clear pass/fail summary (not garbled)
+   - **File I/O bottleneck** (not collision, but performance impact):
+     - Multiple workers using Dir.mktmpdir simultaneously
+     - OS filesystem constraints may serialize operations
+     - Expected: Minimal impact (modern filesystems handle well), but measure variability
+
+**2. Flakiness verification** (CRITICAL - 3x each worker count):
    ```bash
    # Test with 4 workers (3x for consistency check)
    for i in {1..3}; do
@@ -1050,15 +1070,35 @@ end
    done
    grep "assertions" /tmp/test_4w_*.log  # Verify consistent results
 
+   # COLLISION CHECK: Look for concurrency-related errors
+   grep -i "tmpdir.*exists\|permission denied\|timeout\|lock\|collision" /tmp/test_4w_*.log || echo "✅ No collision errors"
+
    # Test with 2 workers (CI simulation)
    for i in {1..3}; do
      TEST_WORKERS=2 bundle exec rake test 2>&1 | tee /tmp/test_2w_$i.log
    done
    grep "assertions" /tmp/test_2w_*.log
+
+   # Verify coverage report merging worked correctly
+   ls -la coverage/coverage.xml  # Must exist and have reasonable size
    ```
-2. Run: `CI=1 bundle exec rake ci` and verify all tests pass
-3. Confirm CI workflow executes with TEST_WORKERS=2 environment variable
-4. Check GitHub Actions logs for parallel execution confirmation
+
+**3. CI workflow verification**:
+   - Run: `CI=1 bundle exec rake ci` and verify all tests pass
+   - Confirm CI workflow executes with TEST_WORKERS=2 environment variable
+   - Check GitHub Actions logs for parallel execution confirmation
+   - Verify coverage report generation (coverage/coverage.xml must exist)
+
+**4. Performance variability check**:
+   ```bash
+   # Compare execution times across 3 runs (should be similar)
+   for i in {1..3}; do
+     echo "=== Run $i ===" >> /tmp/timing.txt
+     grep "Finished in" /tmp/test_4w_$i.log >> /tmp/timing.txt
+   done
+   cat /tmp/timing.txt
+   # Note: Variability >15% indicates potential resource contention
+   ```
 
 **Combined Phase 1+2 gain**: 42-72 seconds → Final runtime: 15-45 seconds (83% improvement)
 
@@ -1095,11 +1135,22 @@ end
 - [ ] **Phase 2.2**: Update .github/workflows/main.yml
   - [ ] Add `env: { TEST_WORKERS: 2, CI: 1 }` to test step
   - [ ] Rationale: ubuntu-slim has 2 CPU limit
-- [ ] **Phase 2.3: Flakiness Verification** (CRITICAL - 3x each worker count):
-  - [ ] Test with 4 workers: `for i in {1..3}; do TEST_WORKERS=4 bundle exec rake test 2>&1 | tee /tmp/test_4w_$i.log; done`
-  - [ ] Test with 2 workers: `for i in {1..3}; do TEST_WORKERS=2 bundle exec rake test 2>&1 | tee /tmp/test_2w_$i.log; done`
-  - [ ] Verify consistency: `grep "assertions" /tmp/test_*w_*.log` (all logs must show identical assertion count)
-  - [ ] Check for flaky failures: `grep -i "failure\|error" /tmp/test_*w_*.log` (should be none)
+- [ ] **Phase 2.3: Flakiness & Collision Verification** (CRITICAL - 3x each worker count):
+  - [ ] **Collision detection (HIGH PRIORITY)**:
+    - [ ] Test with 4 workers: `for i in {1..3}; do TEST_WORKERS=4 bundle exec rake test 2>&1 | tee /tmp/test_4w_$i.log; done`
+    - [ ] Check for tmpdir/permission errors: `grep -i "exists\|permission denied\|timeout\|collision" /tmp/test_4w_*.log || echo "✅ No collision errors"`
+    - [ ] If HIGH RISK (ENV["PTRK_USER_ROOT"] collision) detected, apply worker-specific fix in test_helper.rb:
+      ```ruby
+      worker_id = ENV["TEST_WORKER_ID"] || "0"
+      ENV["PTRK_USER_ROOT"] = Dir.mktmpdir("ptrk_test_#{worker_id}_")
+      ```
+  - [ ] **Flakiness verification**:
+    - [ ] Test with 4 workers: Verify consistency: `grep "assertions" /tmp/test_4w_*.log` (all logs must show identical assertion count)
+    - [ ] Test with 2 workers: `for i in {1..3}; do TEST_WORKERS=2 bundle exec rake test 2>&1 | tee /tmp/test_2w_$i.log; done`
+    - [ ] Check for flaky failures: `grep -i "failure\|error" /tmp/test_*w_*.log` (should be none)
+  - [ ] **Coverage verification**:
+    - [ ] Verify coverage report exists and has reasonable size: `ls -la coverage/coverage.xml`
+    - [ ] Compare coverage metrics across runs (should be identical)
 - [ ] **Phase 2.4: CI Verification**:
   - [ ] Run CI workflow: Push to branch and verify GitHub Actions execution
   - [ ] Confirm TEST_WORKERS=2 in logs
@@ -1151,6 +1202,53 @@ time bundle exec rake test
 - Test runtime > 60 seconds (investigate performance regression)
 - Test runtime variation > 10 seconds (check for flakiness)
 - Coverage drop > 1% (regression in test effectiveness)
+
+---
+
+### ⚠️ [TODO-PARALLEL-EXECUTION-COLLISION-RISKS] Potential Issues with Parallel Test Execution
+
+**IDENTIFIED RISKS** (from 2025-11-18 analysis):
+
+1. **SimpleCov .resultset.json Write Collision** (MEDIUM RISK):
+   - **Current state**: SimpleCov 0.22.0 uses `.resultset.json.lock` (file-based locking)
+   - **Risk**: Multiple workers may create lock contention, increasing test time
+   - **Mitigation**: SimpleCov 0.22.0+ has built-in result merging with lock mechanism
+   - **Verification**: Coverage report must be complete (no missing data)
+   - **Fallback**: If collision detected, add sequential coverage finalization
+
+2. **ENV["PTRK_USER_ROOT"] Shared tmpdir Collision** (HIGH RISK):
+   - **Current state**: Set once in test_helper.rb as single shared directory
+   - **Problem**: Multiple workers may use same tmpdir concurrently → file system conflicts
+   - **Expected behavior**: Tests also create individual Dir.mktmpdir blocks (should be isolated)
+   - **Risk level**: HIGH - Could cause "file exists", "permission denied", "directory not empty" errors
+   - **Remediation needed?**: YES - Verify each worker gets isolated PTRK_USER_ROOT or subdirectory
+   - **Possible fix**: Make ENV["PTRK_USER_ROOT"] worker-specific:
+     ```ruby
+     # In test_helper.rb, make PTRK_USER_ROOT unique per worker
+     worker_id = ENV["TEST_WORKER_ID"] || "0"  # test-unit provides worker ID
+     ENV["PTRK_USER_ROOT"] = Dir.mktmpdir("ptrk_test_#{worker_id}_")
+     ```
+   - **VERIFY FIRST**: Test with TEST_WORKERS=4 and check for tmpdir-related errors
+
+3. **stdout/stderr Interleaving** (LOW RISK):
+   - **Current state**: Test-unit parallel execution mixes output from workers
+   - **Risk**: Test output becomes hard to read (but doesn't affect test correctness)
+   - **Impact**: Debugging becomes harder if test fails in parallel mode
+   - **Mitigation**: Test results are still clearly marked as pass/fail
+   - **Note**: Expected and acceptable for CI use
+
+4. **File I/O Contention** (LOW RISK):
+   - **Current state**: Multiple workers simultaneously creating/deleting tmpdir
+   - **Risk**: Filesystem serializes I/O operations (slow disk becomes bottleneck)
+   - **Impact**: Phase 2 performance gains may be reduced by I/O contention
+   - **Measurement**: Check if execution time variability > 15% across 3 runs
+   - **Note**: Minimal risk on modern filesystems (SSD, ext4/btrfs)
+
+**CRITICAL VERIFICATION REQUIRED BEFORE MERGE**:
+- [ ] Run TEST_WORKERS=4 three times and check for tmpdir-related errors
+- [ ] Compare coverage reports (verify no missing coverage data)
+- [ ] Measure time variability (should be <15% across 3 runs)
+- [ ] Verify test-unit provides worker ID in ENV (needed for PTRK_USER_ROOT isolation)
 
 ---
 
