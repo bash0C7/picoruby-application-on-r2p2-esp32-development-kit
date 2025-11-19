@@ -6,7 +6,7 @@ require "stringio"
 
 # SystemCommandMocking is now defined in test_helper.rb
 
-class PraCommandsEnvTest < PraTestCase
+class CommandsEnvTest < PicotorokkoTestCase
   include SystemCommandMocking
 
   # NOTE: SystemCommandMocking::SystemRefinement is NOT used at class level

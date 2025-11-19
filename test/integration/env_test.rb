@@ -2,7 +2,7 @@ require "test_helper"
 require "tmpdir"
 require "fileutils"
 
-class PraEnvTest < Test::Unit::TestCase
+class EnvTest < Test::Unit::TestCase
   # テスト用の一時ディレクトリ
   def setup
     @original_dir = Dir.pwd

@@ -163,9 +163,6 @@ class PicotorokkoTestCase < Test::Unit::TestCase
   end
 end
 
-# Backward compatibility alias for legacy test class names
-PraTestCase = PicotorokkoTestCase
-
 # Refinement-based system command mocking for CI compatibility
 # Shared by env_test.rb and device_test.rb
 module SystemCommandMocking
