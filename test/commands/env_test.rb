@@ -1,3 +1,4 @@
+require 'English'
 require "test_helper"
 require "tmpdir"
 require "fileutils"
@@ -251,22 +252,6 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "creates environment with path:// format (all three options required)" do
-      omit(
-        "⚠️ DEBUGGING REQUIRED: Git operations in tmpdir fail silently\n" \
-        "Issue: `git rev-parse --short=7 HEAD` returns empty string in temporary directories\n" \
-        "Root cause: Git command execution via backticks may not properly capture output in mktmpdir context\n" \
-        "Test expects: Commit hash matching /^[a-f0-9]{7}$/ from auto-fetched local repo\n" \
-        "Actual result: Empty string returned, causing assert_match to fail\n" \
-        "\n" \
-        "Investigation needed:\n" \
-        "1. Verify git command works in mktmpdir context (may need explicit error handling)\n" \
-        "2. Check if Dir.chdir() scope is preserved correctly for system calls\n" \
-        "3. Consider using Open3.capture3 instead of backticks for reliability\n" \
-        "4. Add debug output to see actual command output\n" \
-        "\n" \
-        "Test code is valid and covers important path:// auto-fetch scenario"
-      )
-
       original_dir = Dir.pwd
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir)
@@ -281,12 +266,14 @@ class PraCommandsEnvTest < PraTestCase
           [r2p2_path, esp32_path, picoruby_path].each do |path|
             FileUtils.mkdir_p(path)
             Dir.chdir(path) do
-              `git init`
+              `git init -b main`
               `git config user.email "test@example.com"`
               `git config user.name "Test User"`
+              `git config commit.gpgsign false`
               File.write('README.md', 'test')
               `git add .`
-              `git commit -m "initial" 2>/dev/null`
+              result = `git commit -m "initial"`
+              raise "Failed to create git commit in #{path}: #{result}" if $CHILD_STATUS.exitstatus != 0
             end
           end
 
@@ -344,12 +331,14 @@ class PraCommandsEnvTest < PraTestCase
           [r2p2_path, esp32_path, picoruby_path].each do |path|
             FileUtils.mkdir_p(path)
             Dir.chdir(path) do
-              `git init`
+              `git init -b main`
               `git config user.email "test@example.com"`
               `git config user.name "Test User"`
+              `git config commit.gpgsign false`
               File.write('README.md', 'test')
               `git add .`
-              `git commit -m "initial" 2>/dev/null`
+              result = `git commit -m "initial"`
+              raise "Failed to create git commit in #{path}: #{result}" if $CHILD_STATUS.exitstatus != 0
             end
           end
 
