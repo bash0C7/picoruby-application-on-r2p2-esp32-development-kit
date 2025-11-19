@@ -51,6 +51,12 @@ module Picotorokko
       def build
         env_name = options[:env]
         actual_env = resolve_env_name(env_name)
+
+        # Setup build environment (.build/ directory) from environment definition
+        puts "Setting up build environment: #{actual_env}"
+        setup_build_environment_for_device(actual_env)
+
+        # Validate R2P2-ESP32 path after setup
         validate_and_get_r2p2_path(actual_env)
 
         # Apply Mrbgemfile if it exists
@@ -300,6 +306,27 @@ module Picotorokko
         end
 
         "cd #{Shellwords.escape(r2p2_path)} && #{rake_cmd} #{task_name}"
+      end
+
+      # Setup build environment (.build/) from environment definition
+      # Creates .build directory, clones repositories with submodules, applies patches
+      # @rbs (String) -> void
+      def setup_build_environment_for_device(env_name)
+        # Get environment definition
+        env_config = Picotorokko::Env.get_environment(env_name)
+        raise "Error: Environment '#{env_name}' not found" if env_config.nil?
+
+        # Construct repos_info from environment definition
+        repos_info = {
+          "R2P2-ESP32" => env_config["R2P2-ESP32"],
+          "picoruby-esp32" => env_config["picoruby-esp32"],
+          "picoruby" => env_config["picoruby"]
+        }
+
+        # Delegate to env setup method (from env.rb)
+        # We call this via direct method delegation to the Env command class
+        env_cmd = Picotorokko::Commands::Env.new
+        env_cmd.send(:setup_build_environment, env_name, repos_info)
       end
     end
 
