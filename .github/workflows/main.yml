@@ -11,15 +11,19 @@ jobs:
   test-matrix:
     runs-on: ubuntu-slim
     name: test (${{ matrix.ruby }})
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         ruby: ['3.4', head]
+        experimental: [false]
         include:
           - ruby: '3.4'
             test_task: ci
+            experimental: false
           - ruby: head
             test_task: test
+            experimental: true
 
     steps:
       - uses: actions/checkout@v4

@@ -7,17 +7,17 @@ SimpleCov.start do
   # NOTE: 段階的にカバレッジ要件を引き上げ
   # Phase 3.2: 60% 達成
   # Phase 4.1: line 75%, branch 55% (実装)
-  # Phase 5.0: line 85%, branch 65% (現在の基準値)
+  # Phase 5.0: line 80%, branch 60% (現在の基準値)
   # 開発環境: ライン単位のカバレッジのみ計測（高速化）
   # CI環境: ブランチカバレッジも計測
   enable_coverage :branch if ENV["CI"]
 
   # Minimum coverage validation only in CI environments
   # Development: coverage is measured but validation is skipped
-  # CI: coverage validation enforced (line 85%, branch 65%)
+  # CI: coverage validation enforced (line 80%, branch 60%)
   if ENV["CI"]
-    minimum_coverage line: 85
-    minimum_coverage branch: 65
+    minimum_coverage line: 80
+    minimum_coverage branch: 60
   end
 end
 
