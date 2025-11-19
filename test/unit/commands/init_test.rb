@@ -1,10 +1,24 @@
 require "test_helper"
 require "tmpdir"
 require "fileutils"
-require_relative "../../lib/picotorokko/commands/init"
+require_relative "../../../lib/picotorokko/commands/init"
 
-class PraCommandsInitTest < PraTestCase
-  # ptrk init コマンドのテスト
+class PraUnitCommandsInitTest < PraTestCase
+  # ptrk init コマンドの単体テスト
+  # NOTE: Network operations are mocked out to focus on ProjectInitializer behavior
+  # See test/integration/commands/init_integration_test.rb for real git clone tests
+
+  def setup
+    super
+    # Skip network environment setup during unit tests
+    ENV['PTRK_SKIP_ENV_SETUP'] = '1'
+  end
+
+  def teardown
+    # Restore environment variable
+    ENV.delete('PTRK_SKIP_ENV_SETUP')
+    super
+  end
 
   sub_test_case "init command basic creation" do
     test "creates project directories" do

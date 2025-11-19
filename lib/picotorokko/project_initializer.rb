@@ -43,10 +43,13 @@ module Picotorokko
       generate_mrbgems
 
       # Setup default environment with latest repo versions
-      begin
-        setup_default_environment
-      rescue StandardError => e
-        warn("Warning: Failed to setup default environment: #{e.message}")
+      # PTRK_SKIP_ENV_SETUP environment variable allows skipping this step (useful for testing)
+      unless ENV['PTRK_SKIP_ENV_SETUP']
+        begin
+          setup_default_environment
+        rescue StandardError => e
+          warn("Warning: Failed to setup default environment: #{e.message}")
+        end
       end
 
       print_success_message

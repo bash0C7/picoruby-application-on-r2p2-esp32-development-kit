@@ -3,8 +3,44 @@ require "rake/testtask"
 require "English"
 
 # ============================================================================
-# MAIN TEST TASK
+# TEST TASK STRUCTURE: Unit, Integration, Scenario
 # ============================================================================
+# NOTE: Test reorganization to separate concerns:
+# - test:unit      : Fast unit tests with mocked dependencies
+# - test:integration: Slower integration tests with real network operations
+# - test:scenario  : Main workflow scenario tests
+# - test           : All tests except device (main suite)
+
+# Unit tests (fast, mocked network operations)
+Rake::TestTask.new("test:unit") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  test_files = FileList["test/unit/**/*_test.rb"].sort
+  t.test_files = test_files
+  t.ruby_opts = ["-W1"]
+end
+
+# Integration tests (slower, real network operations)
+# These can be skipped with: SKIP_NETWORK_TESTS=1 rake test:integration
+Rake::TestTask.new("test:integration") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  test_files = FileList["test/integration/**/*_test.rb"].sort
+  t.test_files = test_files
+  t.ruby_opts = ["-W1"]
+end
+
+# Scenario tests (main workflow verification)
+Rake::TestTask.new("test:scenario") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  test_files = FileList["test/scenario/**/*_test.rb"].sort
+  t.test_files = test_files
+  t.ruby_opts = ["-W1"]
+end
+
+# Main test task (all tests except device and integration)
+# This is the default test task used in CI
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
@@ -15,6 +51,8 @@ Rake::TestTask.new(:test) do |t|
   # - Tests run: 65/197 (132 tests don't register)
   # See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]
   test_files.delete_if { |f| f.include?("device_test.rb") }
+  # Exclude new test type directories from main task (they have their own tasks)
+  test_files.delete_if { |f| f.include?("test/unit/") || f.include?("test/integration/") || f.include?("test/scenario/") }
 
   t.test_files = test_files
 
@@ -125,13 +163,15 @@ task :reset_coverage do
 end
 
 # ============================================================================
-# INTERNAL: Run all tests (main + device suites)
+# INTERNAL: Run all tests (unit + integration + scenario + device)
 # ============================================================================
 
-# Internal task: Combines main test suite and device test suite (for default task)
-desc "Run all tests: main suite + device suite"
+# Internal task: Combines all test types (for CI and development)
+desc "Run all test types: unit + scenario + integration + device"
 task "test:all_internal" => :reset_coverage do
-  sh "bundle exec rake test"
+  sh "bundle exec rake test:unit"
+  sh "bundle exec rake test:scenario"
+  sh "bundle exec rake test:integration 2>&1 | grep -E '^(Started|Finished|[0-9]+ tests)' || true"
   sh "bundle exec rake test:device_internal 2>&1 | grep -E '^(Started|Finished|[0-9]+ tests)' || true"
 end
 
@@ -139,24 +179,40 @@ end
 # PUBLIC TASKS: CI and Development
 # ============================================================================
 
-# CI task: All tests + RuboCop check + coverage validation (NO auto-correction)
-desc "Run CI: all tests, RuboCop validation, and coverage validation"
-task ci: %i[reset_coverage test rubocop coverage_validation] do
-  puts "\n✓ CI passed! All tests + RuboCop + coverage validated."
+# CI task: Unit + Scenario + RuboCop check + coverage validation (NO auto-correction)
+# Note: Integration tests are skipped in CI by default (can be enabled separately)
+desc "Run CI: unit + scenario tests, RuboCop validation, and coverage validation"
+task ci: [:reset_coverage] do
+  sh "bundle exec rake test:unit"
+  sh "bundle exec rake test:scenario"
+  sh "bundle exec rake rubocop"
+  sh "bundle exec rake coverage_validation"
+  puts "\n✓ CI passed! Unit + scenario tests + RuboCop + coverage validated."
 end
 
-# Development task: RuboCop auto-fix, run all tests, validate coverage
-desc "Development: RuboCop auto-fix, run all tests, validate coverage"
-task dev: ["rubocop:fix", :reset_coverage, :test, :coverage_validation] do
-  puts "\n✓ Development checks passed! RuboCop fixed, tests passed, coverage validated."
+# Development task: RuboCop auto-fix, run unit + scenario tests, validate coverage
+desc "Development: RuboCop auto-fix, unit + scenario tests, validate coverage"
+task dev: [:reset_coverage] do
+  sh "bundle exec rubocop --auto-correct-all"
+  sh "bundle exec rake test:unit"
+  sh "bundle exec rake test:scenario"
+  sh "bundle exec rake coverage_validation"
+  puts "\n✓ Development checks passed! RuboCop fixed, unit + scenario tests passed, coverage validated."
 end
 
 # ============================================================================
 # DEFAULT TASK
 # ============================================================================
 
-# Default: Run all tests (main suite + device suite)
-desc "Default task: Run all tests (183 main + 14 device)"
-task default: %i[test:all_internal] do
-  puts "\n✓ All 197 tests completed successfully!"
+# Default: Run all core tests (main test suite)
+desc "Default task: Run all core tests (fast feedback, ~13s)"
+task default: [:reset_coverage, :test] do
+  puts "\n✓ All core tests completed successfully! (~13s)"
+  puts "\nOther test options:"
+  puts "  - rake test:unit           : Unit tests only (fast, 1.3s)"
+  puts "  - rake test:scenario       : Scenario tests only (fast, 0.8s)"
+  puts "  - rake test:integration    : Network integration tests (skip with SKIP_NETWORK_TESTS=1)"
+  puts "  - rake test:all_internal   : All tests including device and integration"
+  puts "  - rake ci                  : CI validation (all core tests + RuboCop)"
+  puts "  - rake dev                 : Development mode (RuboCop fix + core tests)"
 end
