@@ -38,7 +38,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['flash', '--env', 'nonexistent-env'])
+              Picotorokko::Commands::Device.start(["flash", "--env", "nonexistent-env"])
             end
           end
 
@@ -56,7 +56,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['flash', '--env', 'current'])
+              Picotorokko::Commands::Device.start(["flash", "--env", "current"])
             end
           end
 
@@ -73,19 +73,19 @@ class PraCommandsDeviceTest < PraTestCase
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
             # テスト用の環境定義を作成するが、ビルド環境は作成しない
-            r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-            esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-            picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+            r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+            esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+            picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-            Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+            Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
 
             # ビルド環境ディレクトリが存在する場合は削除（前のテストの残骸をクリーンアップ）
-            build_path = Picotorokko::Env.get_build_path('test-env')
-            FileUtils.rm_rf(build_path) if Dir.exist?(build_path)
+            build_path = Picotorokko::Env.get_build_path("test-env")
+            FileUtils.rm_rf(build_path)
 
             assert_raise(RuntimeError) do
               capture_stdout do
-                Picotorokko::Commands::Device.start(['flash', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["flash", "--env", "test-env"])
               end
             end
 
@@ -102,11 +102,11 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |mock|
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['flash', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["flash", "--env", "test-env"])
               end
 
               # 出力を確認
@@ -114,7 +114,7 @@ class PraCommandsDeviceTest < PraTestCase
               assert_match(/✓ Flash completed/, output)
 
               # コマンド実行の検証（rake flash が実行されたことを確認）
-              assert_equal(1, mock[:commands_executed].count { |cmd| cmd.include?('rake flash') })
+              assert_equal(1, mock[:commands_executed].count { |cmd| cmd.include?("rake flash") })
             end
 
             # Directory change is handled by with_fresh_project_root
@@ -135,7 +135,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['monitor', '--env', 'nonexistent-env'])
+              Picotorokko::Commands::Device.start(["monitor", "--env", "nonexistent-env"])
             end
           end
 
@@ -153,7 +153,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['monitor', '--env', 'current'])
+              Picotorokko::Commands::Device.start(["monitor", "--env", "current"])
             end
           end
 
@@ -169,11 +169,11 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |_mock|
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['monitor', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["monitor", "--env", "test-env"])
               end
 
               # 出力を確認
@@ -199,7 +199,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['build', '--env', 'nonexistent-env'])
+              Picotorokko::Commands::Device.start(["build", "--env", "nonexistent-env"])
             end
           end
 
@@ -215,11 +215,11 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |_mock|
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['build', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["build", "--env", "test-env"])
               end
 
               # 出力を確認
@@ -245,7 +245,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['setup_esp32', '--env', 'nonexistent-env'])
+              Picotorokko::Commands::Device.start(["setup_esp32", "--env", "nonexistent-env"])
             end
           end
 
@@ -261,11 +261,11 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |_mock|
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['setup_esp32', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["setup_esp32", "--env", "test-env"])
               end
 
               # 出力を確認
@@ -291,7 +291,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['tasks', '--env', 'nonexistent-env'])
+              Picotorokko::Commands::Device.start(["tasks", "--env", "nonexistent-env"])
             end
           end
 
@@ -309,7 +309,7 @@ class PraCommandsDeviceTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Device.start(['tasks', '--env', 'current'])
+              Picotorokko::Commands::Device.start(["tasks", "--env", "current"])
             end
           end
 
@@ -331,11 +331,11 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |_mock|
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['tasks', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["tasks", "--env", "test-env"])
               end
 
               # タスク一覧メッセージが出力されることを確認
@@ -359,12 +359,12 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |_mock|
               # custom_task が Rakefile に存在するため、method_missing で委譲される
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['custom_task', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["custom_task", "--env", "test-env"])
               end
 
               # タスク委譲メッセージが出力されることを確認
@@ -384,12 +384,12 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking(fail_command: true) do |_mock|
               assert_raise(SystemExit) do
                 capture_stdout do
-                  Picotorokko::Commands::Device.start(['nonexistent_task', '--env', 'test-env'])
+                  Picotorokko::Commands::Device.start(["nonexistent_task", "--env", "test-env"])
                 end
               end
             end
@@ -407,13 +407,13 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |_mock|
               # custom_task が Rakefile に存在するため、method_missing で委譲される
               # 環境名は --env で明示的に指定する（暗黙のカレント環境は存在しない）
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['custom_task', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["custom_task", "--env", "test-env"])
               end
 
               # タスク委譲メッセージが出力されることを確認
@@ -440,7 +440,8 @@ class PraCommandsDeviceTest < PraTestCase
       # - Root cause: Thor help + capture_stdout + mocking context interferes with test-unit hooks
       # - Priority: LOW (display-only feature, non-critical functionality)
       # - See: TODO.md [TODO-INFRASTRUCTURE-DEVICE-TEST]
-      omit "Thor help command breaks test-unit registration - verified: 132+ tests fail to register when mixed with main suite"
+      omit "Thor help command breaks test-unit registration - " \
+           "verified: 132+ tests fail to register when mixed with main suite"
 
       Dir.mktmpdir do |tmpdir|
         with_fresh_project_root do
@@ -448,11 +449,11 @@ class PraCommandsDeviceTest < PraTestCase
           begin
             # NOTE: tmpdir内で新しい環境を構築（前回のテスト実行の影響は受けない）
 
-            setup_test_environment('test-env')
+            setup_test_environment("test-env")
 
             with_esp_env_mocking do |_mock|
               output = capture_stdout do
-                Picotorokko::Commands::Device.start(['help', '--env', 'test-env'])
+                Picotorokko::Commands::Device.start(["help", "--env", "test-env"])
               end
 
               # ヘルプメッセージが表示されることを確認
@@ -470,10 +471,10 @@ class PraCommandsDeviceTest < PraTestCase
   sub_test_case "build_rake_command helper" do
     test "returns 'bundle exec rake' when Gemfile exists" do
       Dir.mktmpdir do |tmpdir|
-        FileUtils.touch(File.join(tmpdir, 'Gemfile'))
+        FileUtils.touch(File.join(tmpdir, "Gemfile"))
         device = Picotorokko::Commands::Device.new
 
-        cmd = device.send(:build_rake_command, tmpdir, 'build')
+        cmd = device.send(:build_rake_command, tmpdir, "build")
 
         assert_match(/bundle exec rake/, cmd)
         assert_match(/build$/, cmd)
@@ -484,7 +485,7 @@ class PraCommandsDeviceTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         device = Picotorokko::Commands::Device.new
 
-        cmd = device.send(:build_rake_command, tmpdir, 'build')
+        cmd = device.send(:build_rake_command, tmpdir, "build")
 
         assert_match(/^cd .* && rake build$/, cmd)
         assert_not_match(/bundle exec/, cmd)
@@ -493,18 +494,17 @@ class PraCommandsDeviceTest < PraTestCase
 
     test "properly escapes paths in command" do
       Dir.mktmpdir do |tmpdir|
-        path_with_spaces = File.join(tmpdir, 'path with spaces')
+        path_with_spaces = File.join(tmpdir, "path with spaces")
         FileUtils.mkdir_p(path_with_spaces)
         device = Picotorokko::Commands::Device.new
 
-        cmd = device.send(:build_rake_command, path_with_spaces, 'build')
+        cmd = device.send(:build_rake_command, path_with_spaces, "build")
 
         # Should contain escaped path
         assert_match(/cd .*path.*with.*spaces/, cmd)
       end
     end
   end
-
 
   def capture_stdout
     original_stdout = $stdout

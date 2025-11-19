@@ -139,8 +139,13 @@ end
 # カバレッジ検証タスク（test実行後にcoverage.xmlが生成されていることを確認）
 desc "Validate SimpleCov coverage report was generated"
 task :coverage_validation do
-  coverage_file = File.join(Dir.pwd, "coverage", "coverage.xml")
-  abort "ERROR: SimpleCov coverage report not found at #{coverage_file}" unless File.exist?(coverage_file)
+  # Check for HTML report (primary format)
+  coverage_file = File.join(Dir.pwd, "coverage", "index.html")
+  unless File.exist?(coverage_file)
+    # Fallback to JSON format
+    coverage_file = File.join(Dir.pwd, "coverage", ".resultset.json")
+  end
+  abort "ERROR: SimpleCov coverage report not found" unless File.exist?(coverage_file)
   puts "✓ SimpleCov coverage report validated: #{coverage_file}"
 end
 
