@@ -14,28 +14,28 @@ class PicotorokkoTest < Test::Unit::TestCase
     test "outputs version string" do
       # 標準出力をキャプチャ
       output = capture_stdout do
-        Picotorokko::CLI.start(['version'])
+        Picotorokko::CLI.start(["version"])
       end
 
       # バージョン情報が出力されることを確認
       assert_match(/picotorokko version \d+\.\d+\.\d+/, output)
-      assert_match(/#{Picotorokko::VERSION}/, output)
+      assert_match(/#{Picotorokko::VERSION}/o, output)
     end
 
     test "outputs version with --version flag" do
       output = capture_stdout do
-        Picotorokko::CLI.start(['--version'])
+        Picotorokko::CLI.start(["--version"])
       end
 
-      assert_match(/picotorokko version #{Picotorokko::VERSION}/, output)
+      assert_match(/picotorokko version #{Picotorokko::VERSION}/o, output)
     end
 
     test "outputs version with -v flag" do
       output = capture_stdout do
-        Picotorokko::CLI.start(['-v'])
+        Picotorokko::CLI.start(["-v"])
       end
 
-      assert_match(/picotorokko version #{Picotorokko::VERSION}/, output)
+      assert_match(/picotorokko version #{Picotorokko::VERSION}/o, output)
     end
   end
 

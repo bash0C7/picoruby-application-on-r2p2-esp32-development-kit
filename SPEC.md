@@ -1370,6 +1370,145 @@ assert_in_delta(expected, actual, delta)       # Float tolerance
 
 ---
 
+## Gem Developer Testing Guide
+
+### Test Classification System
+
+The picotorokko gem uses a **three-layer test classification** to ensure both development velocity and quality:
+
+#### Unit Tests: Fast Development Feedback
+**Location**: `test/unit/**/*_test.rb` (16 test files)
+**Execution Time**: ~1.3 seconds total
+**Characteristics**:
+- Mocked external dependencies (network, git, file I/O, system commands)
+- Tests single class/module behavior in isolation
+- No real git clone or network operations
+- Fast feedback loop for TDD development
+
+**Examples**:
+- `test/unit/commands/init_test.rb` — Project initialization logic
+- `test/unit/template/yaml_engine_test.rb` — YAML template engine
+- `test/unit/picotorokko/executor_test.rb` — Command execution abstraction
+
+**Usage**:
+```bash
+# Run unit tests only (fastest)
+bundle exec rake test:unit
+
+# Development mode (RuboCop auto-fix + unit tests)
+bundle exec rake dev
+
+# Default task (unit tests)
+bundle exec rake
+```
+
+#### Integration Tests: Real Operations Verification
+**Location**: `test/integration/**/*_test.rb` (3 test files)
+**Execution Time**: ~30 seconds
+**Characteristics**:
+- Real git operations (clone, checkout, show, rev-parse)
+- Real network calls to GitHub API
+- Tests interactions between components
+- Verifies actual system behavior
+
+**Examples**:
+- `test/integration/env_test.rb` — Env module with real git repos
+- `test/integration/commands/env_test.rb` — Env command with git workflows
+- `test/integration/commands/init_integration_test.rb` — Init with real environment setup
+
+**Usage**:
+```bash
+# Run integration tests
+bundle exec rake test:integration
+
+# Skip network tests in CI
+SKIP_NETWORK_TESTS=1 bundle exec rake test:integration
+```
+
+#### Scenario Tests: Complete User Workflows
+**Location**: `test/scenario/**/*_test.rb` (2 test files)
+**Execution Time**: ~0.8 seconds
+**Characteristics**:
+- End-to-end user workflow verification
+- Tests main use cases and features
+- Template rendering and variable substitution
+- Project creation and device command flows
+
+**Examples**:
+- `test/scenario/init_scenario_test.rb` — Complete project creation workflows
+- `test/scenario/commands/device_test.rb` — Device command execution flows
+
+**Usage**:
+```bash
+# Run scenario tests
+bundle exec rake test:scenario
+
+# All scenario tests
+bundle exec rake test
+```
+
+### Running Tests
+
+#### Development Workflow
+```bash
+# 1. Unit tests for rapid feedback (fastest)
+bundle exec rake test:unit
+
+# 2. All tests for full verification before commit
+bundle exec rake test
+
+# 3. CI suite with RuboCop and coverage
+bundle exec rake ci
+```
+
+#### Test Output Handling
+**Important**: Always capture test output to temporary files:
+
+```bash
+# ❌ DON'T: Rely on stdout parsing directly
+bundle exec rake ci | grep "passed"
+
+# ✅ DO: Capture output and analyze with grep/tail
+bundle exec rake ci > /tmp/test_output.txt 2>&1
+grep "passed" /tmp/test_output.txt
+tail -20 /tmp/test_output.txt
+```
+
+#### Test Result Verification
+**Use shell exit codes** (0 = success, non-zero = failure):
+
+```bash
+# Verify test success
+bundle exec rake test > /tmp/test.txt 2>&1
+if [ $? -eq 0 ]; then
+  echo "✓ All tests passed"
+else
+  echo "✗ Tests failed - check /tmp/test.txt"
+fi
+```
+
+### Test Architecture Benefits
+
+1. **Development Speed**: Unit tests run in ~1.3 seconds for rapid TDD cycles
+2. **Quality Assurance**: Integration tests verify real git/network behavior
+3. **User Confidence**: Scenario tests validate complete workflows
+4. **CI/CD Integration**: Clear separation enables parallel execution and failure analysis
+5. **Maintainability**: Each test layer has clear responsibility and dependencies
+
+### Test File Statistics
+
+| Layer | Files | Tests | Time | Dependencies |
+|-------|-------|-------|------|---|
+| Unit | 16 | 141 | ~1.3s | Mocked |
+| Integration | 3 | 114 | ~30s | Real git/network |
+| Scenario | 2 | 18 | ~0.8s | Complete workflows |
+| Device | 1 | 18* | ~5s | Device commands |
+| **Total** | **22** | **255** | **~60s** | **Mixed** |
+
+*1 test omitted due to Thor + test-unit registration conflict (non-critical feature)
+
+---
+
 ## Implementation Details for Gem Developers
 
 For architectural decisions, implementation strategies, and detailed component specifications backing this user-facing specification, see [`.claude/docs/spec/`](./.claude/docs/spec/).

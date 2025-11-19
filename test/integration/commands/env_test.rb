@@ -1,4 +1,4 @@
-require 'English'
+require "English"
 require "test_helper"
 require "tmpdir"
 require "fileutils"
@@ -23,15 +23,15 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # 複数の環境を作成
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('staging', r2p2_info, esp32_info, picoruby_info)
-          Picotorokko::Env.set_environment('production', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("staging", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("production", r2p2_info, esp32_info, picoruby_info)
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['list'])
+            Picotorokko::Commands::Env.start(["list"])
           end
 
           # 両方の環境がリストアップされていることを確認
@@ -47,7 +47,7 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['list'])
+            Picotorokko::Commands::Env.start(["list"])
           end
 
           # 環境がない場合のメッセージを確認
@@ -62,14 +62,14 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # テスト環境を作成
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['list'])
+            Picotorokko::Commands::Env.start(["list"])
           end
 
           # 環境名が表示されていることを確認
@@ -87,14 +87,14 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # テスト用の環境を作成
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info, notes: 'Test environment')
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info, notes: "Test environment")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['show', 'test-env'])
+            Picotorokko::Commands::Env.start(["show", "test-env"])
           end
 
           assert_match(/Environment: test-env/, output)
@@ -113,17 +113,17 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create multiple environments
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('staging', r2p2_info, esp32_info, picoruby_info,
-                                           notes: 'Staging environment')
-          Picotorokko::Env.set_environment('production', r2p2_info, esp32_info, picoruby_info,
-                                           notes: 'Production environment')
+          Picotorokko::Env.set_environment("staging", r2p2_info, esp32_info, picoruby_info,
+                                           notes: "Staging environment")
+          Picotorokko::Env.set_environment("production", r2p2_info, esp32_info, picoruby_info,
+                                           notes: "Production environment")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['show', 'staging'])
+            Picotorokko::Commands::Env.start(["show", "staging"])
           end
 
           # Verify staging environment details are shown
@@ -140,7 +140,7 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['show', 'missing-env'])
+            Picotorokko::Commands::Env.start(["show", "missing-env"])
           end
 
           # Verify error message is shown
@@ -161,8 +161,8 @@ class PraCommandsEnvTest < PraTestCase
           assert_raise(RuntimeError) do
             capture_stdout do
               Picotorokko::Commands::Env.start(
-                ['set', 'InvalidEnv', '--R2P2-ESP32', 'picoruby/R2P2-ESP32',
-                 '--picoruby-esp32', 'picoruby/picoruby-esp32', '--picoruby', 'picoruby/picoruby']
+                ["set", "InvalidEnv", "--R2P2-ESP32", "picoruby/R2P2-ESP32",
+                 "--picoruby-esp32", "picoruby/picoruby-esp32", "--picoruby", "picoruby/picoruby"]
               )
             end
           end
@@ -175,21 +175,21 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
-          output = capture_stdout do
+          capture_stdout do
             Picotorokko::Commands::Env.start(
-              ['set', 'prod', '--R2P2-ESP32', 'picoruby/R2P2-ESP32',
-               '--picoruby-esp32', 'picoruby/picoruby-esp32', '--picoruby', 'picoruby/picoruby']
+              ["set", "prod", "--R2P2-ESP32", "picoruby/R2P2-ESP32",
+               "--picoruby-esp32", "picoruby/picoruby-esp32", "--picoruby", "picoruby/picoruby"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment('prod')
+          env_config = Picotorokko::Env.get_environment("prod")
           assert_not_nil(env_config)
           # Verify source URLs are stored correctly
           assert_match(%r{https://github\.com/picoruby/R2P2-ESP32\.git},
-                       env_config['R2P2-ESP32']['source'])
+                       env_config["R2P2-ESP32"]["source"])
           assert_match(%r{https://github\.com/picoruby/picoruby-esp32\.git},
-                       env_config['picoruby-esp32']['source'])
-          assert_match(%r{https://github\.com/picoruby/picoruby\.git}, env_config['picoruby']['source'])
+                       env_config["picoruby-esp32"]["source"])
+          assert_match(%r{https://github\.com/picoruby/picoruby\.git}, env_config["picoruby"]["source"])
         end
       end
     end
@@ -199,18 +199,18 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
-          output = capture_stdout do
+          capture_stdout do
             Picotorokko::Commands::Env.start(
-              ['set', 'my-fork', '--R2P2-ESP32', 'myorg/R2P2-ESP32',
-               '--picoruby-esp32', 'myorg/picoruby-esp32', '--picoruby', 'myorg/picoruby']
+              ["set", "my-fork", "--R2P2-ESP32", "myorg/R2P2-ESP32",
+               "--picoruby-esp32", "myorg/picoruby-esp32", "--picoruby", "myorg/picoruby"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment('my-fork')
+          env_config = Picotorokko::Env.get_environment("my-fork")
           assert_not_nil(env_config)
           # Verify fork URLs
           assert_match(%r{https://github\.com/myorg/R2P2-ESP32\.git},
-                       env_config['R2P2-ESP32']['source'])
+                       env_config["R2P2-ESP32"]["source"])
         end
       end
     end
@@ -221,9 +221,9 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create test git repos
-          r2p2_path = File.join(tmpdir, 'my-R2P2-ESP32')
-          esp32_path = File.join(tmpdir, 'my-esp32')
-          picoruby_path = File.join(tmpdir, 'my-picoruby')
+          r2p2_path = File.join(tmpdir, "my-R2P2-ESP32")
+          esp32_path = File.join(tmpdir, "my-esp32")
+          picoruby_path = File.join(tmpdir, "my-picoruby")
 
           [r2p2_path, esp32_path, picoruby_path].each do |path|
             FileUtils.mkdir_p(path)
@@ -232,28 +232,28 @@ class PraCommandsEnvTest < PraTestCase
               `git config user.email "test@example.com"`
               `git config user.name "Test User"`
               `git config commit.gpgsign false`
-              File.write('README.md', 'test')
+              File.write("README.md", "test")
               `git add .`
               result = `git commit -m "initial"`
               raise "Failed to create git commit in #{path}: #{result}" if $CHILD_STATUS.exitstatus != 0
             end
           end
 
-          output = capture_stdout do
+          capture_stdout do
             Picotorokko::Commands::Env.start(
-              ['set', 'local', '--R2P2-ESP32', "path:#{r2p2_path}",
-               '--picoruby-esp32', "path:#{esp32_path}", '--picoruby', "path:#{picoruby_path}"]
+              ["set", "local", "--R2P2-ESP32", "path:#{r2p2_path}",
+               "--picoruby-esp32", "path:#{esp32_path}", "--picoruby", "path:#{picoruby_path}"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment('local')
+          env_config = Picotorokko::Env.get_environment("local")
           assert_not_nil(env_config)
           # Verify path sources
-          assert_equal("path:#{r2p2_path}", env_config['R2P2-ESP32']['source'])
-          assert_equal("path:#{esp32_path}", env_config['picoruby-esp32']['source'])
-          assert_equal("path:#{picoruby_path}", env_config['picoruby']['source'])
+          assert_equal("path:#{r2p2_path}", env_config["R2P2-ESP32"]["source"])
+          assert_equal("path:#{esp32_path}", env_config["picoruby-esp32"]["source"])
+          assert_equal("path:#{picoruby_path}", env_config["picoruby"]["source"])
           # Verify commits were fetched from repos
-          assert_match(/^[a-f0-9]{7}$/, env_config['R2P2-ESP32']['commit'])
+          assert_match(/^[a-f0-9]{7}$/, env_config["R2P2-ESP32"]["commit"])
         end
       end
     end
@@ -264,9 +264,9 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create test git repos
-          r2p2_path = File.join(tmpdir, 'my-R2P2-ESP32')
-          esp32_path = File.join(tmpdir, 'my-esp32')
-          picoruby_path = File.join(tmpdir, 'my-picoruby')
+          r2p2_path = File.join(tmpdir, "my-R2P2-ESP32")
+          esp32_path = File.join(tmpdir, "my-esp32")
+          picoruby_path = File.join(tmpdir, "my-picoruby")
 
           [r2p2_path, esp32_path, picoruby_path].each do |path|
             FileUtils.mkdir_p(path)
@@ -275,26 +275,26 @@ class PraCommandsEnvTest < PraTestCase
               `git config user.email "test@example.com"`
               `git config user.name "Test User"`
               `git config commit.gpgsign false`
-              File.write('README.md', 'test')
+              File.write("README.md", "test")
               `git add .`
               result = `git commit -m "initial"`
               raise "Failed to create git commit in #{path}: #{result}" if $CHILD_STATUS.exitstatus != 0
             end
           end
 
-          output = capture_stdout do
+          capture_stdout do
             Picotorokko::Commands::Env.start(
-              ['set', 'specific', '--R2P2-ESP32', "path:#{r2p2_path}:abc1234",
-               '--picoruby-esp32', "path:#{esp32_path}:def5678", '--picoruby', "path:#{picoruby_path}:fade012"]
+              ["set", "specific", "--R2P2-ESP32", "path:#{r2p2_path}:abc1234",
+               "--picoruby-esp32", "path:#{esp32_path}:def5678", "--picoruby", "path:#{picoruby_path}:fade012"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment('specific')
+          env_config = Picotorokko::Env.get_environment("specific")
           assert_not_nil(env_config)
           # Verify explicit commits are stored
-          assert_equal('abc1234', env_config['R2P2-ESP32']['commit'])
-          assert_equal('def5678', env_config['picoruby-esp32']['commit'])
-          assert_equal('fade012', env_config['picoruby']['commit'])
+          assert_equal("abc1234", env_config["R2P2-ESP32"]["commit"])
+          assert_equal("def5678", env_config["picoruby-esp32"]["commit"])
+          assert_equal("fade012", env_config["picoruby"]["commit"])
         end
       end
     end
@@ -306,17 +306,17 @@ class PraCommandsEnvTest < PraTestCase
 
           # Mock GitHub fetch
           stub_git_operations do |_context|
-            output = capture_stdout do
-              Picotorokko::Commands::Env.start(['set', 'latest'])
+            capture_stdout do
+              Picotorokko::Commands::Env.start(["set", "latest"])
             end
 
-            env_config = Picotorokko::Env.get_environment('latest')
+            env_config = Picotorokko::Env.get_environment("latest")
             assert_not_nil(env_config)
             # Verify default sources from GitHub
             assert_match(%r{https://github\.com/picoruby/R2P2-ESP32\.git},
-                         env_config['R2P2-ESP32']['source'])
+                         env_config["R2P2-ESP32"]["source"])
             # Commits should be populated
-            assert_not_nil(env_config['R2P2-ESP32']['commit'])
+            assert_not_nil(env_config["R2P2-ESP32"]["commit"])
           end
         end
       end
@@ -331,8 +331,8 @@ class PraCommandsEnvTest < PraTestCase
           assert_raise(RuntimeError) do
             capture_stdout do
               Picotorokko::Commands::Env.start(
-                ['set', 'incomplete', '--R2P2-ESP32', 'picoruby/R2P2-ESP32',
-                 '--picoruby-esp32', 'picoruby/picoruby-esp32']
+                ["set", "incomplete", "--R2P2-ESP32", "picoruby/R2P2-ESP32",
+                 "--picoruby-esp32", "picoruby/picoruby-esp32"]
               )
             end
           end
@@ -349,23 +349,23 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create environment with initial data
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info,
-                                           notes: 'Original environment')
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info,
+                                           notes: "Original environment")
 
           # Reset the environment
-          output = capture_stdout do
-            Picotorokko::Commands::Env.start(['reset', 'test-env'])
+          capture_stdout do
+            Picotorokko::Commands::Env.start(["reset", "test-env"])
           end
 
           # Verify environment still exists
-          env_config = Picotorokko::Env.get_environment('test-env')
+          env_config = Picotorokko::Env.get_environment("test-env")
           assert_not_nil(env_config)
           # Original data should be gone (recreated with placeholder)
-          assert_equal('placeholder', env_config['R2P2-ESP32']['commit'])
+          assert_equal("placeholder", env_config["R2P2-ESP32"]["commit"])
         end
       end
     end
@@ -376,19 +376,19 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create initial environment
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('preserve-test', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("preserve-test", r2p2_info, esp32_info, picoruby_info)
 
           # Reset
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['reset', 'preserve-test'])
+            Picotorokko::Commands::Env.start(["reset", "preserve-test"])
           end
 
           # Check that environment still exists with same name
-          env_config = Picotorokko::Env.get_environment('preserve-test')
+          env_config = Picotorokko::Env.get_environment("preserve-test")
           assert_not_nil(env_config)
           assert_match(/preserve-test/, output)
         end
@@ -402,7 +402,7 @@ class PraCommandsEnvTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Env.start(['reset', 'non-existent'])
+              Picotorokko::Commands::Env.start(["reset", "non-existent"])
             end
           end
         end
@@ -424,10 +424,10 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Git操作をモック化（失敗させる）
-          stub_git_operations(fail_fetch: true) do |stubs|
+          stub_git_operations(fail_fetch: true) do |_stubs|
             assert_raise(RuntimeError) do
               capture_stdout do
-                Picotorokko::Commands::Env.start(['latest'])
+                Picotorokko::Commands::Env.start(["latest"])
               end
             end
           end
@@ -441,10 +441,10 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Git操作をモック化（cloneを失敗させる）
-          stub_git_operations(fail_clone: true) do |stubs|
+          stub_git_operations(fail_clone: true) do |_stubs|
             assert_raise(RuntimeError) do
               capture_stdout do
-                Picotorokko::Commands::Env.start(['latest'])
+                Picotorokko::Commands::Env.start(["latest"])
               end
             end
           end
@@ -465,80 +465,87 @@ class PraCommandsEnvTest < PraTestCase
     $stdout = original_stdout
   end
 
-  # Git操作をスタブ化するヘルパーメソッド
-  def stub_git_operations(fail_fetch: false, fail_clone: false)
-    # テスト用のコミット情報
-    test_commits = {
-      'R2P2-ESP32' => { commit: 'abc1234', timestamp: '20250101_120000' },
-      'picoruby-esp32' => { commit: 'def5678', timestamp: '20250102_120000' },
-      'picoruby' => { commit: 'ghi9012', timestamp: '20250103_120000' }
+  # テスト用のコミット情報を取得
+  def test_commits
+    {
+      "R2P2-ESP32" => { commit: "abc1234", timestamp: "20250101_120000" },
+      "picoruby-esp32" => { commit: "def5678", timestamp: "20250102_120000" },
+      "picoruby" => { commit: "ghi9012", timestamp: "20250103_120000" }
     }
+  end
 
-    # 元のメソッドを保存
-    original_fetch = Picotorokko::Env.method(:fetch_remote_commit)
-    call_count = { fetch: 0, clone: 0 }
-
-    # fetch_remote_commitをスタブ化
-    Picotorokko::Env.define_singleton_method(:fetch_remote_commit) do |repo_url, ref = 'HEAD'|
+  # fetch_remote_commitをスタブ化
+  def stub_fetch_remote_commit(call_count, fail_fetch, commits)
+    original = Picotorokko::Env.method(:fetch_remote_commit)
+    Picotorokko::Env.define_singleton_method(:fetch_remote_commit) do |repo_url, _ref = "HEAD"|
       call_count[:fetch] += 1
       return nil if fail_fetch
 
-      # リポジトリURLから名前を取得
       repo_name = Picotorokko::Env::REPOS.key(repo_url)
-      test_commits[repo_name][:commit]
+      commits[repo_name][:commit]
     end
+    original
+  end
 
-    # systemコマンドをスタブ化（Kernelモジュールに対して）
-    original_system = Kernel.instance_method(:system)
+  # systemコマンドをスタブ化
+  def stub_system_method(call_count, fail_clone)
+    original = Kernel.instance_method(:system)
     Kernel.module_eval do
       define_method(:system) do |*args|
-        cmd = args.join(' ')
-        if cmd.include?('git clone')
+        cmd = args.join(" ")
+        if cmd.include?("git clone")
           call_count[:clone] += 1
           return false if fail_clone
 
-          # 一時ディレクトリにダミーのgitリポジトリを作成
-          # コマンド引数から最後の引数（デスティネーションパス）を抽出
-          # シェルワード形式（引用符付き）に対応
           if cmd =~ /git clone.* (\S+)(?:\s*2>)?$/
-            dest_path = $1.gsub(/['"]/, '') # 引用符を削除
+            dest_path = ::Regexp.last_match(1).gsub(/['"]/, "")
             FileUtils.mkdir_p(dest_path)
-            FileUtils.mkdir_p(File.join(dest_path, '.git'))
+            FileUtils.mkdir_p(File.join(dest_path, ".git"))
           end
           true
-        elsif cmd.include?('git checkout')
-          # Mock git checkout - always succeed for stubs
+        elsif cmd.include?("git checkout")
           true
         else
-          original_system.bind(self).call(*args)
+          original.bind_call(self, *args)
         end
       end
     end
+    original
+  end
 
-    # バッククォートコマンドをスタブ化
-    original_backtick = Kernel.instance_method(:`)
+  # バッククォートコマンドをスタブ化
+  def stub_backtick_method(commits_data)
+    original = Kernel.instance_method(:`)
     Kernel.module_eval do
       define_method(:`) do |cmd|
-        if cmd.include?('git rev-parse --short=7 HEAD')
-          # 現在の作業ディレクトリからリポジトリ名を推測
+        if cmd.include?("git rev-parse --short=7 HEAD")
           pwd = Dir.pwd
           repo_name = Picotorokko::Env::REPOS.keys.find { |name| pwd.include?(name) }
-          test_commits[repo_name][:commit] + "\n"
-        elsif cmd.include?('git show -s --format=%ci HEAD')
-          # タイムスタンプを日付形式で返す
+          "#{commits_data[repo_name][:commit]}\n"
+        elsif cmd.include?("git show -s --format=%ci HEAD")
           pwd = Dir.pwd
           repo_name = Picotorokko::Env::REPOS.keys.find { |name| pwd.include?(name) }
-          "2025-01-0#{Picotorokko::Env::REPOS.keys.index(repo_name) + 1} 12:00:00 +0900\n"
+          idx = Picotorokko::Env::REPOS.keys.index(repo_name) + 1
+          "2025-01-0#{idx} 12:00:00 +0900\n"
         else
-          original_backtick.bind(self).call(cmd)
+          original.bind_call(self, cmd)
         end
       end
     end
+    original
+  end
+
+  # Git操作をスタブ化するヘルパーメソッド
+  def stub_git_operations(fail_fetch: false, fail_clone: false)
+    call_count = { fetch: 0, clone: 0 }
+    commits = test_commits
+    original_fetch = stub_fetch_remote_commit(call_count, fail_fetch, commits)
+    original_system = stub_system_method(call_count, fail_clone)
+    original_backtick = stub_backtick_method(commits)
 
     begin
-      yield({ commits: test_commits, call_count: call_count })
+      yield({ commits: commits, call_count: call_count })
     ensure
-      # 元のメソッドを復元
       Picotorokko::Env.define_singleton_method(:fetch_remote_commit, original_fetch)
       Kernel.module_eval do
         define_method(:system, original_system)
@@ -579,37 +586,37 @@ class PraCommandsEnvTest < PraTestCase
   sub_test_case "Env module validation methods" do
     test "validate_env_name! accepts valid lowercase alphanumeric names" do
       assert_nothing_raised do
-        Picotorokko::Env.validate_env_name!('staging')
-        Picotorokko::Env.validate_env_name!('prod-123')
-        Picotorokko::Env.validate_env_name!('test_env')
-        Picotorokko::Env.validate_env_name!('dev-build-2025')
+        Picotorokko::Env.validate_env_name!("staging")
+        Picotorokko::Env.validate_env_name!("prod-123")
+        Picotorokko::Env.validate_env_name!("test_env")
+        Picotorokko::Env.validate_env_name!("dev-build-2025")
       end
     end
 
     test "validate_env_name! rejects names with uppercase letters" do
       assert_raise(RuntimeError) do
-        Picotorokko::Env.validate_env_name!('InvalidEnv')
+        Picotorokko::Env.validate_env_name!("InvalidEnv")
       end
     end
 
     test "validate_env_name! rejects names with special characters" do
       assert_raise(RuntimeError) do
-        Picotorokko::Env.validate_env_name!('env@name')
+        Picotorokko::Env.validate_env_name!("env@name")
       end
       assert_raise(RuntimeError) do
-        Picotorokko::Env.validate_env_name!('env.name')
+        Picotorokko::Env.validate_env_name!("env.name")
       end
     end
 
     test "validate_env_name! rejects empty names" do
       assert_raise(RuntimeError) do
-        Picotorokko::Env.validate_env_name!('')
+        Picotorokko::Env.validate_env_name!("")
       end
     end
 
     test "validate_env_name! rejects names with spaces" do
       assert_raise(RuntimeError) do
-        Picotorokko::Env.validate_env_name!('env name')
+        Picotorokko::Env.validate_env_name!("env name")
       end
     end
   end
@@ -617,9 +624,9 @@ class PraCommandsEnvTest < PraTestCase
   # Picotorokko::Env module utility method tests
   sub_test_case "Env module utility methods" do
     test "generate_env_hash combines three hashes correctly" do
-      r2p2_hash = 'abc1234-20250101_120000'
-      esp32_hash = 'def5678-20250102_120000'
-      picoruby_hash = 'ghi9012-20250103_120000'
+      r2p2_hash = "abc1234-20250101_120000"
+      esp32_hash = "def5678-20250102_120000"
+      picoruby_hash = "ghi9012-20250103_120000"
 
       result = Picotorokko::Env.generate_env_hash(r2p2_hash, esp32_hash, picoruby_hash)
       expected = "#{r2p2_hash}_#{esp32_hash}_#{picoruby_hash}"
@@ -627,14 +634,14 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "get_cache_path returns correct path for repo cache" do
-      cache_path = Picotorokko::Env.get_cache_path('R2P2-ESP32', 'abc1234-20250101_120000')
-      assert_match(/\.cache\/R2P2-ESP32\/abc1234-20250101_120000$/, cache_path)
+      cache_path = Picotorokko::Env.get_cache_path("R2P2-ESP32", "abc1234-20250101_120000")
+      assert_match(%r{\.cache/R2P2-ESP32/abc1234-20250101_120000$}, cache_path)
     end
 
     test "get_build_path returns correct path for build environment" do
-      build_path = Picotorokko::Env.get_build_path('env_hash_value')
+      build_path = Picotorokko::Env.get_build_path("env_hash_value")
       # Phase 4.1: Path changed from build/ to ptrk_env/
-      assert_match(/ptrk_env\/env_hash_value$/, build_path)
+      assert_match(%r{ptrk_env/env_hash_value$}, build_path)
     end
   end
 
@@ -643,16 +650,16 @@ class PraCommandsEnvTest < PraTestCase
     test "create_symlink and read_symlink work correctly" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          FileUtils.mkdir_p('target_dir')
-          link_path = 'symlink_link'
+          FileUtils.mkdir_p("target_dir")
+          link_path = "symlink_link"
 
           # Create symlink
-          Picotorokko::Env.create_symlink('target_dir', link_path)
+          Picotorokko::Env.create_symlink("target_dir", link_path)
           assert_true(File.symlink?(link_path))
 
           # Read symlink
           target = Picotorokko::Env.read_symlink(link_path)
-          assert_equal('target_dir', target)
+          assert_equal("target_dir", target)
         end
       end
     end
@@ -660,17 +667,17 @@ class PraCommandsEnvTest < PraTestCase
     test "create_symlink overwrites existing symlink" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          FileUtils.mkdir_p('target_dir1')
-          FileUtils.mkdir_p('target_dir2')
-          link_path = 'symlink_link'
+          FileUtils.mkdir_p("target_dir1")
+          FileUtils.mkdir_p("target_dir2")
+          link_path = "symlink_link"
 
           # Create initial symlink
-          Picotorokko::Env.create_symlink('target_dir1', link_path)
-          assert_equal('target_dir1', Picotorokko::Env.read_symlink(link_path))
+          Picotorokko::Env.create_symlink("target_dir1", link_path)
+          assert_equal("target_dir1", Picotorokko::Env.read_symlink(link_path))
 
           # Overwrite with new symlink
-          Picotorokko::Env.create_symlink('target_dir2', link_path)
-          assert_equal('target_dir2', Picotorokko::Env.read_symlink(link_path))
+          Picotorokko::Env.create_symlink("target_dir2", link_path)
+          assert_equal("target_dir2", Picotorokko::Env.read_symlink(link_path))
         end
       end
     end
@@ -678,8 +685,8 @@ class PraCommandsEnvTest < PraTestCase
     test "read_symlink returns nil for non-symlink path" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          FileUtils.mkdir_p('regular_dir')
-          result = Picotorokko::Env.read_symlink('regular_dir')
+          FileUtils.mkdir_p("regular_dir")
+          result = Picotorokko::Env.read_symlink("regular_dir")
           assert_nil(result)
         end
       end
@@ -703,7 +710,7 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
-          test_data = { 'environments' => { 'test-env' => { 'data' => 'value' } }, 'current' => 'test-env' }
+          test_data = { "environments" => { "test-env" => { "data" => "value" } }, "current" => "test-env" }
           Picotorokko::Env.save_env_file(test_data)
 
           loaded = Picotorokko::Env.load_env_file
@@ -730,19 +737,19 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
 
-          hashes = Picotorokko::Env.compute_env_hash('test-env')
+          hashes = Picotorokko::Env.compute_env_hash("test-env")
           assert_not_nil(hashes)
 
           r2p2_hash, esp32_hash, picoruby_hash, env_hash = hashes
-          assert_equal('abc1234-20250101_120000', r2p2_hash)
-          assert_equal('def5678-20250102_120000', esp32_hash)
-          assert_equal('ghi9012-20250103_120000', picoruby_hash)
+          assert_equal("abc1234-20250101_120000", r2p2_hash)
+          assert_equal("def5678-20250102_120000", esp32_hash)
+          assert_equal("ghi9012-20250103_120000", picoruby_hash)
           assert_match(/abc1234-20250101_120000_def5678-20250102_120000_ghi9012-20250103_120000/, env_hash)
         end
       end
@@ -752,7 +759,7 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
-          result = Picotorokko::Env.compute_env_hash('non-existent')
+          result = Picotorokko::Env.compute_env_hash("non-existent")
           assert_nil(result)
         end
       end
@@ -765,7 +772,7 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           assert_raise(RuntimeError) do
-            Picotorokko::Env.execute_with_esp_env('false') # `false` command always fails
+            Picotorokko::Env.execute_with_esp_env("false") # `false` command always fails
           end
         end
       end
@@ -775,7 +782,7 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           # Should not raise
-          Picotorokko::Env.execute_with_esp_env('true')
+          Picotorokko::Env.execute_with_esp_env("true")
         end
       end
     end
@@ -783,10 +790,10 @@ class PraCommandsEnvTest < PraTestCase
     test "execute_with_esp_env works with working_dir parameter" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          FileUtils.mkdir_p('test_dir')
+          FileUtils.mkdir_p("test_dir")
 
           # Should execute in the specified directory
-          Picotorokko::Env.execute_with_esp_env('test -d .', File.join(tmpdir, 'test_dir'))
+          Picotorokko::Env.execute_with_esp_env("test -d .", File.join(tmpdir, "test_dir"))
         end
       end
     end
@@ -797,7 +804,7 @@ class PraCommandsEnvTest < PraTestCase
     test "has_submodules? returns true when .gitmodules exists" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          File.write('.gitmodules', '[submodule "test"]\n  path = test\n  url = https://example.com/test.git')
+          File.write(".gitmodules", '[submodule "test"]\n  path = test\n  url = https://example.com/test.git')
           result = Picotorokko::Env.has_submodules?(tmpdir)
           assert_true(result)
         end
@@ -820,7 +827,7 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
-          result = Picotorokko::Env.get_environment('non-existent')
+          result = Picotorokko::Env.get_environment("non-existent")
           assert_nil(result)
         end
       end
@@ -831,16 +838,16 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
-          r2p2_info = { 'commit' => 'r2p2abc', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'esp32def', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'pico999', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "r2p2abc", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "esp32def", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "pico999", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('custom-env', r2p2_info, esp32_info, picoruby_info, notes: 'Custom notes')
+          Picotorokko::Env.set_environment("custom-env", r2p2_info, esp32_info, picoruby_info, notes: "Custom notes")
 
-          env_config = Picotorokko::Env.get_environment('custom-env')
+          env_config = Picotorokko::Env.get_environment("custom-env")
           assert_not_nil(env_config)
-          assert_equal('r2p2abc', env_config['R2P2-ESP32']['commit'])
-          assert_equal('Custom notes', env_config['notes'])
+          assert_equal("r2p2abc", env_config["R2P2-ESP32"]["commit"])
+          assert_equal("Custom notes", env_config["notes"])
         end
       end
     end
@@ -876,7 +883,7 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           setup_test_git_repo
 
-          result = Picotorokko::Env.get_commit_hash(tmpdir, 'HEAD')
+          result = Picotorokko::Env.get_commit_hash(tmpdir, "HEAD")
           # Should return format: short_hash-YYYYMMDD_HHMMSS
           assert_match(/^[a-f0-9]{7}-\d{8}_\d{6}$/, result)
         end
@@ -887,7 +894,7 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         # Directory without git repository
         error = assert_raise(RuntimeError) do
-          Picotorokko::Env.get_commit_hash(tmpdir, 'HEAD')
+          Picotorokko::Env.get_commit_hash(tmpdir, "HEAD")
         end
         assert_match(/Failed to get commit hash/, error.message)
       end
@@ -897,12 +904,12 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           # Create git repo but no commits
-          system('git init', out: File::NULL)
+          system("git init", out: File::NULL)
           system('git config user.email "test@example.com"')
           system('git config user.name "Test User"')
 
           error = assert_raise(RuntimeError) do
-            Picotorokko::Env.get_commit_hash(tmpdir, 'nonexistent')
+            Picotorokko::Env.get_commit_hash(tmpdir, "nonexistent")
           end
           assert_match(/Failed to get commit hash/, error.message)
         end
@@ -917,8 +924,8 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           stub_git_operations do |context|
-            result = Picotorokko::Env.fetch_remote_commit('https://github.com/picoruby/R2P2-ESP32.git')
-            assert_equal('abc1234', result)
+            result = Picotorokko::Env.fetch_remote_commit("https://github.com/picoruby/R2P2-ESP32.git")
+            assert_equal("abc1234", result)
             assert_equal(1, context[:call_count][:fetch])
           end
         end
@@ -928,8 +935,8 @@ class PraCommandsEnvTest < PraTestCase
     test "fetch_remote_commit returns nil on network failure" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          stub_git_operations(fail_fetch: true) do |context|
-            result = Picotorokko::Env.fetch_remote_commit('https://github.com/picoruby/R2P2-ESP32.git')
+          stub_git_operations(fail_fetch: true) do |_context|
+            result = Picotorokko::Env.fetch_remote_commit("https://github.com/picoruby/R2P2-ESP32.git")
             assert_nil(result)
           end
         end
@@ -939,16 +946,16 @@ class PraCommandsEnvTest < PraTestCase
     test "clone_repo skips clone if destination already exists" do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
-          dest_path = File.join(tmpdir, 'existing_repo')
+          dest_path = File.join(tmpdir, "existing_repo")
           FileUtils.mkdir_p(dest_path)
 
           stub_git_operations do |context|
             output = capture_stdout do
-              Picotorokko::Env.clone_repo('https://github.com/picoruby/R2P2-ESP32.git', dest_path, 'abc1234')
+              Picotorokko::Env.clone_repo("https://github.com/picoruby/R2P2-ESP32.git", dest_path, "abc1234")
             end
 
             # No "Cloning" message should appear
-            assert_equal('', output)
+            assert_equal("", output)
             # clone should not be called
             assert_equal(0, context[:call_count][:clone])
           end
@@ -1014,7 +1021,7 @@ class PraCommandsEnvTest < PraTestCase
           end
         end
 
-        info, warnings = Picotorokko::Env.traverse_submodules_and_validate(r2p2_path)
+        _, warnings = Picotorokko::Env.traverse_submodules_and_validate(r2p2_path)
 
         # Should warn about 4th level
         assert_equal 1, warnings.size
@@ -1041,31 +1048,31 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create test environment
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
 
           # Create build directory with git repository
           # Phase 4.1: Build path uses env_name instead of env_hash
-          build_path = Picotorokko::Env.get_build_path('test-env')
+          build_path = Picotorokko::Env.get_build_path("test-env")
 
           # Initialize git repository with changes
-          r2p2_work = File.join(build_path, 'R2P2-ESP32')
+          r2p2_work = File.join(build_path, "R2P2-ESP32")
           FileUtils.mkdir_p(r2p2_work)
           Dir.chdir(r2p2_work) do
-            system('git init > /dev/null 2>&1')
+            system("git init > /dev/null 2>&1")
             system('git config user.email "test@example.com" > /dev/null 2>&1')
             system('git config user.name "Test User" > /dev/null 2>&1')
-            File.write('test.txt', 'initial')
-            system('git add . > /dev/null 2>&1')
+            File.write("test.txt", "initial")
+            system("git add . > /dev/null 2>&1")
             system('git commit -m "initial" > /dev/null 2>&1')
-            File.write('test.txt', 'modified')
+            File.write("test.txt", "modified")
           end
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['patch_export', 'test-env'])
+            Picotorokko::Commands::Env.start(["patch_export", "test-env"])
           end
 
           # Verify output
@@ -1073,7 +1080,7 @@ class PraCommandsEnvTest < PraTestCase
           assert_match(/✓ Patches exported/, output)
 
           # Verify patch directory was created
-          patch_dir = File.join(Picotorokko::Env::PATCH_DIR, 'R2P2-ESP32')
+          patch_dir = File.join(Picotorokko::Env::PATCH_DIR, "R2P2-ESP32")
           assert_true(Dir.exist?(patch_dir))
         end
       end
@@ -1085,26 +1092,26 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create test environment
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
 
           # Create build directory
           # Phase 4.1: Build path uses env_name instead of env_hash
-          build_path = Picotorokko::Env.get_build_path('test-env')
+          build_path = Picotorokko::Env.get_build_path("test-env")
 
-          r2p2_work = File.join(build_path, 'R2P2-ESP32')
+          r2p2_work = File.join(build_path, "R2P2-ESP32")
           FileUtils.mkdir_p(r2p2_work)
 
           # Create patch file
-          patch_dir = File.join(Picotorokko::Env::PATCH_DIR, 'R2P2-ESP32')
+          patch_dir = File.join(Picotorokko::Env::PATCH_DIR, "R2P2-ESP32")
           FileUtils.mkdir_p(patch_dir)
-          File.write(File.join(patch_dir, 'patch.txt'), 'patched content')
+          File.write(File.join(patch_dir, "patch.txt"), "patched content")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['patch_apply', 'test-env'])
+            Picotorokko::Commands::Env.start(["patch_apply", "test-env"])
           end
 
           # Verify output
@@ -1112,8 +1119,8 @@ class PraCommandsEnvTest < PraTestCase
           assert_match(/✓ Patches applied/, output)
 
           # Verify patch was applied
-          assert_true(File.exist?(File.join(r2p2_work, 'patch.txt')))
-          assert_equal('patched content', File.read(File.join(r2p2_work, 'patch.txt')))
+          assert_true(File.exist?(File.join(r2p2_work, "patch.txt")))
+          assert_equal("patched content", File.read(File.join(r2p2_work, "patch.txt")))
         end
       end
     end
@@ -1124,36 +1131,36 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create test environment
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
 
           # Create build directory with git repository
           # Phase 4.1: Build path uses env_name instead of env_hash
-          build_path = Picotorokko::Env.get_build_path('test-env')
+          build_path = Picotorokko::Env.get_build_path("test-env")
 
-          r2p2_work = File.join(build_path, 'R2P2-ESP32')
+          r2p2_work = File.join(build_path, "R2P2-ESP32")
           FileUtils.mkdir_p(r2p2_work)
 
           # Initialize git repository
           Dir.chdir(r2p2_work) do
-            system('git init > /dev/null 2>&1')
+            system("git init > /dev/null 2>&1")
             system('git config user.email "test@example.com" > /dev/null 2>&1')
             system('git config user.name "Test User" > /dev/null 2>&1')
-            File.write('test.txt', 'initial')
-            system('git add . > /dev/null 2>&1')
+            File.write("test.txt", "initial")
+            system("git add . > /dev/null 2>&1")
             system('git commit -m "initial" > /dev/null 2>&1')
           end
 
           # Create patch directory
-          patch_dir = File.join(Picotorokko::Env::PATCH_DIR, 'R2P2-ESP32')
+          patch_dir = File.join(Picotorokko::Env::PATCH_DIR, "R2P2-ESP32")
           FileUtils.mkdir_p(patch_dir)
-          File.write(File.join(patch_dir, 'patch.txt'), 'patched content')
+          File.write(File.join(patch_dir, "patch.txt"), "patched content")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(['patch_diff', 'test-env'])
+            Picotorokko::Commands::Env.start(["patch_diff", "test-env"])
           end
 
           # Verify output
@@ -1278,19 +1285,19 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create only R2P2-ESP32 repo (no esp32 submodule)
-          r2p2_path = File.join(tmpdir, 'R2P2-ESP32')
+          r2p2_path = File.join(tmpdir, "R2P2-ESP32")
           FileUtils.mkdir_p(r2p2_path)
           Dir.chdir(r2p2_path) do
             setup_test_git_repo
           end
 
-          info, warnings = Picotorokko::Env.traverse_submodules_and_validate(r2p2_path)
+          info, = Picotorokko::Env.traverse_submodules_and_validate(r2p2_path)
 
           # Should have R2P2-ESP32 info only
           assert_equal(1, info.size)
-          assert info.key?('R2P2-ESP32')
-          assert_false info.key?('picoruby-esp32')
-          assert_false info.key?('picoruby')
+          assert info.key?("R2P2-ESP32")
+          assert_false info.key?("picoruby-esp32")
+          assert_false info.key?("picoruby")
         end
       end
     end
@@ -1301,25 +1308,25 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create R2P2-ESP32 with esp32 but not picoruby
-          r2p2_path = File.join(tmpdir, 'R2P2-ESP32')
+          r2p2_path = File.join(tmpdir, "R2P2-ESP32")
           FileUtils.mkdir_p(r2p2_path)
           Dir.chdir(r2p2_path) do
             setup_test_git_repo
           end
 
-          esp32_path = File.join(r2p2_path, 'components', 'picoruby-esp32')
+          esp32_path = File.join(r2p2_path, "components", "picoruby-esp32")
           FileUtils.mkdir_p(esp32_path)
           Dir.chdir(esp32_path) do
             setup_test_git_repo
           end
 
-          info, warnings = Picotorokko::Env.traverse_submodules_and_validate(r2p2_path)
+          info, = Picotorokko::Env.traverse_submodules_and_validate(r2p2_path)
 
           # Should have R2P2-ESP32 and esp32 only
           assert_equal(2, info.size)
-          assert info.key?('R2P2-ESP32')
-          assert info.key?('picoruby-esp32')
-          assert_false info.key?('picoruby')
+          assert info.key?("R2P2-ESP32")
+          assert info.key?("picoruby-esp32")
+          assert_false info.key?("picoruby")
         end
       end
     end
@@ -1333,7 +1340,7 @@ class PraCommandsEnvTest < PraTestCase
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Env.start(['patch_export', 'nonexistent'])
+              Picotorokko::Commands::Env.start(["patch_export", "nonexistent"])
             end
           end
         end
@@ -1346,15 +1353,15 @@ class PraCommandsEnvTest < PraTestCase
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
           # Create environment definition but no build directory
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('no-build-env', r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("no-build-env", r2p2_info, esp32_info, picoruby_info)
 
           assert_raise(RuntimeError) do
             capture_stdout do
-              Picotorokko::Commands::Env.start(['patch_export', 'no-build-env'])
+              Picotorokko::Commands::Env.start(["patch_export", "no-build-env"])
             end
           end
         end
@@ -1368,20 +1375,20 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info,
-                                           notes: 'Important notes')
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info,
+                                           notes: "Important notes")
 
-          output = capture_stdout do
-            Picotorokko::Commands::Env.start(['reset', 'test-env'])
+          capture_stdout do
+            Picotorokko::Commands::Env.start(["reset", "test-env"])
           end
 
-          config = Picotorokko::Env.get_environment('test-env')
-          assert_match(/Important notes/, config['notes'])
-          assert_match(/reset at/, config['notes'])
+          config = Picotorokko::Env.get_environment("test-env")
+          assert_match(/Important notes/, config["notes"])
+          assert_match(/reset at/, config["notes"])
         end
       end
     end
@@ -1391,19 +1398,19 @@ class PraCommandsEnvTest < PraTestCase
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
 
-          r2p2_info = { 'commit' => 'abc1234', 'timestamp' => '20250101_120000' }
-          esp32_info = { 'commit' => 'def5678', 'timestamp' => '20250102_120000' }
-          picoruby_info = { 'commit' => 'ghi9012', 'timestamp' => '20250103_120000' }
+          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
+          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
+          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment('test-env', r2p2_info, esp32_info, picoruby_info, notes: '')
+          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info, notes: "")
 
-          output = capture_stdout do
-            Picotorokko::Commands::Env.start(['reset', 'test-env'])
+          capture_stdout do
+            Picotorokko::Commands::Env.start(["reset", "test-env"])
           end
 
-          config = Picotorokko::Env.get_environment('test-env')
-          assert_match(/^Reset at/, config['notes'])
-          assert_no_match(/\n/, config['notes']) # Single line only
+          config = Picotorokko::Env.get_environment("test-env")
+          assert_match(/^Reset at/, config["notes"])
+          assert_no_match(/\n/, config["notes"]) # Single line only
         end
       end
     end
@@ -1433,7 +1440,7 @@ class PraCommandsEnvTest < PraTestCase
       # または正常終了してしまう（gitコマンドが成功する場合）
 
       # 実装後の期待動作をテストする（現在は失敗するはず）
-      env = Picotorokko::Commands::Env.new
+      Picotorokko::Commands::Env.new
 
       # TODO: RealityMarbleでのモックが難しいため、一旦omitして実装を先に進める
       # 実装完了後に、統合テストとして別途追加する予定
@@ -1461,14 +1468,14 @@ class PraCommandsEnvTest < PraTestCase
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           # Create a real git repo, then try to checkout invalid commit
-          test_repo_path = File.join(tmpdir, 'source-repo')
+          test_repo_path = File.join(tmpdir, "source-repo")
           FileUtils.mkdir_p(test_repo_path)
           Dir.chdir(test_repo_path) do
-            system('git init', out: File::NULL, err: File::NULL)
+            system("git init", out: File::NULL, err: File::NULL)
             system('git config user.email "test@example.com"')
             system('git config user.name "Test User"')
-            File.write('test.txt', 'content')
-            system('git add .', out: File::NULL, err: File::NULL)
+            File.write("test.txt", "content")
+            system("git add .", out: File::NULL, err: File::NULL)
             system('git commit -m "initial"', out: File::NULL, err: File::NULL)
           end
 

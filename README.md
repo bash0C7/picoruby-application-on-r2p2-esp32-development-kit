@@ -266,6 +266,83 @@ bundle exec gem build picotorokko.gemspec
 bundle exec exe/ptrk --help
 ```
 
+### Test Architecture
+
+The picotorokko gem uses a **three-layer test classification system** to balance speed, isolation, and real-world verification:
+
+#### Layer 1: Unit Tests (Fast, Mocked)
+**Location**: `test/unit/**/*_test.rb`
+- Fast execution (~1.3 seconds total)
+- Mocked external dependencies (network, file I/O, system commands)
+- Focused on single class/module behavior
+- Examples: `test/unit/commands/init_test.rb`, `test/unit/template/yaml_engine_test.rb`
+
+```bash
+# Run unit tests only (fastest feedback)
+bundle exec rake test:unit
+```
+
+#### Layer 2: Integration Tests (Real Operations)
+**Location**: `test/integration/**/*_test.rb`
+- Slower execution (~30 seconds)
+- Real git operations (git clone, checkout, show)
+- Real network calls to GitHub API
+- Tests interactions between components
+- Examples: `test/integration/env_test.rb`, `test/integration/commands/env_test.rb`
+
+```bash
+# Run integration tests
+bundle exec rake test:integration
+```
+
+#### Layer 3: Scenario Tests (User Workflows)
+**Location**: `test/scenario/**/*_test.rb`
+- Complete user workflow verification
+- Project creation scenarios, device commands
+- Template rendering and variable substitution
+- Examples: `test/scenario/init_scenario_test.rb`, `test/scenario/commands/device_test.rb`
+
+```bash
+# Run scenario tests
+bundle exec rake test:scenario
+```
+
+#### Test Execution
+
+**Quick Reference**:
+```bash
+# Development (unit tests only - fastest)
+bundle exec rake
+
+# All tests (unit → integration → scenario)
+bundle exec rake test
+
+# CI suite (all tests + RuboCop + coverage validation)
+bundle exec rake ci
+
+# Development mode with RuboCop auto-fix
+bundle exec rake dev
+```
+
+#### Test Result Verification
+
+Tests must be verified using **shell exit codes**:
+- **Exit code 0** = All tests passed
+- **Non-zero exit code** = Tests failed
+
+```bash
+# Example: Verify test success
+bundle exec rake ci > /tmp/test_output.txt 2>&1
+if [ $? -eq 0 ]; then
+  echo "✓ All tests passed"
+else
+  echo "✗ Tests failed"
+  tail /tmp/test_output.txt  # View detailed output
+fi
+```
+
+**Important**: Always capture test output to temporary files and use `grep`/`tail` for analysis, not relying on stdout directly.
+
 ### Testing with Reality Marble
 
 [Reality Marble](lib/reality_marble) is a powerful mocking gem integrated into picotorokko's test suite. It uses native Ruby syntax for elegant method mocking with automatic cleanup:
