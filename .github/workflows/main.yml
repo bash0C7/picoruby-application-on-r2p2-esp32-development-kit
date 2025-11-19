@@ -4,13 +4,28 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'playground/**'
 
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'playground/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test-matrix:
     runs-on: ubuntu-slim
     name: test (${{ matrix.ruby }})
+    timeout-minutes: 3
+    permissions:
+      contents: read
     continue-on-error: ${{ matrix.optional }}
     strategy:
       fail-fast: false

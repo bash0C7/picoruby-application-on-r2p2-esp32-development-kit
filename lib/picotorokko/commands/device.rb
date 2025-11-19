@@ -47,7 +47,7 @@ module Picotorokko
       # Build firmware for ESP32
       # @rbs () -> void
       desc "build", "Build firmware for ESP32"
-      option :env, default: "current", desc: "Environment name"
+      option :env, default: "latest", desc: "Environment name"
       def build
         env_name = options[:env]
         actual_env = resolve_env_name(env_name)
@@ -190,18 +190,22 @@ module Picotorokko
       # Apply Mrbgemfile if it exists
       # Reads Mrbgemfile and applies mrbgems to build_config files
       # @rbs (String) -> void
-      def apply_mrbgemfile(_env_name)
+      def apply_mrbgemfile(env_name)
         mrbgemfile_path = File.join(Picotorokko::Env.project_root, "Mrbgemfile")
         return unless File.exist?(mrbgemfile_path)
 
         mrbgemfile_content = File.read(mrbgemfile_path)
-        apply_to_build_configs(mrbgemfile_content)
+        apply_to_build_configs(mrbgemfile_content, env_name)
       end
 
-      # Apply mrbgems to all build_config/*.rb files
-      # @rbs (String) -> void
-      def apply_to_build_configs(mrbgemfile_content)
-        build_config_dir = File.join(Picotorokko::Env.project_root, "build_config")
+      # Apply mrbgems to all build_config/*.rb files in R2P2-ESP32 build directory
+      # @rbs (String, String) -> void
+      def apply_to_build_configs(mrbgemfile_content, env_name)
+        # Get R2P2-ESP32 path from build environment
+        actual_env = resolve_env_name(env_name)
+        r2p2_path = validate_and_get_r2p2_path(actual_env)
+
+        build_config_dir = File.join(r2p2_path, "build_config")
         return unless Dir.exist?(build_config_dir)
 
         Dir.glob(File.join(build_config_dir, "*.rb")).each do |config_file|
@@ -215,6 +219,8 @@ module Picotorokko
           modified = BuildConfigApplier.apply(content, gems)
           File.write(config_file, modified)
         end
+
+        puts "  ✓ Applied Mrbgemfile to R2P2-ESP32/build_config/"
       end
 
       # 利用可能なR2P2-ESP32タスクを表示
