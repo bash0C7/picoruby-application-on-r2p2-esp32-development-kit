@@ -378,12 +378,6 @@ module Picotorokko
         )
 
         puts "✓ Environment definition '#{env_name}' created successfully in .picoruby-env.yml"
-
-        # Setup build environment
-        puts "\nSetting up build environment..."
-        setup_build_environment(env_name, repos_info)
-
-        puts "✓ Build environment setup complete"
       end
 
       # Fetch latest commit versions from all default repositories
@@ -512,8 +506,24 @@ module Picotorokko
         cloned_repos = []
 
         begin
-          # Clone each repository
-          Picotorokko::Env::REPOS.each do |repo_name, repo_url|
+          # Clone R2P2-ESP32 WITH SUBMODULES to cache first
+          r2p2_name = "R2P2-ESP32"
+          r2p2_url = Picotorokko::Env::REPOS[r2p2_name]
+          r2p2_info = repos_info[r2p2_name]
+          r2p2_commit = r2p2_info["commit"]
+          r2p2_timestamp = r2p2_info["timestamp"]
+
+          puts "  Cloning #{r2p2_name} WITH SUBMODULES..."
+          cache_path = Picotorokko::Env.cache_clone_with_submodules(r2p2_name, r2p2_url, r2p2_commit, r2p2_timestamp)
+          target_path = File.join(build_path, r2p2_name)
+          FileUtils.rm_rf(target_path)
+          FileUtils.cp_r(cache_path, target_path)
+          cloned_repos << target_path
+          puts "    ✓ #{r2p2_name} with submodules: #{r2p2_commit}"
+
+          # Clone other repositories normally
+          ["picoruby-esp32", "picoruby"].each do |repo_name|
+            repo_url = Picotorokko::Env::REPOS[repo_name]
             puts "  Cloning #{repo_name}..."
             clone_and_checkout_repo(repo_name, repo_url, build_path, repos_info)
             cloned_repos << File.join(build_path, repo_name)

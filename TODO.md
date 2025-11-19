@@ -2,11 +2,11 @@
 
 ## Current Status (Latest - 2025-11-19)
 
-**✅ COMPLETED: Gem-Wide Test Architecture Reorganization**
-- ✅ **Result**: 21 test files (16 unit + 3 integration + 2 scenario) successfully reorganized
-- ✅ **Verification**: 265 tests passing, 100% success rate
-- ✅ **Commit**: d868410 - "refactor: reorganize tests into unit/integration/scenario hierarchy"
-- ✅ **Status**: Pushed to branch claude/speed-up-rake-test-014cJmR2fckoNWySpghDHopd
+**🔧 IN PROGRESS: ptrk env latest Submodule Initialization Fix**
+- 🔧 **Phase 1-2**: Completed investigation and SPEC.md update
+- 🔧 **Phase 3a**: Partially complete - added `cache_clone_with_submodules` method
+- 📋 **Updates**: SPEC.md and TODO.md revised for correct design
+- 🚀 **Next**: Simplify `ptrk env latest`, implement `.build` setup in `ptrk device build`
 
 **Completed Milestones:**
 - ✅ **All Tests**: Passing (100% success rate)
@@ -18,6 +18,37 @@
 - ✅ **Build Environment Setup**: Automatic git clone/checkout for `ptrk env latest`
 - ✅ **Rake Command Polymorphism**: Smart detection for bundle exec vs rake
 - ✅ **PicoRuby Development Templates**: Enhanced CLAUDE.md with mrbgems, I2C/GPIO/RMT, memory optimization
+
+---
+
+## Active Implementation: Fix ptrk env latest (Phase 3-4)
+
+### ⚠️ Design Correction
+**Old (SPEC.md v1 - incorrect)**:
+- `ptrk cache fetch` → `ptrk build setup` → `ptrk device build`
+
+**New (SPEC.md v2 - correct)**:
+- `ptrk env latest` → save environment definition only
+- `ptrk device build` → setup `.build/` and build firmware
+
+### Phase 3: Simplify ptrk env latest
+- [ ] **TDD RED**: Write test for `ptrk env latest` without setup_build_environment call
+- [ ] **TDD GREEN**: Remove setup_build_environment from latest command
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **TDD REFACTOR**: Clean up any dead code
+- [ ] **COMMIT**: "refactor: simplify ptrk env latest to save definition only"
+
+### Phase 4: Implement .build Setup in ptrk device build
+- [ ] **TDD RED**: Write test for `.build/` directory creation with submodules
+- [ ] **TDD GREEN**: Implement `.build/` setup (clone with submodules, apply patches)
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **TDD REFACTOR**: Extract setup logic into helper methods
+- [ ] **COMMIT**: "feat: setup .build directory with submodules in ptrk device build"
+
+### Phase 5: End-to-end Verification
+- [ ] Verify workflow: `ptrk init` → `ptrk env latest` → `ptrk device build`
+- [ ] Test in playground environment
+- [ ] Confirm submodule structure in `.build/R2P2-ESP32/components/picoruby-esp32/picoruby/`
 
 ---
 

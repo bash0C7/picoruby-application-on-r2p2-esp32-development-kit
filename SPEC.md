@@ -626,208 +626,14 @@ ptrk env set specific \
 
 #### `ptrk env latest`
 
-**Description**: Fetch latest versions and switch to them
+**Description**: Fetch latest versions and save environment definition
 
 **Operation**:
 1. Fetch HEAD commits from each repo via GitHub API or `git ls-remote`
-2. Generate new environment name (e.g., `latest-20241105-143500`)
-3. Save to `.cache` via `ptrk cache fetch`
-4. Setup environment via `ptrk build setup`
-5. Switch via `ptrk env set`
+2. Create environment definition named `latest` in `.picoruby-env.yml`
+3. Store commit hashes and timestamps for later build setup
 
----
-
-### 📦 Cache Management Commands
-
-#### `ptrk cache list`
-
-**Description**: Display list of cached repository versions
-
-**Output Example**:
-```
-=== R2P2-ESP32 ===
-  f500652 - 2024-11-05 14:30:22
-  34a1c23 - 2024-11-04 12:00:00
-
-=== picoruby-esp32 ===
-  6a6da3a - 2024-11-05 14:21:15
-  f331744 - 2024-11-04 11:55:00
-
-=== picoruby ===
-  e57c370 - 2024-11-05 14:10:30
-  df21508 - 2024-11-04 11:50:00
-
-Total cache size: 1.2GB
-```
-
----
-
-#### `ptrk cache fetch [ENV_NAME]`
-
-**Description**: Fetch specified environment from GitHub and save to `.cache`
-
-**Arguments**:
-- `ENV_NAME` - Environment name (`latest`, `feature-xyz`, etc.)
-- Default: `latest`
-
-**Operation**:
-1. Load corresponding environment definition from `.picoruby-env.yml`
-2. Clone R2P2-ESP32 (to `.cache/R2P2-ESP32/{commit-hash}/`)
-3. **3-level submodule traversal**:
-   - Level 1: Update `components/picoruby-esp32`
-   - Level 2: Update `components/picoruby-esp32/picoruby`
-   - Level 3+: Output warning, do not process
-4. Save picoruby-esp32 and picoruby to `.cache/` respectively
-5. Extract timestamp from `git show -s --format=%ci`
-6. Append to `.picoruby-env.yml`
-
-**3-Level Submodule Traversal**:
-
-- Level 1 (R2P2-ESP32):
-  ```ruby
-  Dir.chdir('.cache/R2P2-ESP32/{commit-hash}') do
-    system('git submodule update --init --recursive')
-  end
-  ```
-- Level 2 (picoruby-esp32):
-  ```ruby
-  Dir.chdir('.cache/R2P2-ESP32/{commit-hash}/components/picoruby-esp32') do
-    system('git submodule update --init --recursive')
-  end
-  ```
-- Level 3 (picoruby):
-  ```ruby
-  Dir.chdir('.cache/R2P2-ESP32/{commit-hash}/components/picoruby-esp32/picoruby') do
-    # Check for 4th-level submodules
-    if system('git config --file .gitmodules --get-regexp path')
-      puts "WARNING: Found 4th-level submodule(s) - not handled"
-    end
-  end
-  ```
-
-**Example**:
-```bash
-ptrk cache fetch latest
-# => Fetching R2P2-ESP32 HEAD...
-#    Cloning to .cache/R2P2-ESP32/34a1c23-20241104_120000/
-#    Updating submodule: components/picoruby-esp32
-#    Updating submodule: components/picoruby-esp32/picoruby
-#    Updating .picoruby-env.yml...
-#    Done!
-```
-
----
-
-#### `ptrk cache clean REPO`
-
-**Description**: Delete all caches for specified repo
-
-**Arguments**:
-- `REPO` - One of: `R2P2-ESP32`, `picoruby-esp32`, `picoruby`
-
-**Operation**:
-1. Delete all directories under `.cache/{repo}/`
-2. Remove corresponding commits from `.picoruby-env.yml`
-
-**Example**:
-```bash
-ptrk cache clean picoruby-esp32
-# => Removing .cache/picoruby-esp32/...
-```
-
----
-
-#### `ptrk cache prune`
-
-**Description**: Delete caches not referenced by any environment
-
-**Operation**:
-1. Collect all commits in use from all environments in `.picoruby-env.yml`
-2. Compare against all commits in `.cache/`
-3. Delete unused commits
-
-**Example**:
-```bash
-ptrk cache prune
-# => Unused .cache/R2P2-ESP32/old-hash-20240101_000000/ - removing
-#    Freed: 500MB
-```
-
----
-
-### 🔨 Build Environment Management Commands
-
-#### `ptrk build setup [ENV_NAME]`
-
-**Description**: Setup `build/{env-hash}/` for specified environment
-
-**Arguments**:
-- `ENV_NAME` - Environment name (default: `current`)
-
-**Operation**:
-1. Load environment definition from `.picoruby-env.yml`
-2. Check if corresponding cache exists in `.cache/` (error if not)
-3. Create `build/{env-hash}/` directory
-4. Copy from `.cache/R2P2-ESP32/{commit-hash}/` to `build/{env-hash}/R2P2-ESP32/`
-5. Remove `build/{env-hash}/R2P2-ESP32/components/picoruby-esp32/`
-6. Copy from `.cache/picoruby-esp32/{commit-hash}/` to `build/{env-hash}/R2P2-ESP32/components/picoruby-esp32/`
-7. Similarly copy `picoruby/`
-8. Apply `patch/` (same process as `patch:apply`)
-9. Copy `storage/home/` to `build/{env-hash}/R2P2-ESP32/storage/home/`
-10. Relink `build/current` symlink to `build/{env-hash}/`
-
-**Example**:
-```bash
-ptrk build setup stable-2024-11
-# => Setting up build environment: stable-2024-11
-#    Creating build/f500652-20241105_143022_6a6da3a-20241105_142015_e57c370-20241105_141030/
-#    Copying .cache/R2P2-ESP32/f500652-20241105_143022/
-#    Copying .cache/picoruby-esp32/6a6da3a-20241105_142015/
-#    Copying .cache/picoruby/e57c370-20241105_141030/
-#    Applying patches...
-#    Copying storage/home/
-#    Updating symlink: build/current
-#    Done! (Ready to build)
-```
-
----
-
-#### `ptrk build clean [ENV_NAME]`
-
-**Description**: Delete specified build environment
-
-**Arguments**:
-- `ENV_NAME` - Environment name (default: `current`)
-
-**Operation**:
-1. If `build/current` is a symlink, read its target
-2. If env_name is `current`, delete symlink target and clear `build/current`
-3. Otherwise, delete specified environment
-
-**Example**:
-```bash
-ptrk build clean development
-# => Removing build/34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/
-```
-
----
-
-#### `ptrk build list`
-
-**Description**: Display list of constructed environments under `build/`
-
-**Output Example**:
-```
-=== Build Environments ===
-
-build/current -> f500652-20241105_143022_6a6da3a-20241105_142015_e57c370-20241105_141030/
-
-Available:
-  f500652-20241105_143022_6a6da3a-20241105_142015_e57c370-20241105_141030/    (2.5GB)  stable-2024-11
-  34a1c23-20241104_120000_f331744-20241104_115500_df21508-20241104_115000/    (2.3GB)  development
-
-Total build storage: 4.8GB
-```
+**Note**: Actual build environment (`.build/`) is created by `ptrk device build`
 
 ---
 
@@ -893,6 +699,40 @@ diff --git a/storage/home/custom.rb (working) vs (patch/)
 
 === picoruby-esp32 ===
 (no changes)
+```
+
+---
+
+### 🏗️ Build and Device Commands
+
+#### `ptrk device build [--env ENV_NAME]`
+
+**Description**: Setup build environment (`.build/`) from environment definition and build firmware
+
+**Arguments**:
+- `--env ENV_NAME` - Environment name (default: `latest`)
+
+**Operation**:
+1. Load environment definition from `.picoruby-env.yml` (e.g., `latest`)
+2. Create `.build/` directory if not exists
+3. Clone R2P2-ESP32 WITH SUBMODULES to `.build/R2P2-ESP32/` (ensures `components/picoruby-esp32/picoruby/` exists)
+4. Clone picoruby-esp32 and picoruby to respective locations
+5. Apply patches from `patch/` directory
+6. Copy `storage/home/` to build environment
+7. Execute `rake build` in `.build/R2P2-ESP32/`
+
+**Example**:
+```bash
+ptrk device build              # Uses default 'latest' environment
+ptrk device build --env stable # Use 'stable' environment
+# => Setting up build environment from 'latest'...
+#    Cloning R2P2-ESP32 with submodules...
+#    Cloning picoruby-esp32...
+#    Cloning picoruby...
+#    Applying patches...
+#    Copying storage/home/...
+#    Building firmware...
+#    ✓ Build complete
 ```
 
 ---
