@@ -11,12 +11,12 @@ class PraUnitCommandsInitTest < PraTestCase
   def setup
     super
     # Skip network environment setup during unit tests
-    ENV['PTRK_SKIP_ENV_SETUP'] = '1'
+    ENV["PTRK_SKIP_ENV_SETUP"] = "1"
   end
 
   def teardown
     # Restore environment variable
-    ENV.delete('PTRK_SKIP_ENV_SETUP')
+    ENV.delete("PTRK_SKIP_ENV_SETUP")
     super
   end
 

@@ -12,12 +12,12 @@ class PraScenarioInitTest < PraTestCase
   def setup
     super
     # Skip network environment setup during scenario tests
-    ENV['PTRK_SKIP_ENV_SETUP'] = '1'
+    ENV["PTRK_SKIP_ENV_SETUP"] = "1"
   end
 
   def teardown
     # Restore environment variable
-    ENV.delete('PTRK_SKIP_ENV_SETUP')
+    ENV.delete("PTRK_SKIP_ENV_SETUP")
     super
   end
 
@@ -63,7 +63,7 @@ class PraScenarioInitTest < PraTestCase
 
           # User expectation: Can view workflow content
           workflow = File.read("my-ci-project/.github/workflows/esp32-build.yml", encoding: "UTF-8")
-          assert workflow.length > 0
+          assert workflow.length.positive?
         ensure
           Dir.chdir(original_dir)
         end
@@ -111,9 +111,9 @@ class PraScenarioInitTest < PraTestCase
 
           # User expectation: .gitignore prevents tracking build artifacts
           ignored = File.read(".gitignore", encoding: "UTF-8")
-          assert_match(/\.cache\//, ignored)
-          assert_match(/build\//, ignored)
-          assert_match(/ptrk_env\//, ignored)
+          assert_match(%r{\.cache/}, ignored)
+          assert_match(%r{build/}, ignored)
+          assert_match(%r{ptrk_env/}, ignored)
 
           # User expectation: Can commit project files
           system("git add .", out: File::NULL)
@@ -121,8 +121,8 @@ class PraScenarioInitTest < PraTestCase
 
           # User expectation: Build artifacts won't be tracked
           tracked_files = `git ls-tree -r --name-only HEAD`.strip.split("\n")
-          assert !tracked_files.any? { |f| f.start_with?(".cache/") }
-          assert !tracked_files.any? { |f| f.start_with?("build/") }
+          assert(tracked_files.none? { |f| f.start_with?(".cache/") })
+          assert(tracked_files.none? { |f| f.start_with?("build/") })
         ensure
           Dir.chdir(original_dir)
         end

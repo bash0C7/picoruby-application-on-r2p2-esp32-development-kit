@@ -15,7 +15,7 @@ class PraIntegrationCommandsInitTest < PraTestCase
   sub_test_case "init with network environment setup" do
     test "creates default environment with real repository information" do
       # Skip in development environment
-      return if ENV['SKIP_NETWORK_TESTS']
+      return if ENV["SKIP_NETWORK_TESTS"]
 
       original_dir = Dir.pwd
       Dir.mktmpdir do |tmpdir|
@@ -40,7 +40,7 @@ class PraIntegrationCommandsInitTest < PraTestCase
     test "handles network errors gracefully" do
       # This test verifies project creation succeeds even when network setup fails
       # Only runs when network tests are enabled
-      return if ENV['SKIP_NETWORK_TESTS']
+      return if ENV["SKIP_NETWORK_TESTS"]
 
       original_dir = Dir.pwd
       Dir.mktmpdir do |tmpdir|
@@ -62,7 +62,7 @@ class PraIntegrationCommandsInitTest < PraTestCase
   sub_test_case "git clone simulation" do
     test "fetch_repo_info properly clones and extracts repo information" do
       # Skip in development environment
-      return if ENV['SKIP_NETWORK_TESTS']
+      return if ENV["SKIP_NETWORK_TESTS"]
 
       env_command = Picotorokko::Commands::Env.new
       repo_name = "picoruby"
@@ -81,7 +81,8 @@ class PraIntegrationCommandsInitTest < PraTestCase
         assert_match(/^\d{8}_\d{6}$/, repo_info["timestamp"], "timestamp should be YYYYMMDD_HHMMSS format")
       rescue StandardError => e
         # In case of network error, skip gracefully
-        return if ENV['SKIP_NETWORK_TESTS']
+        return if ENV["SKIP_NETWORK_TESTS"]
+
         raise e
       end
     end

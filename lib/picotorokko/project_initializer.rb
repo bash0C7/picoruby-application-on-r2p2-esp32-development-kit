@@ -44,7 +44,7 @@ module Picotorokko
 
       # Setup default environment with latest repo versions
       # PTRK_SKIP_ENV_SETUP environment variable allows skipping this step (useful for testing)
-      unless ENV['PTRK_SKIP_ENV_SETUP']
+      unless ENV["PTRK_SKIP_ENV_SETUP"]
         begin
           setup_default_environment
         rescue StandardError => e
