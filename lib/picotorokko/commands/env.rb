@@ -207,7 +207,7 @@ module Picotorokko
         #
         # @rbs (String, String) -> Hash[String, String]
         def process_path_source(path_spec, timestamp)
-          if path_spec =~ /^path:(.+):([a-f0-9]{7,})$/
+          if path_spec =~ /^path:(.+?):([a-f0-9]{7,})$/
             path = Regexp.last_match(1)
             commit = Regexp.last_match(2)
             source_key = "path:#{path}"

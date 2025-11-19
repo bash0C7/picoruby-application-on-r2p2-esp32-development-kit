@@ -299,24 +299,6 @@ class PraCommandsEnvTest < PraTestCase
     end
 
     test "creates environment with path://commit format (explicit commit)" do
-      omit(
-        "⚠️ DEBUGGING REQUIRED: Regex matching with Thor option values\n" \
-        "Issue: path:// regex matching fails for explicit commit format\n" \
-        "Expected pattern: path:/absolute/path:abc1234 → extracts commit 'abc1234'\n" \
-        "Root cause: Either regex is incorrect or Thor option parsing modifies the value\n" \
-        "Test expects: Commits 'abc1234', 'def5678', 'ghi9012' stored exactly\n" \
-        "Actual result: Regex match fails silently, falls through to auto-fetch path\n" \
-        "\n" \
-        "Investigation needed:\n" \
-        "1. Verify regex pattern /^path:(.+):([a-f0-9]{7,})$/ matches test inputs\n" \
-        "2. Add debug output in process_path_source to show actual option values\n" \
-        "3. Check if Thor is modifying the option value (escaping, etc.)\n" \
-        "4. Test regex directly against example: \"path:/tmp/repo:abc1234\"\n" \
-        "5. Consider if backreference handling is correct\n" \
-        "\n" \
-        "Test code is valid and covers important path://commit explicit specification scenario"
-      )
-
       original_dir = Dir.pwd
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir)
