@@ -12,8 +12,14 @@ jobs:
     runs-on: ubuntu-slim
     name: test (${{ matrix.ruby }})
     strategy:
+      fail-fast: false
       matrix:
-        ruby: ['3.4']
+        ruby: ['3.4', head]
+        include:
+          - ruby: '3.4'
+            test_task: ci
+          - ruby: head
+            test_task: test
 
     steps:
       - uses: actions/checkout@v4
@@ -23,13 +29,14 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           cache-version: 1
-      - name: Run CI: tests + RuboCop + coverage validation
-        run: bundle exec rake ci
+      - name: "Run tests (${{ matrix.test_task }})"
+        run: bundle exec rake ${{ matrix.test_task }}
       - name: Generate RBS files from annotations
+        if: matrix.ruby == '3.4'
         run: bundle exec rake rbs:generate
       - name: Upload coverage to Codecov
+        if: matrix.ruby == '3.4' && always()
         uses: codecov/codecov-action@v4
-        if: always()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/coverage.xml
