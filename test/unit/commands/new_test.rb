@@ -1,12 +1,12 @@
 require "test_helper"
 require "tmpdir"
 require "fileutils"
-require_relative "../../../lib/picotorokko/commands/init"
+require_relative "../../../lib/picotorokko/commands/new"
 
-class UnitCommandsInitTest < PicotorokkoTestCase
-  # ptrk init コマンドの単体テスト
+class UnitCommandsNewTest < PicotorokkoTestCase
+  # ptrk new コマンドの単体テスト
   # NOTE: Network operations are mocked out to focus on ProjectInitializer behavior
-  # See test/integration/commands/init_integration_test.rb for real git clone tests
+  # See test/integration/commands/new_integration_test.rb for real git clone tests
 
   def setup
     super
@@ -20,7 +20,7 @@ class UnitCommandsInitTest < PicotorokkoTestCase
     super
   end
 
-  sub_test_case "init command basic creation" do
+  sub_test_case "new command basic creation" do
     test "creates project directories" do
       original_dir = Dir.pwd
       Dir.mktmpdir do |tmpdir|
@@ -244,7 +244,7 @@ class UnitCommandsInitTest < PicotorokkoTestCase
     end
   end
 
-  sub_test_case "init command with --with-ci option" do
+  sub_test_case "new command with --with-ci option" do
     test "copies GitHub Actions workflow when --with-ci is enabled" do
       original_dir = Dir.pwd
       Dir.mktmpdir do |tmpdir|
@@ -280,7 +280,7 @@ class UnitCommandsInitTest < PicotorokkoTestCase
     end
   end
 
-  sub_test_case "init command with hyphenated option keys (Thor format)" do
+  sub_test_case "new command with hyphenated option keys (Thor format)" do
     test "handles with_ci when key is string with hyphen" do
       original_dir = Dir.pwd
       Dir.mktmpdir do |tmpdir|
