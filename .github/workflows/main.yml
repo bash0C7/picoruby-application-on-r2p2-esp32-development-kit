@@ -64,7 +64,7 @@ jobs:
   test-pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-slim
-    name: test (PR - ${{ matrix.ruby }})
+    name: test (${{ matrix.ruby }})
     timeout-minutes: 3
     permissions:
       contents: read
