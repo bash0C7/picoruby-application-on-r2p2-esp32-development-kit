@@ -319,4 +319,50 @@ class UnitCommandsNewTest < PicotorokkoTestCase
       end
     end
   end
+
+  sub_test_case "New Thor command class" do
+    test "returns early when project_name is nil" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Create a New command instance
+          command = Picotorokko::Commands::New.new
+
+          # Call create with nil - should return without error
+          result = command.create(nil)
+
+          # Verify result is nil (early return)
+          assert_nil result
+
+          # Verify no project directory is created
+          assert !Dir.exist?("test-project")
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+
+    test "creates project when project_name is provided" do
+      original_dir = Dir.pwd
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir)
+        begin
+          # Create a New command instance
+          command = Picotorokko::Commands::New.new
+
+          # Call create with project name (should not raise)
+          assert_nothing_raised do
+            command.create("test-new-project")
+          end
+
+          # Verify project was created
+          assert Dir.exist?("test-new-project")
+          assert File.exist?("test-new-project/.picoruby-env.yml")
+        ensure
+          Dir.chdir(original_dir)
+        end
+      end
+    end
+  end
 end
