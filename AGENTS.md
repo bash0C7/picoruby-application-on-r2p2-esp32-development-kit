@@ -29,7 +29,7 @@ There are two distinct audiences in this project:
 **ptrk Users** (PicoRuby Application Developers):
 - They install the `ptrk` gem: `gem install picotorokko`
 - They use the `ptrk` command to develop PicoRuby applications for ESP32
-- They use templates and guides in `docs/`, `docs/github-actions/`, and `SPEC.md`
+- They use templates and guides in `docs/`, `docs/github-actions/`, and `docs/SPECIFICATION.md`
 - They run: `ptrk env show`, `ptrk build setup`, `ptrk device flash`, etc.
 
 ## Documentation Locations
@@ -43,7 +43,7 @@ There are two distinct audiences in this project:
 
 **For ptrk users** (they read these):
 - `README.md` — Installation and quick start (sections: "For PicoRuby Application Users")
-- `SPEC.md` — Complete specification of ptrk gems and behavior
+- `docs/SPECIFICATION.md` — Complete specification of ptrk commands and behavior
 - `docs/` — User guides (CI/CD, mrbgems, RuboCop, etc.)
 - `docs/github-actions/` — Workflow templates for GitHub Actions
 
@@ -235,3 +235,63 @@ Fixed delays waste AI tokens and extend execution time unnecessarily. Always use
 - ❌ Fixed sleep (wastes tokens, slow)
 - ❌ Polling loop with sleep (even worse)
 - ❌ Multiple commands with fixed delays
+
+## Documentation Update Standards
+
+### Key Development Files
+
+**For gem developers** (you read/write these):
+- `.claude/docs/` — Internal design documents, architecture, implementation guides
+- `.claude/skills/` — Agent workflows for your development process
+- `AGENTS.md` — AI instructions (this file)
+- `CLAUDE.md` — Development guidelines
+- `lib/picotorokko/` — Source code
+- `test/` — Test suite
+
+**For ptrk users** (they read these):
+- `README.md` — Installation and quick start
+- `docs/SPECIFICATION.md` — Complete specification of ptrk commands and behavior
+- `docs/` — User guides (CI/CD, mrbgems, RuboCop, etc.)
+- `docs/github-actions/` — Workflow templates for GitHub Actions
+
+### When to Update Documentation
+
+**Implementation changes trigger documentation updates**:
+
+1. **Command behavior changed?**
+   - Update: `docs/SPECIFICATION.md` + `README.md`
+   - Reference: `.claude/skills/documentation-standards/update-guide.md`
+
+2. **Template/workflow changed?**
+   - Update: `docs/CI_CD_GUIDE.md` + `docs/MRBGEMS_GUIDE.md`
+   - Reference: `.claude/skills/documentation-standards/update-guide.md`
+
+3. **Public API changed?**
+   - Update: rbs-inline annotations in source code
+   - Run: `rake rbs:generate` to regenerate `.rbs` files
+   - Reference: `.claude/docs/type-annotation-guide.md`
+
+4. **Architecture/design changed?**
+   - Update: `.claude/docs/` design documents
+   - Reference: `.claude/docs/documentation-automation-design.md`
+
+### Documentation Update Workflow
+
+See `.claude/skills/documentation-standards/` for complete implementation guide.
+
+**Quick reference**:
+1. Make code change + write tests + verify CI passes
+2. Check affected documentation files from list above
+3. Update documentation in same commit
+4. Commit with message referencing what documentation was updated
+5. Push to feature branch
+
+### Documentation Quality Rules
+
+**ALL documentation must follow these rules**:
+- ✅ **No historical context** — Remove all "was", "previously", "legacy", development notes
+- ✅ **Clean and forward-facing** — Written for current/future, not past
+- ✅ **User-centric sections** — Clearly divided: user-facing vs developer-facing
+- ✅ **Links updated** — All cross-references must point to current locations
+- ✅ **Specification first** — `docs/SPECIFICATION.md` is source of truth for command behavior
+- ✅ **Examples current** — All code examples must work with current implementation
