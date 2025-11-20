@@ -1,25 +1,37 @@
-name: Ruby
+name: CI
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - 'playground/**'
+    branches: [ main ]
 
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - 'playground/**'
+    # paths-ignore を削除し、すべてのPRでワークフローをトリガーする
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # ソースコードの変更があったかを判定するジョブ
+  changes-filter:
+    runs-on: ubuntu-slim
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'lib/**'
+              - 'test/**'
+              - 'Rakefile'
+              - 'Gemfile'
+              - 'picotorokko.gemspec'
+              - '.github/workflows/main.yml'
+
   test-main-matrix:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-slim
@@ -62,7 +74,10 @@ jobs:
         continue-on-error: true
 
   test-pr:
-    if: github.event_name == 'pull_request'
+    # changes-filter ジョブの完了を待つ
+    needs: changes-filter
+    # ソースコードに変更があった場合のみジョブを実行する
+    if: github.event_name == 'pull_request' && needs.changes-filter.outputs.src == 'true'
     runs-on: ubuntu-slim
     name: test (${{ matrix.ruby }})
     timeout-minutes: 3
