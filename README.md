@@ -154,7 +154,7 @@ Environment metadata is stored in `ptrk_env/.picoruby-env.yml`. Each environment
 
 ### Documentation
 
-For detailed specifications, see [SPEC.md](SPEC.md).
+For detailed specifications, see [docs/SPECIFICATION.md](docs/SPECIFICATION.md).
 
 ### CI/CD Integration
 
@@ -213,10 +213,10 @@ See [docs/architecture/](docs/architecture/) for complete architecture documenta
 
 #### User & Developer Guides
 
-- [SPEC.md](SPEC.md) - Complete specification of ptrk commands and behavior
-- [CI/CD Integration Guide](docs/CI_CD_GUIDE.md) - GitHub Actions workflows for PicoRuby application users
-- [mrbgems Development Guide](docs/MRBGEMS_GUIDE.md) - Creating application-specific mrbgems
-- [RuboCop Integration Guide](docs/RUBOCOP_PICORUBY_GUIDE.md) - RuboCop setup for PicoRuby development
+- [docs/SPECIFICATION.md](docs/SPECIFICATION.md) - Complete specification of ptrk commands and behavior
+- [docs/CI_CD_GUIDE.md](docs/CI_CD_GUIDE.md) - GitHub Actions workflows for PicoRuby application users
+- [docs/MRBGEMS_GUIDE.md](docs/MRBGEMS_GUIDE.md) - Creating application-specific mrbgems
+- [docs/RUBOCOP_PICORUBY_GUIDE.md](docs/RUBOCOP_PICORUBY_GUIDE.md) - RuboCop setup for PicoRuby development
 
 ### Development
 
