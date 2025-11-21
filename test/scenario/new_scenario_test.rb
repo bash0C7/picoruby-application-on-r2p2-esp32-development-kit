@@ -113,7 +113,7 @@ class ScenarioNewTest < PicotorokkoTestCase
           ignored = File.read(".gitignore", encoding: "UTF-8")
           assert_match(%r{\.cache/}, ignored)
           assert_match(%r{build/}, ignored)
-          assert_match(%r{ptrk_env/}, ignored)
+          assert_match(%r{\.ptrk_env/}, ignored)
 
           # User expectation: Can commit project files
           system("git add .", out: File::NULL)

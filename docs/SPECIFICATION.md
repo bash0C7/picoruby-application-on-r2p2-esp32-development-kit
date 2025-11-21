@@ -204,7 +204,7 @@ environments:
 │
 ├── .cache/                 # Version cache (git-ignored)
 ├── build/                  # Build working directory (git-ignored)
-├── ptrk_env/               # Environment metadata (git-ignored)
+├── ..ptrk_env/               # Environment metadata (git-ignored)
 │
 ├── .picoruby-env.yml       # Environment configuration file
 ├── .gitignore              # Standard gitignore for ptrk projects
@@ -217,19 +217,19 @@ environments:
 
 **Generated Files**:
 
-1. **`.gitignore`** - Excludes `.cache/`, `build/`, `ptrk_env/*/` from version control
+1. **`.gitignore`** - Excludes `.cache/`, `build/`, `..ptrk_env/*/` from version control
 2. **`.picoruby-env.yml`** - Initial environment configuration (empty, ready for `ptrk env set`)
 3. **`.rubocop.yml`** - PicoRuby-specific linting configuration:
    - TargetRubyVersion: 3.3 for microcontroller development
    - Stricter Metrics/MethodLength (20 max) for memory efficiency
-   - Excludes ptrk_env/, .cache/, patch/, vendor/ from linting
+   - Excludes ..ptrk_env/, .cache/, patch/, vendor/ from linting
    - Allows Japanese comments for device documentation
 4. **`Mrbgemfile`** - mrbgems dependency declarations:
    - Pre-configured with picoruby-picotest reference
    - Platform-specific mrbgem support
    - GitHub repository references
 5. **`Gemfile`** - Contains `picotorokko` gem dependency (when available in gems)
-6. **`ptrk_env/.gitkeep`** - Preserves directory in git
+6. **`..ptrk_env/.gitkeep`** - Preserves directory in git
 7. **`README.md`** - Template-generated with project name and author, includes ptrk command references
 8. **`CLAUDE.md`** - Comprehensive PicoRuby development guide including:
    - mrbgems dependency management
@@ -287,7 +287,7 @@ mkdir my-app && cd my-app && ptrk new
 **Success Criteria**:
 - All directories created with `.gitkeep` files where needed
 - All template files rendered without errors
-- `.gitignore` correctly excludes `.cache/`, `build/`, `ptrk_env/*/`
+- `.gitignore` correctly excludes `.cache/`, `build/`, `..ptrk_env/*/`
 - `.picoruby-env.yml` contains empty environments map ready for `ptrk env set`
 - Project is immediately usable with `ptrk env set` and `ptrk build setup`
 
@@ -319,7 +319,7 @@ PROJECT_NAME/
 │   ├── R2P2-ESP32/        # R2P2-ESP32 patches
 │   ├── picoruby-esp32/    # picoruby-esp32 patches
 │   └── picoruby/          # picoruby patches
-├── ptrk_env/              # Environment metadata (git-ignored)
+├── ..ptrk_env/              # Environment metadata (git-ignored)
 │   └── .gitkeep
 ├── mrbgems/               # Custom mrbgems (if --with-mrbgem specified)
 │   └── NAME/
@@ -372,7 +372,7 @@ ptrk new
 2. Create directory structure with `.gitkeep` files
 3. Render template files with project variables:
    - `.picoruby-env.yml` - Empty YAML structure ready for environments
-   - `.gitignore` - Excludes `.cache/`, `build/`, `ptrk_env/*/`
+   - `.gitignore` - Excludes `.cache/`, `build/`, `..ptrk_env/*/`
    - `Gemfile` - References picotorokko gem from rubygems.org
    - `README.md` - Project overview and quick start instructions
    - `CLAUDE.md` - PicoRuby development guidelines
@@ -707,18 +707,18 @@ diff --git a/storage/home/custom.rb (working) vs (patch/)
 
 #### `ptrk device build [--env ENV_NAME]`
 
-**Description**: Setup build environment in `ptrk_env/` from environment definition and build firmware
+**Description**: Setup build environment in `..ptrk_env/` from environment definition and build firmware
 
 **Arguments**:
 - `--env ENV_NAME` - Environment name (default: `latest`)
 
 **Operation**:
 1. Load environment definition from `.picoruby-env.yml` (e.g., `latest`)
-2. Prepare build workspace at `ptrk_env/{ENV_NAME}/`
-3. Clone R2P2-ESP32 WITH SUBMODULES using cached copy and place it under `ptrk_env/{ENV_NAME}/R2P2-ESP32/`
+2. Prepare build workspace at `..ptrk_env/{ENV_NAME}/`
+3. Clone R2P2-ESP32 WITH SUBMODULES using cached copy and place it under `..ptrk_env/{ENV_NAME}/R2P2-ESP32/`
 4. Clone picoruby-esp32 and picoruby repositories referenced by the environment definition
 5. Copy `storage/home/` and `mrbgems/` (if present) into the R2P2-ESP32 working directory
-6. Execute `rake build` in `ptrk_env/{ENV_NAME}/R2P2-ESP32/`
+6. Execute `rake build` in `..ptrk_env/{ENV_NAME}/R2P2-ESP32/`
 
 **Note**: Apply custom patches with `ptrk env patch_apply` before building if you need to overlay files from `patch/`.
 

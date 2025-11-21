@@ -101,7 +101,7 @@ module Picotorokko
         "patch/R2P2-ESP32",
         "patch/picoruby-esp32",
         "patch/picoruby",
-        "ptrk_env",
+        ".ptrk_env",
         ".github/workflows"
       ]
 
@@ -180,7 +180,7 @@ module Picotorokko
         "patch/R2P2-ESP32/.gitkeep",
         "patch/picoruby-esp32/.gitkeep",
         "patch/picoruby/.gitkeep",
-        "ptrk_env/.gitkeep"
+        ".ptrk_env/.gitkeep"
       ]
 
       # Add GitHub Actions workflow if --with-ci is enabled

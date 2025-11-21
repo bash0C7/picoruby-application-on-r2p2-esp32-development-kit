@@ -6,7 +6,7 @@ AllCops:
   NewCops: enable
   Exclude:
     - "vendor/**/*"
-    - "ptrk_env/**/*"
+    - ".ptrk_env/**/*"
     - ".cache/**/*"
     - "patch/**/*"
 

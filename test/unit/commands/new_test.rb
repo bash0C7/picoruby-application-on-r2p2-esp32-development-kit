@@ -33,7 +33,7 @@ class UnitCommandsNewTest < PicotorokkoTestCase
           # Check that all required directories are created
           assert Dir.exist?("test-project/storage/home")
           assert Dir.exist?("test-project/patch")
-          assert Dir.exist?("test-project/ptrk_env")
+          assert Dir.exist?("test-project/.ptrk_env")
         ensure
           Dir.chdir(original_dir)
         end
@@ -114,7 +114,7 @@ class UnitCommandsNewTest < PicotorokkoTestCase
           gitignore = File.read("test-project/.gitignore")
           assert_match(%r{\.cache/}, gitignore)
           assert_match(%r{build/}, gitignore)
-          assert_match(%r{ptrk_env/}, gitignore)
+          assert_match(%r{\.ptrk_env/}, gitignore)
         ensure
           Dir.chdir(original_dir)
         end
@@ -178,7 +178,7 @@ class UnitCommandsNewTest < PicotorokkoTestCase
           # Check that directories are created in current directory
           assert Dir.exist?("./storage/home")
           assert Dir.exist?("./patch")
-          assert Dir.exist?("./ptrk_env")
+          assert Dir.exist?("./.ptrk_env")
         ensure
           Dir.chdir(original_dir)
         end
@@ -195,7 +195,7 @@ class UnitCommandsNewTest < PicotorokkoTestCase
           initializer.initialize_project
 
           # Check for .gitkeep files
-          assert File.exist?("test-project/ptrk_env/.gitkeep")
+          assert File.exist?("test-project/.ptrk_env/.gitkeep")
           assert File.exist?("test-project/storage/home/.gitkeep")
           assert File.exist?("test-project/patch/R2P2-ESP32/.gitkeep")
           assert File.exist?("test-project/patch/picoruby-esp32/.gitkeep")

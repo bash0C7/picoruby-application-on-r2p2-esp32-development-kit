@@ -91,7 +91,7 @@ To customize R2P2-ESP32 or dependencies:
 │
 ├── .cache/                 # Repository snapshots (git-ignored)
 ├── build/                  # Build working directory (git-ignored)
-├── ptrk_env/               # Environment metadata (git-ignored)
+├── .ptrk_env/              # Environment metadata (git-ignored)
 │
 ├── .picoruby-env.yml       # Environment definitions
 ├── .gitignore

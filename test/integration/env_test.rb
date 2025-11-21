@@ -27,9 +27,9 @@ class EnvTest < Test::Unit::TestCase
 
     test "save_env_file and load_env_file round trip" do
       data = {
-        "current" => "test-env",
+        "current" => "20251121_120000",
         "environments" => {
-          "test-env" => {
+          "20251121_120000" => {
             "R2P2-ESP32" => { "commit" => "abc1234", "timestamp" => "20250101_120000" },
             "picoruby-esp32" => { "commit" => "def5678", "timestamp" => "20250101_120000" },
             "picoruby" => { "commit" => "ghi9012", "timestamp" => "20250101_120000" },
@@ -42,8 +42,8 @@ class EnvTest < Test::Unit::TestCase
       loaded = Picotorokko::Env.load_env_file
 
       assert_equal(data, loaded)
-      assert_equal("test-env", loaded["current"])
-      assert_equal("abc1234", loaded["environments"]["test-env"]["R2P2-ESP32"]["commit"])
+      assert_equal("20251121_120000", loaded["current"])
+      assert_equal("abc1234", loaded["environments"]["20251121_120000"]["R2P2-ESP32"]["commit"])
     end
   end
 
@@ -59,9 +59,9 @@ class EnvTest < Test::Unit::TestCase
       esp32_info = { "commit" => "def5678", "timestamp" => "20250101_120000" }
       picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250101_120000" }
 
-      Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info, notes: "Test notes")
+      Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info, notes: "Test notes")
 
-      env = Picotorokko::Env.get_environment("test-env")
+      env = Picotorokko::Env.get_environment("20251121_120000")
       assert_not_nil(env)
       assert_equal(r2p2_info, env["R2P2-ESP32"])
       assert_equal(esp32_info, env["picoruby-esp32"])
@@ -93,7 +93,7 @@ class EnvTest < Test::Unit::TestCase
 
     test "get_build_path returns correct path" do
       # Phase 4.1: Build path uses env_name instead of env_hash
-      env_name = "test-env"
+      env_name = "20251121_120000"
       result = Picotorokko::Env.get_build_path(env_name)
       expected = File.join(Picotorokko::Env::PROJECT_ROOT, Picotorokko::Env::ENV_DIR, env_name)
 
@@ -155,9 +155,9 @@ class EnvTest < Test::Unit::TestCase
       esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
       picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-      Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
+      Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info)
 
-      result = Picotorokko::Env.compute_env_hash("test-env")
+      result = Picotorokko::Env.compute_env_hash("20251121_120000")
       assert_not_nil(result)
 
       r2p2_hash, esp32_hash, picoruby_hash, env_hash = result

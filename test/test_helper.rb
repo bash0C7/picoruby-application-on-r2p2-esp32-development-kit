@@ -95,12 +95,12 @@ class PicotorokkoTestCase < Test::Unit::TestCase
     begin
       dirs_to_cleanup = [
         File.join(Picotorokko::Env.project_root, "build"),    # build/
-        Picotorokko::Env.patch_dir,                           # ptrk_env/patch/
-        Picotorokko::Env.cache_dir                            # ptrk_env/.cache/
+        Picotorokko::Env.patch_dir,                           # .ptrk_env/patch/
+        Picotorokko::Env.cache_dir                            # .ptrk_env/.cache/
       ]
 
       files_to_cleanup = [
-        Picotorokko::Env.env_file                             # ptrk_env/.picoruby-env.yml
+        Picotorokko::Env.env_file                             # .ptrk_env/.picoruby-env.yml
       ]
 
       dirs_to_cleanup.each do |dir|
@@ -140,7 +140,7 @@ class PicotorokkoTestCase < Test::Unit::TestCase
   # Helper: Verify gem root is not polluted with build artifacts
   def verify_gem_root_clean!
     gem_root = Dir.pwd
-    pollution_dirs = %w[build ptrk_env .cache patch]
+    pollution_dirs = %w[build .ptrk_env .cache patch]
     polluted = pollution_dirs.select { |dir| File.exist?(File.join(gem_root, dir)) }
 
     return if polluted.empty?
