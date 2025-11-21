@@ -2,61 +2,17 @@ require_relative "../../test_helper"
 require "reality_marble"
 
 class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
-  test "ProjectInitializer has setup_default_environment method" do
+  test "initialize_project creates project structure" do
     tmpdir = Dir.mktmpdir
     project_name = "test_project"
 
     begin
       initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
-      assert initializer.respond_to?(:setup_default_environment),
-             "ProjectInitializer should have setup_default_environment method"
-    ensure
-      FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
-    end
-  end
-
-  test "initialize_project handles setup_default_environment gracefully" do
-    tmpdir = Dir.mktmpdir
-    project_name = "test_project"
-
-    begin
-      # Mock setup_default_environment to avoid network calls
-      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
-        # Simulate successful completion without network call
-      end
-
-      initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
-      # Should complete without error even with setup_default_environment mocked
       initializer.initialize_project
 
       # Verify project structure was created
       assert Dir.exist?(File.join(tmpdir, project_name, "storage", "home"))
     ensure
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
-      FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
-    end
-  end
-
-  test "initialize_project handles setup_default_environment errors gracefully" do
-    tmpdir = Dir.mktmpdir
-    project_name = "test_project"
-
-    begin
-      # Mock setup_default_environment to raise an error
-      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
-        raise StandardError, "Network error"
-      end
-
-      initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
-      # Should complete without raising, despite error in setup_default_environment
-      initializer.initialize_project
-
-      # Verify project structure was still created
-      assert Dir.exist?(File.join(tmpdir, project_name, "storage", "home"))
-    ensure
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
@@ -66,12 +22,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
     project_name = "test_project"
 
     begin
-      # Mock setup_default_environment to avoid network calls
-      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
-        # No-op
-      end
-
       initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
       initializer.initialize_project
 
@@ -79,7 +29,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
       test_dir = File.join(tmpdir, project_name, "test")
       assert Dir.exist?(test_dir), "test/ directory should be created"
     ensure
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
@@ -89,12 +38,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
     project_name = "test_project"
 
     begin
-      # Mock setup_default_environment to avoid network calls
-      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
-        # No-op
-      end
-
       initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
       initializer.initialize_project
 
@@ -102,7 +45,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
       test_file = File.join(tmpdir, project_name, "test", "app_test.rb")
       assert File.exist?(test_file), "test/app_test.rb template should be created"
     ensure
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
@@ -112,12 +54,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
     project_name = "test_project"
 
     begin
-      # Mock setup_default_environment to avoid network calls
-      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
-        # No-op
-      end
-
       initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
       initializer.initialize_project
 
@@ -131,7 +67,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
       assert_match(/mock_any_instance_of/, content, "Should include mock example")
       assert_match(/assert_equal/, content, "Should include assertion example")
     ensure
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
@@ -141,12 +76,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
     project_name = "test_project"
 
     begin
-      # Mock setup_default_environment to avoid network calls
-      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
-        # No-op
-      end
-
       initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
       initializer.initialize_project
 
@@ -160,7 +89,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
       assert_match(/ptrk_env/, content, "Should exclude ptrk_env directory")
       assert_match(%r{Metrics/MethodLength}, content, "Should have MethodLength config")
     ensure
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
@@ -170,12 +98,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
     project_name = "test_project"
 
     begin
-      # Mock setup_default_environment to avoid network calls
-      original_method = Picotorokko::ProjectInitializer.instance_method(:setup_default_environment)
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment) do
-        # No-op
-      end
-
       initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
       initializer.initialize_project
 
@@ -189,7 +111,6 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
       assert_match(/GPIO/, content, "Should mention GPIO")
       assert_match(/Memory Optimization/, content, "Should discuss memory optimization")
     ensure
-      Picotorokko::ProjectInitializer.define_method(:setup_default_environment, original_method)
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end
@@ -283,6 +204,26 @@ class PicotorokkoProjectInitializerTest < PicotorokkoTestCase
       end
     ensure
       File.delete(test_template_path) if test_template_path && File.exist?(test_template_path)
+      FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
+    end
+  end
+
+  test "initialize_project does not create environment automatically" do
+    tmpdir = Dir.mktmpdir
+    project_name = "test_project"
+
+    begin
+      initializer = Picotorokko::ProjectInitializer.new(project_name, path: tmpdir)
+      initializer.initialize_project
+
+      # .ptrk_env directory should exist (for structure) but be empty except .gitkeep
+      ptrk_env_dir = File.join(tmpdir, project_name, ".ptrk_env")
+      assert Dir.exist?(ptrk_env_dir), ".ptrk_env directory should exist"
+
+      # Only .gitkeep should exist
+      entries = Dir.entries(ptrk_env_dir).reject { |e| [".", ".."].include?(e) }
+      assert_equal [".gitkeep"], entries, ".ptrk_env should only contain .gitkeep"
+    ensure
       FileUtils.rm_rf(tmpdir) if tmpdir && Dir.exist?(tmpdir)
     end
   end

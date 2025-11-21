@@ -91,7 +91,8 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info, notes: "Test environment")
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info,
+                                           notes: "Test environment")
 
           output = capture_stdout do
             Picotorokko::Commands::Env.start(["show", "20251121_120000"])
