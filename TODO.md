@@ -29,7 +29,15 @@
 
 **New (SPEC.md v2 - correct)**:
 - `ptrk env latest` → save environment definition only
-- `ptrk device build` → setup `.build/` and build firmware
+- `ptrk device build` → setup `.ptrk_build/` and build firmware
+
+### Phase 3a: Directory naming consistency (ptrk_env → .ptrk_env)
+- [ ] **TDD RED**: Write tests for `.ptrk_env/` directory usage
+- [ ] **TDD GREEN**: Update `ENV_DIR` constant from `ptrk_env` to `.ptrk_env`
+- [ ] **TDD GREEN**: Update all `get_build_path`, `get_environment`, file operations to use `.ptrk_env/`
+- [ ] **TDD GREEN**: Update test fixtures and test setup
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "refactor: rename ptrk_env to .ptrk_env for consistency and visibility control"
 
 ### Phase 3: Remove env creation from ptrk new
 - [ ] **TDD RED**: Write test for `ptrk new` without environment creation
@@ -39,18 +47,77 @@
 - [ ] **COMMIT**: "refactor: remove automatic environment creation from ptrk new"
 
 ### Phase 3b: Rename ptrk env latest to ptrk env set --latest
-- [ ] **TDD RED**: Write test for `ptrk env set --latest` with timestamp env name (YYYYMMDD_HHMMSS format)
-- [ ] **TDD GREEN**: Rename latest command to be `ptrk env set --latest`
-- [ ] **TDD GREEN**: Auto-set currentenv if .picoruby-env.yml is empty/missing
+
+**Design**: Use git submodule mechanism for cross-repo consistency
+- Clone R2P2-ESP32 at specified commit
+- Initialize submodules and checkout picoruby-esp32 & picoruby at specified commits
+- Disable push on all repos to prevent accidental pushes
+- Generate env-name from local timestamp (YYYYMMDD_HHMMSS format)
+
+#### Phase 3b-submodule: Implement submodule rewriting
+- [ ] **TDD RED**: Write test for `ptrk env set --latest` with submodule rewriting
+- [ ] **TDD GREEN**: Clone R2P2-ESP32 at specified commit to `.ptrk_env/{env_name}/`
+- [ ] **TDD GREEN**: Extract picoruby-esp32 & picoruby commit refs from env definition
+- [ ] **TDD GREEN**: Initialize submodules: `git submodule update --init --recursive`
+- [ ] **TDD GREEN**: Checkout each submodule to specified commit:
+  - `cd .ptrk_env/{env}/components/picoruby-esp32 && git checkout <commit>`
+  - `cd picoruby && git checkout <commit>` (nested submodule)
+- [ ] **TDD GREEN**: Stage submodule changes: `git add components/picoruby-esp32`
+- [ ] **TDD GREEN**: Commit: `git commit --amend -m "..."` with timestamp env-name
+- [ ] **TDD GREEN**: Disable push on all repos via `git remote set-url --push origin no_push`
+- [ ] **TDD GREEN**: Generate env-name from local timestamp (YYYYMMDD_HHMMSS)
+- [ ] **TDD GREEN**: Record R2P2-ESP32, picoruby-esp32, picoruby commit hashes in .picoruby-env.yml
+- [ ] **TDD GREEN**: Auto-set current env if .picoruby-env.yml is empty/missing
 - [ ] **TDD RUBOCOP**: Auto-fix style
-- [ ] **TDD REFACTOR**: Extract timestamp generation logic
-- [ ] **COMMIT**: "refactor: rename ptrk env latest to ptrk env set --latest"
+- [ ] **TDD REFACTOR**: Extract git submodule operations into helper methods
+- [ ] **COMMIT**: "feat: implement ptrk env set --latest with submodule rewriting"
+
+#### Phase 3b-cleanup: Remove ptrk env latest command
+- [ ] **TDD RED**: Write test verifying `ptrk env latest` is no longer available
+- [ ] **TDD GREEN**: Remove `latest` command from env.rb
+- [ ] **TDD GREEN**: Remove CLI registration from cli.rb
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "refactor: remove ptrk env latest command (replaced by ptrk env set --latest)"
+
+#### Phase 3b-rubocop: Generate RuboCop config in env set
+
+**Design**: Extract RBS files directly from env's picoruby repository
+- Source: `.ptrk_env/{env}/picoruby/mrbgems/picoruby-*/sig/*.rbs`
+- Parse RBS files using `rbs` gem (not markdown)
+- Compare with CRuby core class methods
+- Store env-specific JSON databases
+
+- [ ] **TDD RED**: Write test for RuboCop setup during `ptrk env set --latest`
+- [ ] **TDD GREEN**: Generate `.ptrk_env/{env}/rubocop/data/` directory during env creation
+- [ ] **TDD GREEN**: Locate RBS files in `.ptrk_env/{env}/picoruby/mrbgems/picoruby-*/sig/*.rbs`
+- [ ] **TDD GREEN**: Parse RBS using `rbs` gem and extract method definitions
+- [ ] **TDD GREEN**: Extract CRuby core class methods (Array, String, Hash, Integer, Float, Symbol, Regexp, Range, Enumerable, Numeric, Kernel, File, Dir)
+- [ ] **TDD GREEN**: Calculate unsupported methods (CRuby - PicoRuby)
+- [ ] **TDD GREEN**: Generate `picoruby_supported_methods.json` and `picoruby_unsupported_methods.json`
+- [ ] **TDD GREEN**: Copy custom Cop files to `.ptrk_env/{env}/rubocop/lib/`
+- [ ] **TDD GREEN**: Generate env-specific `.rubocop-picoruby.yml` in `.ptrk_env/{env}/rubocop/`
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "feat: generate env-specific RuboCop configuration in ptrk env set"
 
 ### Phase 3c: Implement current environment tracking
 - [ ] **TDD RED**: Write test for `ptrk env current ENV_NAME` command
 - [ ] **TDD GREEN**: Implement `ptrk env current` to set/get current environment
 - [ ] **TDD RUBOCOP**: Auto-fix style
 - [ ] **COMMIT**: "feat: add ptrk env current command for environment selection"
+
+#### Phase 3c-rubocop: Sync .rubocop.yml with current env
+
+**Design**: Merge env-specific RuboCop config with existing project config
+- Use `inherit_from` to reference `.ptrk_env/{env}/rubocop/.rubocop-picoruby.yml`
+- Preserves user's existing `.rubocop.yml` settings
+- Auto-generates if doesn't exist
+
+- [ ] **TDD RED**: Write test for `.rubocop.yml` placement when `ptrk env current` is set
+- [ ] **TDD GREEN**: Create `.rubocop.yml` in project root if not exists
+- [ ] **TDD GREEN**: Add `inherit_from: .ptrk_env/{env}/rubocop/.rubocop-picoruby.yml` to `.rubocop.yml`
+- [ ] **TDD GREEN**: Preserve user's existing `.rubocop.yml` settings (merge not overwrite)
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "feat: generate project .rubocop.yml linked to current env"
 
 ### Phase 3d: Support ENV_NAME omission with current fallback
 - [ ] **TDD RED**: Write tests for optional ENV_NAME on patch_diff, patch_export, reset, show
@@ -65,17 +132,53 @@
 - [ ] **TDD RUBOCOP**: Auto-fix style
 - [ ] **COMMIT**: "refactor: remove patch_apply command (patches applied during build)"
 
-### Phase 4: Implement .build Setup in ptrk device build
-- [ ] **TDD RED**: Write test for `.build/` directory creation with submodules
-- [ ] **TDD GREEN**: Implement `.build/` setup (clone with submodules, apply patches)
+### Phase 3f: Remove ptrk rubocop command
+- [ ] **TDD RED**: Write test verifying `ptrk rubocop` is no longer available
+- [ ] **TDD GREEN**: Remove RuboCop command class (`lib/picotorokko/commands/rubocop.rb`)
+- [ ] **TDD GREEN**: Remove CLI registration from `lib/picotorokko/cli.rb`
+- [ ] **TDD GREEN**: Keep RuboCop templates (used in env setup and `ptrk env current`)
 - [ ] **TDD RUBOCOP**: Auto-fix style
-- [ ] **TDD REFACTOR**: Extract setup logic into helper methods
-- [ ] **COMMIT**: "feat: setup .build directory with submodules in ptrk device build"
+- [ ] **COMMIT**: "refactor: remove ptrk rubocop command (integrated into ptrk env)"
+
+### Phase 4: Implement .ptrk_build Setup in ptrk device build
+
+**Design**: Separate readonly env cache from build working directory
+- `.ptrk_env/{env_name}/` - readonly env (git working copies from env definition)
+- `.ptrk_build/{env_name}/` - build working directory (patches, storage/home applied)
+
+#### Phase 4a: Setup .ptrk_build directory structure
+- [ ] **TDD RED**: Write test for `.ptrk_build/{env_name}/` directory creation with complete submodule structure
+- [ ] **TDD GREEN**: If `.ptrk_build/{env_name}/` doesn't exist, copy entire tree from `.ptrk_env/{env_name}/` (submodules already present)
+- [ ] **TDD GREEN**: Skip copy if `.ptrk_build/{env_name}/` already exists (cache optimization)
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "feat: setup .ptrk_build directory from env cache with complete submodule structure"
+
+#### Phase 4b: Apply patches to .ptrk_build directory
+- [ ] **TDD RED**: Write test for patch application to `.ptrk_build/{env_name}/`
+- [ ] **TDD GREEN**: Implement patch application (always run, even if `.ptrk_build/{env_name}/` existed)
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "feat: apply patches to .ptrk_build directory"
+
+#### Phase 4c: Reflect storage/home contents
+- [ ] **TDD RED**: Write test for storage/home reflection
+- [ ] **TDD GREEN**: Copy from `storage/home/` to `.ptrk_build/{env_name}/R2P2-ESP32/storage/home/`
+- [ ] **TDD GREEN**: Ensure this runs always (even if `.ptrk_build/{env_name}/` existed)
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "feat: reflect storage/home contents in .ptrk_build directory"
+
+#### Phase 4d: Update ptrk device default env
+- [ ] **TDD RED**: Write test for `--env` default as `current` (not `latest`)
+- [ ] **TDD GREEN**: Change `ptrk device build` default from `latest` to `current`
+- [ ] **TDD RUBOCOP**: Auto-fix style
+- [ ] **COMMIT**: "refactor: use current as default env for all device commands"
 
 ### Phase 5: End-to-end Verification
-- [ ] Verify workflow: `ptrk init` → `ptrk env latest` → `ptrk device build`
+- [ ] Verify workflow: `ptrk env set --latest` → `ptrk env current 20251121_060114` → `ptrk device build`
 - [ ] Test in playground environment
-- [ ] Confirm submodule structure in `.build/R2P2-ESP32/components/picoruby-esp32/picoruby/`
+- [ ] Confirm `.ptrk_env/20251121_060114/R2P2-ESP32/` has complete submodule structure (git submodule update executed)
+- [ ] Confirm `.ptrk_build/20251121_060114/R2P2-ESP32/` is copy of .ptrk_env with patches and storage/home applied
+- [ ] Verify push is disabled on all repos: `git remote -v` shows no push URL
+- [ ] Verify `.ptrk_env/` repos cannot be accidentally modified
 
 ---
 
