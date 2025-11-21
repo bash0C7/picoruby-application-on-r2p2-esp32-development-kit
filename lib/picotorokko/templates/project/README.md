@@ -56,7 +56,7 @@ ptrk device monitor
 - **`patch/`** — Customizations to R2P2-ESP32 and dependencies (git-managed)
 - **`.cache/`** — Immutable repository snapshots (git-ignored)
 - **`build/`** — Active build working directory (git-ignored)
-- **`ptrk_env/`** — Environment metadata (git-ignored)
+- **`.ptrk_env/`** — Environment metadata (git-ignored)
 
 ## Documentation
 

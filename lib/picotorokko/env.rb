@@ -15,10 +15,10 @@ module Picotorokko
   # - ビルド環境（Build Environment）: build/ ディレクトリに構築されたワーキングディレクトリ（実ファイル）
   # - キャッシュ（Cache）: .cache/ ディレクトリに保存された不変のリポジトリコピー
   module Env
-    # ptrk env directory name
-    ENV_DIR = "ptrk_env".freeze
-    # ptrk env name pattern validation (lowercase alphanumeric, dash, underscore)
-    ENV_NAME_PATTERN = /^[a-z0-9_-]+$/
+    # ptrk env directory name (hidden directory)
+    ENV_DIR = ".ptrk_env".freeze
+    # ptrk env name pattern validation (YYYYMMDD_HHMMSS format only)
+    ENV_NAME_PATTERN = /^\d+_\d+$/
 
     # リポジトリ定義
     REPOS = {

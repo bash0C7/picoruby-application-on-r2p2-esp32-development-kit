@@ -51,7 +51,7 @@ class IntegrationCommandsNewTest < PicotorokkoTestCase
           initializer.initialize_project
 
           # Project should be created successfully even if network setup fails
-          assert File.exist?("test-project/ptrk_env")
+          assert File.exist?("test-project/.ptrk_env")
         ensure
           Dir.chdir(original_dir)
         end

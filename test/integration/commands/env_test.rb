@@ -27,16 +27,16 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("staging", r2p2_info, esp32_info, picoruby_info)
-          Picotorokko::Env.set_environment("production", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("20231215_143000", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("20251121_190000", r2p2_info, esp32_info, picoruby_info)
 
           output = capture_stdout do
             Picotorokko::Commands::Env.start(["list"])
           end
 
           # 両方の環境がリストアップされていることを確認
-          assert_match(/staging/, output)
-          assert_match(/production/, output)
+          assert_match(/20231215_143000/, output)
+          assert_match(/20251121_190000/, output)
         end
       end
     end
@@ -66,14 +66,14 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info)
 
           output = capture_stdout do
             Picotorokko::Commands::Env.start(["list"])
           end
 
           # 環境名が表示されていることを確認
-          assert_match(/test-env/, output)
+          assert_match(/20251121_120000/, output)
         end
       end
     end
@@ -91,13 +91,13 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info, notes: "Test environment")
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info, notes: "Test environment")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(["show", "test-env"])
+            Picotorokko::Commands::Env.start(["show", "20251121_120000"])
           end
 
-          assert_match(/Environment: test-env/, output)
+          assert_match(/Environment: 20251121_120000/, output)
           assert_match(/Repo versions:/, output)
           assert_match(/R2P2-ESP32: abc1234 \(20250101_120000\)/, output)
           assert_match(/picoruby-esp32: def5678 \(20250102_120000\)/, output)
@@ -117,17 +117,17 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("staging", r2p2_info, esp32_info, picoruby_info,
+          Picotorokko::Env.set_environment("20231215_143000", r2p2_info, esp32_info, picoruby_info,
                                            notes: "Staging environment")
-          Picotorokko::Env.set_environment("production", r2p2_info, esp32_info, picoruby_info,
+          Picotorokko::Env.set_environment("20251121_190000", r2p2_info, esp32_info, picoruby_info,
                                            notes: "Production environment")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(["show", "staging"])
+            Picotorokko::Commands::Env.start(["show", "20231215_143000"])
           end
 
-          # Verify staging environment details are shown
-          assert_match(/staging/, output)
+          # Verify 20231215_143000 environment details are shown
+          assert_match(/20231215_143000/, output)
           assert_match(/Staging environment/, output)
           assert_match(/Repo versions:/, output)
         end
@@ -177,12 +177,12 @@ class CommandsEnvTest < PicotorokkoTestCase
 
           capture_stdout do
             Picotorokko::Commands::Env.start(
-              ["set", "prod", "--R2P2-ESP32", "picoruby/R2P2-ESP32",
+              ["set", "20251121_170000", "--R2P2-ESP32", "picoruby/R2P2-ESP32",
                "--picoruby-esp32", "picoruby/picoruby-esp32", "--picoruby", "picoruby/picoruby"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment("prod")
+          env_config = Picotorokko::Env.get_environment("20251121_170000")
           assert_not_nil(env_config)
           # Verify source URLs are stored correctly
           assert_match(%r{https://github\.com/picoruby/R2P2-ESP32\.git},
@@ -201,12 +201,12 @@ class CommandsEnvTest < PicotorokkoTestCase
 
           capture_stdout do
             Picotorokko::Commands::Env.start(
-              ["set", "my-fork", "--R2P2-ESP32", "myorg/R2P2-ESP32",
+              ["set", "20251121_140000", "--R2P2-ESP32", "myorg/R2P2-ESP32",
                "--picoruby-esp32", "myorg/picoruby-esp32", "--picoruby", "myorg/picoruby"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment("my-fork")
+          env_config = Picotorokko::Env.get_environment("20251121_140000")
           assert_not_nil(env_config)
           # Verify fork URLs
           assert_match(%r{https://github\.com/myorg/R2P2-ESP32\.git},
@@ -241,12 +241,12 @@ class CommandsEnvTest < PicotorokkoTestCase
 
           capture_stdout do
             Picotorokko::Commands::Env.start(
-              ["set", "local", "--R2P2-ESP32", "path:#{r2p2_path}",
+              ["set", "20251121_180000", "--R2P2-ESP32", "path:#{r2p2_path}",
                "--picoruby-esp32", "path:#{esp32_path}", "--picoruby", "path:#{picoruby_path}"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment("local")
+          env_config = Picotorokko::Env.get_environment("20251121_180000")
           assert_not_nil(env_config)
           # Verify path sources
           assert_equal("path:#{r2p2_path}", env_config["R2P2-ESP32"]["source"])
@@ -284,12 +284,12 @@ class CommandsEnvTest < PicotorokkoTestCase
 
           capture_stdout do
             Picotorokko::Commands::Env.start(
-              ["set", "specific", "--R2P2-ESP32", "path:#{r2p2_path}:abc1234",
+              ["set", "20251121_190000", "--R2P2-ESP32", "path:#{r2p2_path}:abc1234",
                "--picoruby-esp32", "path:#{esp32_path}:def5678", "--picoruby", "path:#{picoruby_path}:fade012"]
             )
           end
 
-          env_config = Picotorokko::Env.get_environment("specific")
+          env_config = Picotorokko::Env.get_environment("20251121_190000")
           assert_not_nil(env_config)
           # Verify explicit commits are stored
           assert_equal("abc1234", env_config["R2P2-ESP32"]["commit"])
@@ -307,10 +307,10 @@ class CommandsEnvTest < PicotorokkoTestCase
           # Mock GitHub fetch
           stub_git_operations do |_context|
             capture_stdout do
-              Picotorokko::Commands::Env.start(["set", "latest"])
+              Picotorokko::Commands::Env.start(["set", "20251121_150000"])
             end
 
-            env_config = Picotorokko::Env.get_environment("latest")
+            env_config = Picotorokko::Env.get_environment("20251121_150000")
             assert_not_nil(env_config)
             # Verify default sources from GitHub
             assert_match(%r{https://github\.com/picoruby/R2P2-ESP32\.git},
@@ -353,16 +353,16 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info,
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info,
                                            notes: "Original environment")
 
           # Reset the environment
           capture_stdout do
-            Picotorokko::Commands::Env.start(["reset", "test-env"])
+            Picotorokko::Commands::Env.start(["reset", "20251121_120000"])
           end
 
           # Verify environment still exists
-          env_config = Picotorokko::Env.get_environment("test-env")
+          env_config = Picotorokko::Env.get_environment("20251121_120000")
           assert_not_nil(env_config)
           # Original data should be gone (recreated with placeholder)
           assert_equal("placeholder", env_config["R2P2-ESP32"]["commit"])
@@ -380,17 +380,17 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("preserve-test", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("20251121_160000", r2p2_info, esp32_info, picoruby_info)
 
           # Reset
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(["reset", "preserve-test"])
+            Picotorokko::Commands::Env.start(["reset", "20251121_160000"])
           end
 
           # Check that environment still exists with same name
-          env_config = Picotorokko::Env.get_environment("preserve-test")
+          env_config = Picotorokko::Env.get_environment("20251121_160000")
           assert_not_nil(env_config)
-          assert_match(/preserve-test/, output)
+          assert_match(/20251121_160000/, output)
         end
       end
     end
@@ -563,16 +563,16 @@ class CommandsEnvTest < PicotorokkoTestCase
 
   # Picotorokko::Env module validation tests
   sub_test_case "Env module validation methods" do
-    test "validate_env_name! accepts valid lowercase alphanumeric names" do
+    test "validate_env_name! accepts valid YYYYMMDD_HHMMSS format names" do
       assert_nothing_raised do
-        Picotorokko::Env.validate_env_name!("staging")
-        Picotorokko::Env.validate_env_name!("prod-123")
-        Picotorokko::Env.validate_env_name!("test_env")
-        Picotorokko::Env.validate_env_name!("dev-build-2025")
+        Picotorokko::Env.validate_env_name!("20231215_143000")
+        Picotorokko::Env.validate_env_name!("20251121_120000")
+        Picotorokko::Env.validate_env_name!("20000101_000000")
+        Picotorokko::Env.validate_env_name!("99999999_235959")
       end
     end
 
-    test "validate_env_name! rejects names with uppercase letters" do
+    test "validate_env_name! rejects names with non-digit characters" do
       assert_raise(RuntimeError) do
         Picotorokko::Env.validate_env_name!("InvalidEnv")
       end
@@ -612,11 +612,11 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info)
 
           # Create build directory with git repository
           # Phase 4.1: Build path uses env_name instead of env_hash
-          build_path = Picotorokko::Env.get_build_path("test-env")
+          build_path = Picotorokko::Env.get_build_path("20251121_120000")
 
           # Initialize git repository with changes
           r2p2_work = File.join(build_path, "R2P2-ESP32")
@@ -632,11 +632,11 @@ class CommandsEnvTest < PicotorokkoTestCase
           end
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(["patch_export", "test-env"])
+            Picotorokko::Commands::Env.start(["patch_export", "20251121_120000"])
           end
 
           # Verify output
-          assert_match(/Exporting patches from: test-env/, output)
+          assert_match(/Exporting patches from: 20251121_120000/, output)
           assert_match(/✓ Patches exported/, output)
 
           # Verify patch directory was created
@@ -656,11 +656,11 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info)
 
           # Create build directory
           # Phase 4.1: Build path uses env_name instead of env_hash
-          build_path = Picotorokko::Env.get_build_path("test-env")
+          build_path = Picotorokko::Env.get_build_path("20251121_120000")
 
           r2p2_work = File.join(build_path, "R2P2-ESP32")
           FileUtils.mkdir_p(r2p2_work)
@@ -671,7 +671,7 @@ class CommandsEnvTest < PicotorokkoTestCase
           File.write(File.join(patch_dir, "patch.txt"), "patched content")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(["patch_apply", "test-env"])
+            Picotorokko::Commands::Env.start(["patch_apply", "20251121_120000"])
           end
 
           # Verify output
@@ -695,11 +695,11 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info)
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info)
 
           # Create build directory with git repository
           # Phase 4.1: Build path uses env_name instead of env_hash
-          build_path = Picotorokko::Env.get_build_path("test-env")
+          build_path = Picotorokko::Env.get_build_path("20251121_120000")
 
           r2p2_work = File.join(build_path, "R2P2-ESP32")
           FileUtils.mkdir_p(r2p2_work)
@@ -720,7 +720,7 @@ class CommandsEnvTest < PicotorokkoTestCase
           File.write(File.join(patch_dir, "patch.txt"), "patched content")
 
           output = capture_stdout do
-            Picotorokko::Commands::Env.start(["patch_diff", "test-env"])
+            Picotorokko::Commands::Env.start(["patch_diff", "20251121_120000"])
           end
 
           # Verify output
@@ -939,14 +939,14 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info,
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info,
                                            notes: "Important notes")
 
           capture_stdout do
-            Picotorokko::Commands::Env.start(["reset", "test-env"])
+            Picotorokko::Commands::Env.start(["reset", "20251121_120000"])
           end
 
-          config = Picotorokko::Env.get_environment("test-env")
+          config = Picotorokko::Env.get_environment("20251121_120000")
           assert_match(/Important notes/, config["notes"])
           assert_match(/reset at/, config["notes"])
         end
@@ -962,13 +962,13 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("test-env", r2p2_info, esp32_info, picoruby_info, notes: "")
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info, notes: "")
 
           capture_stdout do
-            Picotorokko::Commands::Env.start(["reset", "test-env"])
+            Picotorokko::Commands::Env.start(["reset", "20251121_120000"])
           end
 
-          config = Picotorokko::Env.get_environment("test-env")
+          config = Picotorokko::Env.get_environment("20251121_120000")
           assert_match(/^Reset at/, config["notes"])
           assert_no_match(/\n/, config["notes"]) # Single line only
         end
