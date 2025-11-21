@@ -1,16 +1,17 @@
 # Project Status
 
-## Current Status (Latest - 2025-11-19)
+## Current Status (Latest - 2025-11-21)
 
-**🔧 IN PROGRESS: ptrk env latest Submodule Initialization Fix**
-- 🔧 **Phase 1-2**: Completed investigation and SPEC.md update
-- 🔧 **Phase 3a**: Partially complete - added `cache_clone_with_submodules` method
-- 📋 **Updates**: SPEC.md and TODO.md revised for correct design
-- 🚀 **Next**: Simplify `ptrk env latest`, implement `.build` setup in `ptrk device build`
+**✅ COMPLETED: Phase 3a - Directory Naming Consistency**
+- ✅ **Phase 3a**: Complete - renamed `ptrk_env` to `.ptrk_env`, updated ENV_NAME_PATTERN to YYYYMMDD_HHMMSS
+- ✅ **Tests**: All unit tests (153) and integration tests (70) passing with 83.29% line coverage
+- ✅ **Quality**: RuboCop clean (0 violations)
+- 🚀 **Next**: Phase 3 removal tasks, Phase 3b submodule rewriting
 
 **Completed Milestones:**
-- ✅ **All Tests**: Passing (100% success rate)
-- ✅ **Quality**: RuboCop clean (0 violations), coverage targets met
+- ✅ **All Tests**: Passing (223 unit + integration tests, 100% success rate)
+- ✅ **Quality**: RuboCop clean (0 violations), 83.29% line coverage
+- ✅ **Phase 3a**: Directory naming consistency - `.ptrk_env` + YYYYMMDD_HHMMSS format
 - ✅ **Error Handling**: All identified code quality issues verified and documented
 - ✅ **ptrk init Command**: Complete with PicoRuby templates (.rubocop.yml, CLAUDE.md)
 - ✅ **Mrbgemfile DSL**: Complete with template generation
@@ -32,14 +33,14 @@
 - `ptrk device build` → setup `.ptrk_build/` and build firmware
 
 ### Phase 3a: Directory naming consistency (ptrk_env → .ptrk_env)
-- [ ] **TDD RED**: Write tests for `.ptrk_env/` directory usage
-- [ ] **TDD GREEN**: Update `ENV_DIR` constant from `ptrk_env` to `.ptrk_env`
-- [ ] **TDD GREEN**: Update `ENV_NAME_PATTERN` to `/^\d+_\d+$/` (YYYYMMDD_HHMMSS format only)
-- [ ] **TDD GREEN**: Update `validate_env_name!` for new pattern
-- [ ] **TDD GREEN**: Update all `get_build_path`, `get_environment`, file operations to use `.ptrk_env/`
-- [ ] **TDD GREEN**: Update test fixtures and test setup
-- [ ] **TDD RUBOCOP**: Auto-fix style
-- [ ] **COMMIT**: "refactor: rename ptrk_env to .ptrk_env and validate env names as YYYYMMDD_HHMMSS"
+- [x] **TDD RED**: Write tests for `.ptrk_env/` directory usage
+- [x] **TDD GREEN**: Update `ENV_DIR` constant from `ptrk_env` to `.ptrk_env`
+- [x] **TDD GREEN**: Update `ENV_NAME_PATTERN` to `/^\d+_\d+$/` (YYYYMMDD_HHMMSS format only)
+- [x] **TDD GREEN**: Update `validate_env_name!` for new pattern
+- [x] **TDD GREEN**: Update all `get_build_path`, `get_environment`, file operations to use `.ptrk_env/`
+- [x] **TDD GREEN**: Update test fixtures and test setup
+- [x] **TDD RUBOCOP**: Auto-fix style
+- [x] **COMMIT**: "refactor: rename ptrk_env to .ptrk_env and validate env names as YYYYMMDD_HHMMSS"
 
 ### Phase 3: Remove env creation from ptrk new
 - [ ] **TDD RED**: Write test for `ptrk new` without environment creation
@@ -442,6 +443,16 @@ All features must pass:
 
 ## Recent Changes
 
+### Session 2025-11-21: Phase 3a - Directory Naming Consistency
+- **Implemented Phase 3a**: Complete directory rename and env naming pattern update
+- **Constants updated**:
+  - `ENV_DIR`: `"ptrk_env"` → `".ptrk_env"` (hidden directory for cleaner project root)
+  - `ENV_NAME_PATTERN`: `/^[a-z0-9_-]+$/` → `/^\d+_\d+$/` (strict YYYYMMDD_HHMMSS format)
+- **Full test coverage**: 153 unit tests + 70 integration tests (100% passing, 83.29% coverage)
+- **All file operations updated**: ProjectInitializer, templates, tests
+- **RuboCop**: 0 violations, quality gates met
+- **TDD Microycle**: Perfect RED → GREEN → RUBOCOP → REFACTOR → COMMIT cycle
+
 ### Session 2025-11-18: Code Quality Verification
 - Verified all identified code quality issues
 - All issues confirmed as fixed with proper error handling and test coverage
@@ -450,18 +461,9 @@ All features must pass:
 
 ### Session 2025-11-17: PicoRuby Development Templates
 - Added `.rubocop.yml` template with PicoRuby-specific configuration
-- Enhanced `CLAUDE.md` template with:
-  - mrbgems dependency management
-  - Peripheral APIs (I2C, GPIO, RMT) with examples
-  - Memory optimization techniques
-  - RuboCop configuration guide
-  - Picotest testing framework
+- Enhanced `CLAUDE.md` template with mrbgems, peripheral APIs, memory optimization
 - Updated ProjectInitializer to copy template files
 - Fixed UTF-8 encoding in tests for international characters
-
-### Previous Sessions: Environment & Build Features
-- Session 6: Fixed `ptrk env latest` infrastructure issues
-- Session 5: Implemented build environment setup and Gemfile detection
 
 ---
 
