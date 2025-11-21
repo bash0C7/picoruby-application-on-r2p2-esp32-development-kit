@@ -64,6 +64,7 @@ sig/rbs_collection/
 # PicoRuby/R2P2-ESP32
 # Phase 4.1: Consolidated directory structure
 ptrk_env/
+.ptrk_env/
 
 # Manual verification directory
 manual-test/
