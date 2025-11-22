@@ -91,7 +91,8 @@ class CommandsEnvTest < PicotorokkoTestCase
           esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
           picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
 
-          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info, notes: "Test environment")
+          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info,
+                                           notes: "Test environment")
 
           output = capture_stdout do
             Picotorokko::Commands::Env.start(["show", "20251121_120000"])
@@ -1111,6 +1112,90 @@ class CommandsEnvTest < PicotorokkoTestCase
         assert_match(/not a regular file/, error.message)
       ensure
         FileUtils.rm_rf(tmpdir)
+      end
+    end
+  end
+
+  # env set --latest コマンドのテスト
+  sub_test_case "env set --latest command" do
+    test "creates environment with timestamp-based name" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
+
+          # Mock Time.now to control timestamp
+          frozen_time = Time.new(2025, 11, 21, 14, 30, 45)
+          original_now = Time.method(:now)
+          Time.define_singleton_method(:now) { frozen_time }
+
+          begin
+            # Mock fetch_latest_repos to avoid network calls
+            env_command = Picotorokko::Commands::Env.new
+            repos_info = {
+              "R2P2-ESP32" => { "commit" => "abc1234", "timestamp" => "20251121_143045" },
+              "picoruby-esp32" => { "commit" => "def5678", "timestamp" => "20251121_143045" },
+              "picoruby" => { "commit" => "ghi9012", "timestamp" => "20251121_143045" }
+            }
+
+            env_command.define_singleton_method(:fetch_latest_repos) { repos_info }
+
+            output = capture_stdout do
+              env_command.set_latest
+            end
+
+            # Verify environment was created with timestamp name
+            expected_env_name = "20251121_143045"
+            env_config = Picotorokko::Env.get_environment(expected_env_name)
+
+            assert_not_nil env_config, "Environment should be created with timestamp name"
+            assert_equal "abc1234", env_config["R2P2-ESP32"]["commit"]
+            assert_match(/#{expected_env_name}/, output)
+          ensure
+            Time.define_singleton_method(:now, original_now)
+          end
+        end
+      end
+    end
+
+    test "set command with --latest option triggers timestamp-based environment creation" do
+      omit "Mocking Object.system causes segfault in CI environment"
+
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
+
+          # Mock Time.now
+          frozen_time = Time.new(2025, 11, 21, 15, 0, 0)
+          original_now = Time.method(:now)
+          Time.define_singleton_method(:now) { frozen_time }
+
+          begin
+            # Mock network calls
+            original_fetch = Picotorokko::Env.method(:fetch_remote_commit)
+            Picotorokko::Env.define_singleton_method(:fetch_remote_commit) do |_url, _ref = "HEAD"|
+              "mock123"
+            end
+
+            original_clone = Object.method(:system)
+            Object.define_singleton_method(:system) do |*_args|
+              true # Mock successful git operations
+            end
+
+            # Call set with --latest option (env_name becomes optional)
+            capture_stdout do
+              Picotorokko::Commands::Env.start(%w[set --latest])
+            end
+
+            expected_env_name = "20251121_150000"
+            env_config = Picotorokko::Env.get_environment(expected_env_name)
+
+            assert_not_nil env_config, "Environment should be created with timestamp name via --latest"
+          ensure
+            Time.define_singleton_method(:now, original_now)
+            Picotorokko::Env.define_singleton_method(:fetch_remote_commit, original_fetch)
+            Object.define_singleton_method(:system, original_clone)
+          end
+        end
       end
     end
   end

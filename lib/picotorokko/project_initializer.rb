@@ -42,35 +42,7 @@ module Picotorokko
       # Generate mrbgems if requested
       generate_mrbgems
 
-      # Setup default environment with latest repo versions
-      # PTRK_SKIP_ENV_SETUP environment variable allows skipping this step (useful for testing)
-      unless ENV["PTRK_SKIP_ENV_SETUP"]
-        begin
-          setup_default_environment
-        rescue StandardError => e
-          warn("Warning: Failed to setup default environment: #{e.message}")
-        end
-      end
-
       print_success_message
-    end
-
-    # @rbs () -> void
-    # Create default environment with latest repository versions
-    # Automatically called during project initialization
-    # Network errors are caught and logged without blocking initialization
-    def setup_default_environment
-      env_command = Picotorokko::Commands::Env.new
-      repos_info = env_command.fetch_latest_repos
-
-      env_name = "default"
-      Picotorokko::Env.set_environment(
-        env_name,
-        repos_info["R2P2-ESP32"],
-        repos_info["picoruby-esp32"],
-        repos_info["picoruby"],
-        notes: "Auto-generated default environment during project initialization"
-      )
     end
 
     private
@@ -257,7 +229,7 @@ module Picotorokko
       puts ""
       puts "Next steps:"
       puts "  1. cd #{project_name}" if project_name != File.basename(Dir.pwd)
-      puts "  2. ptrk env latest  # Fetch latest repository versions"
+      puts "  2. ptrk env set --latest  # Fetch latest repository versions"
       puts "  3. ptrk device build  # Build firmware for your device"
       puts "  4. ptrk device flash  # Flash firmware to ESP32"
       puts "  5. ptrk device monitor  # Monitor serial output"

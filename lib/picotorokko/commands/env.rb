@@ -118,12 +118,21 @@ module Picotorokko
       # @raise [RuntimeError] If only some options specified (all three required)
       # @raise [RuntimeError] If environment name is invalid (via validate_env_name!)
       #
-      # @rbs (String) -> void
-      desc "set ENV_NAME", "Create new environment with repository sources"
+      # @rbs (String?) -> void
+      desc "set [ENV_NAME]", "Create new environment with repository sources"
       option :"R2P2-ESP32", type: :string, desc: "org/repo or path:// for R2P2-ESP32"
       option :"picoruby-esp32", type: :string, desc: "org/repo or path:// for picoruby-esp32"
       option :picoruby, type: :string, desc: "org/repo or path:// for picoruby"
-      def set(env_name)
+      option :latest, type: :boolean, desc: "Use timestamp for env name and fetch latest"
+      def set(env_name = nil)
+        # Handle --latest option: generate timestamp-based env_name
+        if options[:latest]
+          set_latest
+          return
+        end
+
+        raise "Error: ENV_NAME is required" if env_name.nil?
+
         Picotorokko::Env.validate_env_name!(env_name)
 
         # Auto-fetch if no options specified
@@ -147,6 +156,27 @@ module Picotorokko
       end
 
       no_commands do # rubocop:disable Metrics/BlockLength
+        # Create environment with timestamp-based name and fetch latest repos
+        # @rbs () -> void
+        def set_latest
+          puts "Fetching latest commits from GitHub..."
+          repos_info = fetch_latest_repos
+
+          # Generate env_name from current timestamp
+          env_name = Time.now.strftime("%Y%m%d_%H%M%S")
+          puts "\nSaving as environment definition '#{env_name}' in .picoruby-env.yml..."
+
+          Picotorokko::Env.set_environment(
+            env_name,
+            repos_info["R2P2-ESP32"],
+            repos_info["picoruby-esp32"],
+            repos_info["picoruby"],
+            notes: "Auto-generated latest versions"
+          )
+
+          puts "✓ Environment definition '#{env_name}' created successfully in .picoruby-env.yml"
+        end
+
         # Route source specification to appropriate handler (GitHub or local path)
         #
         # Detects source format type and delegates to specialized processors:
