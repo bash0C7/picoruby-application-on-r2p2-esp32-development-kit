@@ -1229,5 +1229,84 @@ class CommandsEnvTest < PicotorokkoTestCase
         end
       end
     end
+
+    test "set --latest clones R2P2-ESP32 to .ptrk_env/{env_name}/" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
+
+          # Mock Time.now
+          frozen_time = Time.new(2025, 11, 21, 16, 30, 0)
+          original_now = Time.method(:now)
+          Time.define_singleton_method(:now) { frozen_time }
+
+          begin
+            # Mock fetch_remote_commit
+            original_fetch = Picotorokko::Env.method(:fetch_remote_commit)
+            Picotorokko::Env.define_singleton_method(:fetch_remote_commit) do |_url, _ref = "HEAD"|
+              "abc1234"
+            end
+
+            # Track git commands executed
+            executed_commands = []
+
+            # Mock Kernel#system at the deepest level
+            original_system = Kernel.instance_method(:system)
+            Kernel.module_eval do
+              define_method(:system) do |cmd, *_args|
+                executed_commands << cmd.to_s
+                # Create directory if it's a git clone command
+                if cmd.to_s.include?("git clone") && cmd =~ /git clone.*\s(\S+)\s+2>/
+                  target = Regexp.last_match(1)
+                  FileUtils.mkdir_p(target)
+                  FileUtils.mkdir_p(File.join(target, ".git"))
+                end
+                true
+              end
+            end
+
+            # Mock Kernel#` (backtick)
+            original_backtick = Kernel.instance_method(:`)
+            Kernel.module_eval do
+              define_method(:`) do |cmd|
+                case cmd
+                when /git rev-parse/
+                  "abc1234\n"
+                when /git show -s --format=%ci/
+                  "2025-11-21 16:30:00 +0900\n"
+                else
+                  ""
+                end
+              end
+            end
+
+            # Call set with --latest option
+            capture_stdout do
+              Picotorokko::Commands::Env.start(%w[set --latest])
+            end
+
+            expected_env_name = "20251121_163000"
+
+            # Verify .ptrk_env/{env_name}/ directory was created
+            env_path = File.join(Picotorokko::Env::ENV_DIR, expected_env_name)
+            assert Dir.exist?(env_path), "Should create .ptrk_env/#{expected_env_name}/ directory"
+
+            # Verify git clone with --filter=blob:none was executed
+            clone_cmd = executed_commands.find { |c| c.include?("git clone") && c.include?(env_path) }
+            assert_not_nil clone_cmd, "Should execute git clone to .ptrk_env/#{expected_env_name}/"
+            assert_match(/--filter=blob:none/, clone_cmd, "Should use --filter=blob:none for partial clone")
+          ensure
+            Time.define_singleton_method(:now, original_now)
+            Picotorokko::Env.define_singleton_method(:fetch_remote_commit, original_fetch)
+            Kernel.module_eval do
+              define_method(:system, original_system)
+            end
+            Kernel.module_eval do
+              define_method(:`, original_backtick)
+            end
+          end
+        end
+      end
+    end
   end
 end

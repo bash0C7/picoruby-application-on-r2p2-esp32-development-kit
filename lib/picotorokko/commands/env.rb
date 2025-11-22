@@ -175,6 +175,27 @@ module Picotorokko
           )
 
           puts "✓ Environment definition '#{env_name}' created successfully in .picoruby-env.yml"
+
+          # Clone R2P2-ESP32 to .ptrk_env/{env_name}/
+          clone_env_repository(env_name, repos_info)
+        end
+
+        # Clone R2P2-ESP32 repository to .ptrk_env/{env_name}/
+        # @rbs (String, Hash[String, Hash[String, String]]) -> void
+        def clone_env_repository(env_name, repos_info)
+          env_path = File.join(Picotorokko::Env::ENV_DIR, env_name)
+          r2p2_url = Picotorokko::Env::REPOS["R2P2-ESP32"]
+          # r2p2_commit will be used for checkout in next implementation step
+          _ = repos_info["R2P2-ESP32"]["commit"]
+
+          puts "\nCloning R2P2-ESP32 to #{env_path}..."
+
+          # Clone with --filter=blob:none for partial clone (faster)
+          clone_cmd = "git clone --filter=blob:none #{Shellwords.escape(r2p2_url)} " \
+                      "#{Shellwords.escape(env_path)} 2>/dev/null"
+          raise "Clone failed: R2P2-ESP32 from #{r2p2_url}" unless system(clone_cmd)
+
+          puts "  ✓ R2P2-ESP32 cloned to #{env_path}"
         end
 
         # Route source specification to appropriate handler (GitHub or local path)
