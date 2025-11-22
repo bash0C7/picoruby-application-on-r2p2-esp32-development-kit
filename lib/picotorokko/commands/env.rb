@@ -562,42 +562,6 @@ module Picotorokko
         puts "\u2713 Patches exported"
       end
 
-      # Apply stored patches to build environment
-      # @rbs (String) -> void
-      desc "patch_apply ENV_NAME", "Apply patches to build environment"
-      def patch_apply(env_name)
-        env_config = Picotorokko::Env.get_environment(env_name)
-        raise "Error: Environment '#{env_name}' not found" if env_config.nil?
-
-        # Phase 4.1: Build path uses env_name directly
-        build_path = Picotorokko::Env.get_build_path(env_name)
-        raise "Error: Build environment not found: #{env_name}" unless Dir.exist?(build_path)
-
-        puts "  Applying patches..."
-
-        %w[R2P2-ESP32 picoruby-esp32 picoruby].each do |repo|
-          patch_repo_dir = File.join(Picotorokko::Env.patch_dir, repo)
-          next unless Dir.exist?(patch_repo_dir)
-
-          case repo
-          when "R2P2-ESP32"
-            work_path = File.join(build_path, "R2P2-ESP32")
-          when "picoruby-esp32"
-            work_path = File.join(build_path, "R2P2-ESP32", "components", "picoruby-esp32")
-          when "picoruby"
-            work_path = File.join(build_path, "R2P2-ESP32", "components", "picoruby-esp32", "picoruby")
-          end
-
-          next unless Dir.exist?(work_path)
-
-          # Apply patches
-          Picotorokko::PatchApplier.apply_patches_to_directory(patch_repo_dir, work_path)
-          puts "    Applied #{repo}"
-        end
-
-        puts "  \u2713 Patches applied"
-      end
-
       # Display differences between working changes and stored patches
       # @rbs (String) -> void
       desc "patch_diff [ENV_NAME]", "Display differences between working changes and stored patches"

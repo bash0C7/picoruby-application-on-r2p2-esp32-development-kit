@@ -447,6 +447,16 @@ class CommandsEnvTest < PicotorokkoTestCase
     end
   end
 
+  # env patch_apply コマンド削除の確認テスト
+  sub_test_case "env patch_apply command removal" do
+    test "ptrk env patch_apply is no longer available" do
+      # Thor should not recognize "patch_apply" as a valid command
+      # Patches are applied during device build
+      assert_false Picotorokko::Commands::Env.all_commands.key?("patch_apply"),
+                   "The 'patch_apply' command should be removed (patches applied during build)"
+    end
+  end
+
   # env current コマンドのテスト
   sub_test_case "env current command" do
     test "sets current environment when ENV_NAME is provided" do
@@ -748,45 +758,6 @@ class CommandsEnvTest < PicotorokkoTestCase
           # Verify patch directory was created
           patch_dir = File.join(Picotorokko::Env::PATCH_DIR, "R2P2-ESP32")
           assert_true(Dir.exist?(patch_dir))
-        end
-      end
-    end
-
-    test "applies patches with patch_apply command" do
-      Dir.mktmpdir do |tmpdir|
-        Dir.chdir(tmpdir) do
-          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
-
-          # Create test environment
-          r2p2_info = { "commit" => "abc1234", "timestamp" => "20250101_120000" }
-          esp32_info = { "commit" => "def5678", "timestamp" => "20250102_120000" }
-          picoruby_info = { "commit" => "ghi9012", "timestamp" => "20250103_120000" }
-
-          Picotorokko::Env.set_environment("20251121_120000", r2p2_info, esp32_info, picoruby_info)
-
-          # Create build directory
-          # Phase 4.1: Build path uses env_name instead of env_hash
-          build_path = Picotorokko::Env.get_build_path("20251121_120000")
-
-          r2p2_work = File.join(build_path, "R2P2-ESP32")
-          FileUtils.mkdir_p(r2p2_work)
-
-          # Create patch file
-          patch_dir = File.join(Picotorokko::Env::PATCH_DIR, "R2P2-ESP32")
-          FileUtils.mkdir_p(patch_dir)
-          File.write(File.join(patch_dir, "patch.txt"), "patched content")
-
-          output = capture_stdout do
-            Picotorokko::Commands::Env.start(["patch_apply", "20251121_120000"])
-          end
-
-          # Verify output
-          assert_match(/Applying patches/, output)
-          assert_match(/✓ Patches applied/, output)
-
-          # Verify patch was applied
-          assert_true(File.exist?(File.join(r2p2_work, "patch.txt")))
-          assert_equal("patched content", File.read(File.join(r2p2_work, "patch.txt")))
         end
       end
     end
