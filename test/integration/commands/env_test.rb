@@ -1138,6 +1138,7 @@ class CommandsEnvTest < PicotorokkoTestCase
             }
 
             env_command.define_singleton_method(:fetch_latest_repos) { repos_info }
+            env_command.define_singleton_method(:clone_env_repository) { |_env_name, _repos_info| nil }
 
             output = capture_stdout do
               env_command.set_latest
