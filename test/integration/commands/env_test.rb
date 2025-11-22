@@ -1511,5 +1511,87 @@ class CommandsEnvTest < PicotorokkoTestCase
         end
       end
     end
+
+    test "set --latest generates RuboCop configuration directory" do
+      Dir.mktmpdir do |tmpdir|
+        Dir.chdir(tmpdir) do
+          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
+
+          # Mock Time.now
+          frozen_time = Time.new(2025, 11, 22, 10, 30, 0)
+          original_now = Time.method(:now)
+          Time.define_singleton_method(:now) { frozen_time }
+
+          begin
+            # Mock fetch_latest_repos
+            Picotorokko::Commands::Env.class_eval do
+              no_commands do
+                alias_method :original_fetch_latest_repos, :fetch_latest_repos
+                define_method(:fetch_latest_repos) do
+                  {
+                    "R2P2-ESP32" => { "commit" => "abc1234", "timestamp" => "20251122_103000" },
+                    "picoruby-esp32" => { "commit" => "def5678", "timestamp" => "20251122_103000" },
+                    "picoruby" => { "commit" => "ghi9012", "timestamp" => "20251122_103000" }
+                  }
+                end
+              end
+            end
+
+            # Mock Kernel#system
+            original_system = Kernel.instance_method(:system)
+            Kernel.module_eval do
+              define_method(:system) do |cmd, *_args|
+                # Create directory for clone
+                if cmd.to_s.include?("git clone") && cmd =~ /git clone.*\s(\S+)\s+2>/
+                  target = Regexp.last_match(1)
+                  FileUtils.mkdir_p(target)
+                  FileUtils.mkdir_p(File.join(target, ".git"))
+                  # Create mock picoruby directory with RBS files
+                  picoruby_path = File.join(target, "components", "picoruby-esp32", "picoruby")
+                  mrbgem_path = File.join(picoruby_path, "mrbgems", "picoruby-array", "sig")
+                  FileUtils.mkdir_p(mrbgem_path)
+                  File.write(File.join(mrbgem_path, "array.rbs"), <<~RBS)
+                    class Array[unchecked out Elem]
+                      def each: () { (Elem) -> void } -> self
+                      def size: () -> Integer
+                    end
+                  RBS
+                end
+                true
+              end
+            end
+
+            # Call set with --latest option
+            capture_stdout do
+              Picotorokko::Commands::Env.start(%w[set --latest])
+            end
+
+            expected_env_name = "20251122_103000"
+
+            # Verify .ptrk_env/{env}/rubocop/data/ directory was created
+            rubocop_data_path = File.join(Picotorokko::Env::ENV_DIR, expected_env_name, "rubocop", "data")
+            assert Dir.exist?(rubocop_data_path),
+                   "Should create #{rubocop_data_path} directory for RuboCop configuration"
+
+            # Verify JSON files are generated
+            supported_json = File.join(rubocop_data_path, "picoruby_supported_methods.json")
+            unsupported_json = File.join(rubocop_data_path, "picoruby_unsupported_methods.json")
+            assert File.exist?(supported_json), "Should generate picoruby_supported_methods.json"
+            assert File.exist?(unsupported_json), "Should generate picoruby_unsupported_methods.json"
+          ensure
+            Time.define_singleton_method(:now, original_now)
+            Picotorokko::Commands::Env.class_eval do
+              no_commands do
+                alias_method :fetch_latest_repos, :original_fetch_latest_repos
+                remove_method :original_fetch_latest_repos
+              end
+            end
+            Kernel.module_eval do
+              define_method(:system, original_system)
+            end
+          end
+        end
+      end
+    end
   end
 end

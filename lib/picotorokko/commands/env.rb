@@ -1,8 +1,10 @@
 require "English"
 require "fileutils"
+require "json"
 require "shellwords"
 require "thor"
 require "picotorokko/patch_applier"
+require "rbs"
 
 module Picotorokko
   module Commands
@@ -256,6 +258,103 @@ module Picotorokko
           puts "  ✓ picoruby-esp32 checked out to #{esp32_commit}"
           puts "  ✓ picoruby checked out to #{picoruby_commit}"
           puts "  ✓ Push disabled on all repositories"
+
+          # Generate RuboCop configuration
+          generate_rubocop_config(env_name, env_path)
+        end
+
+        # Generate RuboCop configuration with PicoRuby method database
+        # @rbs (String, String) -> void
+        def generate_rubocop_config(_env_name, env_path)
+          rubocop_data_path = File.join(env_path, "rubocop", "data")
+          FileUtils.mkdir_p(rubocop_data_path)
+
+          # Find RBS files in picoruby mrbgems
+          picoruby_path = File.join(env_path, "components", "picoruby-esp32", "picoruby")
+          rbs_pattern = File.join(picoruby_path, "mrbgems", "picoruby-*", "sig", "*.rbs")
+
+          supported_methods = {}
+          rbs_files = Dir.glob(rbs_pattern)
+
+          rbs_files.each do |rbs_file|
+            parse_rbs_file(rbs_file, supported_methods)
+          end
+
+          # Generate supported methods JSON
+          supported_json = File.join(rubocop_data_path, "picoruby_supported_methods.json")
+          File.write(supported_json, JSON.pretty_generate(supported_methods))
+
+          # Generate unsupported methods JSON (CRuby methods not in PicoRuby)
+          unsupported_methods = calculate_unsupported_methods(supported_methods)
+          unsupported_json = File.join(rubocop_data_path, "picoruby_unsupported_methods.json")
+          File.write(unsupported_json, JSON.pretty_generate(unsupported_methods))
+
+          puts "  ✓ RuboCop configuration generated in #{rubocop_data_path}"
+        end
+
+        # Parse RBS file and extract method definitions
+        # @rbs (String, Hash[String, Hash[String, Array[String]]]) -> void
+        def parse_rbs_file(rbs_file, methods_hash)
+          content = File.read(rbs_file)
+          sig = RBS::Parser.parse_signature(content)
+
+          sig[2].each do |dec|
+            case dec
+            when RBS::AST::Declarations::Class, RBS::AST::Declarations::Module
+              class_name = dec.name.name.to_s
+              methods_hash[class_name] ||= { "instance" => [], "singleton" => [] }
+
+              dec.members.each do |member|
+                case member
+                when RBS::AST::Members::MethodDefinition
+                  # Skip methods with @ignore annotation
+                  next if member.comment&.string&.include?("@ignore")
+
+                  method_name = member.name.to_s
+                  kind = member.kind == :singleton ? "singleton" : "instance"
+                  unless methods_hash[class_name][kind].include?(method_name)
+                    methods_hash[class_name][kind] << method_name
+                  end
+                end
+              end
+
+              # Sort methods alphabetically
+              methods_hash[class_name]["instance"].sort!
+              methods_hash[class_name]["singleton"].sort!
+            end
+          end
+        rescue RBS::ParsingError => e
+          warn "Warning: Failed to parse #{rbs_file}: #{e.message}"
+        end
+
+        # Calculate unsupported methods (CRuby methods not in PicoRuby)
+        # @rbs (Hash[String, Hash[String, Array[String]]]) -> Hash[String, Hash[String, Array[String]]]
+        def calculate_unsupported_methods(supported_methods)
+          core_classes = [Array, String, Hash, Integer, Float, Symbol, Regexp, Range, Numeric]
+          unsupported = {}
+
+          core_classes.each do |klass|
+            class_name = klass.name
+            next unless supported_methods.key?(class_name)
+
+            cruby_instance = klass.instance_methods(false).map(&:to_s)
+            cruby_singleton = klass.methods(false).map(&:to_s)
+
+            picoruby_instance = supported_methods[class_name]["instance"] || []
+            picoruby_singleton = supported_methods[class_name]["singleton"] || []
+
+            unsupported_instance = (cruby_instance - picoruby_instance).sort
+            unsupported_singleton = (cruby_singleton - picoruby_singleton).sort
+
+            next if unsupported_instance.empty? && unsupported_singleton.empty?
+
+            unsupported[class_name] = {
+              "instance" => unsupported_instance,
+              "singleton" => unsupported_singleton
+            }
+          end
+
+          unsupported
         end
 
         # Route source specification to appropriate handler (GitHub or local path)
