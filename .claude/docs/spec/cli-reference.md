@@ -22,6 +22,30 @@ picoruby:       e57c370 (2024-11-05 14:10:30)
 
 ---
 
+### `ptrk env current [ENV_NAME]`
+
+**Description**: Get or set current environment
+
+**Arguments**:
+- `ENV_NAME` (optional) - Environment name to set as current
+
+**Operation**:
+- Without argument: Show current environment name
+- With argument: Set specified environment as current (must exist in `.picoruby-env.yml`)
+
+**Example**:
+```bash
+# Show current environment
+ptrk env current
+# => Current environment: 20251121_150000
+
+# Set current environment
+ptrk env current 20251121_180000
+# => ✓ Current environment set to: 20251121_180000
+```
+
+---
+
 ### `ptrk env set ENV_NAME`
 
 **Description**: Switch to specified environment
@@ -182,23 +206,20 @@ pra monitor
 ### Scenario 2: Validate Latest Version
 
 ```bash
-# 1. Fetch latest version
-ptrk env latest
+# 1. Fetch latest version and create environment
+ptrk env set --latest
 # => Fetching latest from GitHub...
-#    Created environment: latest-20241105-143500
-#    Setting up environment...
-#    Switched to: latest-20241105-143500
+#    Created environment: 20251121_150000
+#    Cloning R2P2-ESP32 with submodules...
+#    ✓ Environment '20251121_150000' created successfully
 
-# 2. Build
-cd build/current/R2P2-ESP32
-rake build
-cd ../../..
+# 2. Set as current and build
+ptrk env current 20251121_150000
+ptrk device build
 
-# 3. If issues found, revert to stable
-ptrk env set stable-2024-11
-cd build/current/R2P2-ESP32
-rake build
-cd ../../..
+# 3. If issues found, revert to previous
+ptrk env current 20251120_120000
+ptrk device build
 ```
 
 ### Scenario 3: Patch Management

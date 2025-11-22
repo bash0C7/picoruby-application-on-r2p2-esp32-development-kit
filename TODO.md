@@ -2,15 +2,18 @@
 
 ## Current Status (Latest - 2025-11-22)
 
-**✅ COMPLETED: Phase 3b-submodule (Full Implementation)**
-- ✅ **Phase 3b-submodule**: Complete - full git clone/submodule rewriting workflow
-- ✅ **Tests**: All unit tests (152) and integration tests (75) passing with 83.79% line coverage
+**✅ COMPLETED: Phase 3c (Current Environment Tracking)**
+- ✅ **Phase 3c**: Complete - `ptrk env current` command implemented
+- ✅ **Phase 3b-cleanup**: Complete - removed `ptrk env latest` command
+- ✅ **Tests**: All unit tests (152) and integration tests (77) passing with 84.24% line coverage
 - ✅ **Quality**: RuboCop clean (0 violations)
-- 🚀 **Next**: Phase 3b-cleanup (remove ptrk env latest) or reality_marble refactoring
+- 🚀 **Next**: Phase 3b-rubocop (RBS parsing) or Phase 3d (ENV_NAME omission)
 
 **Completed Milestones:**
-- ✅ **All Tests**: Passing (227 unit + integration tests, 100% success rate)
-- ✅ **Quality**: RuboCop clean (0 violations), 83.79% line coverage
+- ✅ **All Tests**: Passing (229 unit + integration tests, 100% success rate)
+- ✅ **Quality**: RuboCop clean (0 violations), 84.24% line coverage
+- ✅ **Phase 3c**: `ptrk env current` command for environment selection
+- ✅ **Phase 3b-cleanup**: Removed `ptrk env latest` (replaced by `ptrk env set --latest`)
 - ✅ **Phase 3b-submodule**: Full implementation of `ptrk env set --latest` with submodule rewriting
 - ✅ **Phase 3b (Part 1)**: Added `--latest` option to `ptrk env set` command
 - ✅ **Phase 3**: Removed automatic environment creation from ptrk new
@@ -111,11 +114,10 @@ cd picoruby && git remote set-url --push origin no_push
 - [x] **COMMIT**: "feat: implement ptrk env set --latest with submodule rewriting"
 
 #### Phase 3b-cleanup: Remove ptrk env latest command
-- [ ] **TDD RED**: Write test verifying `ptrk env latest` is no longer available
-- [ ] **TDD GREEN**: Remove `latest` command from env.rb
-- [ ] **TDD GREEN**: Remove CLI registration from cli.rb
-- [ ] **TDD RUBOCOP**: Auto-fix style
-- [ ] **COMMIT**: "refactor: remove ptrk env latest command (replaced by ptrk env set --latest)"
+- [x] **TDD RED**: Write test verifying `ptrk env latest` is no longer available
+- [x] **TDD GREEN**: Remove `latest` command from env.rb
+- [x] **TDD RUBOCOP**: Auto-fix style
+- [x] **COMMIT**: "refactor: remove ptrk env latest command (replaced by ptrk env set --latest)"
 
 #### Phase 3b-rubocop: Generate RuboCop config in env set
 
@@ -176,10 +178,10 @@ end
 - [ ] **COMMIT**: "feat: generate env-specific RuboCop configuration in ptrk env set"
 
 ### Phase 3c: Implement current environment tracking
-- [ ] **TDD RED**: Write test for `ptrk env current ENV_NAME` command
-- [ ] **TDD GREEN**: Implement `ptrk env current` to set/get current environment
-- [ ] **TDD RUBOCOP**: Auto-fix style
-- [ ] **COMMIT**: "feat: add ptrk env current command for environment selection"
+- [x] **TDD RED**: Write test for `ptrk env current ENV_NAME` command
+- [x] **TDD GREEN**: Implement `ptrk env current` to set/get current environment
+- [x] **TDD RUBOCOP**: Auto-fix style
+- [x] **COMMIT**: "feat: add ptrk env current command for environment selection"
 
 #### Phase 3c-rubocop: Sync .rubocop.yml with current env
 
