@@ -202,7 +202,21 @@ module Picotorokko
           submodule_cmd = "cd #{Shellwords.escape(env_path)} && git submodule update --init --recursive --jobs 4"
           raise "Submodule update failed for R2P2-ESP32" unless system(submodule_cmd)
 
+          # Checkout picoruby-esp32 to specified commit
+          esp32_commit = repos_info["picoruby-esp32"]["commit"]
+          esp32_path = File.join(env_path, "components", "picoruby-esp32")
+          esp32_checkout = "cd #{Shellwords.escape(esp32_path)} && git checkout #{Shellwords.escape(esp32_commit)}"
+          raise "Checkout failed: picoruby-esp32 to commit #{esp32_commit}" unless system(esp32_checkout)
+
+          # Checkout picoruby (nested submodule) to specified commit
+          picoruby_commit = repos_info["picoruby"]["commit"]
+          picoruby_path = File.join(esp32_path, "picoruby")
+          picoruby_checkout = "cd #{Shellwords.escape(picoruby_path)} && git checkout #{Shellwords.escape(picoruby_commit)}"
+          raise "Checkout failed: picoruby to commit #{picoruby_commit}" unless system(picoruby_checkout)
+
           puts "  ✓ R2P2-ESP32 cloned and checked out to #{r2p2_commit}"
+          puts "  ✓ picoruby-esp32 checked out to #{esp32_commit}"
+          puts "  ✓ picoruby checked out to #{picoruby_commit}"
         end
 
         # Route source specification to appropriate handler (GitHub or local path)

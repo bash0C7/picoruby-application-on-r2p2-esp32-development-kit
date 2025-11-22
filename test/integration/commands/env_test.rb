@@ -1425,6 +1425,18 @@ class CommandsEnvTest < PicotorokkoTestCase
             assert_not_nil submodule_cmd, "Should execute git submodule update"
             assert_match(/--init/, submodule_cmd, "Should use --init flag")
             assert_match(/--recursive/, submodule_cmd, "Should use --recursive flag")
+
+            # Verify picoruby-esp32 checkout
+            esp32_checkout = executed_commands.find { |c| c.include?("picoruby-esp32") && c.include?("git checkout") }
+            assert_not_nil esp32_checkout, "Should checkout picoruby-esp32 to specified commit"
+            assert_match(/def5678/, esp32_checkout, "Should checkout picoruby-esp32 to def5678")
+
+            # Verify picoruby (nested) checkout
+            picoruby_checkout = executed_commands.find do |c|
+              c.include?("picoruby-esp32/picoruby") && c.include?("git checkout")
+            end
+            assert_not_nil picoruby_checkout, "Should checkout nested picoruby to specified commit"
+            assert_match(/ghi9012/, picoruby_checkout, "Should checkout picoruby to ghi9012")
           ensure
             Time.define_singleton_method(:now, original_now)
             Picotorokko::Commands::Env.class_eval do
