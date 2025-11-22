@@ -65,6 +65,7 @@ sig/rbs_collection/
 # Phase 4.1: Consolidated directory structure
 ptrk_env/
 .ptrk_env/
+.ptrk_build/
 
 # Manual verification directory
 manual-test/
