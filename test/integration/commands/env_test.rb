@@ -1158,8 +1158,6 @@ class CommandsEnvTest < PicotorokkoTestCase
     end
 
     test "set command with --latest option triggers timestamp-based environment creation" do
-      omit "Mocking Object.system causes segfault in CI environment"
-
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
@@ -1170,15 +1168,41 @@ class CommandsEnvTest < PicotorokkoTestCase
           Time.define_singleton_method(:now) { frozen_time }
 
           begin
-            # Mock network calls
+            # Mock fetch_remote_commit
             original_fetch = Picotorokko::Env.method(:fetch_remote_commit)
             Picotorokko::Env.define_singleton_method(:fetch_remote_commit) do |_url, _ref = "HEAD"|
               "mock123"
             end
 
-            original_clone = Object.method(:system)
-            Object.define_singleton_method(:system) do |*_args|
-              true # Mock successful git operations
+            # Mock Kernel#system at the deepest level
+            original_system = Kernel.instance_method(:system)
+            Kernel.module_eval do
+              define_method(:system) do |cmd, *_args|
+                # Create directory if it's a git clone command
+                # Command format: git clone --depth 1 url target 2>/dev/null
+                # Extract target path (last argument before 2>)
+                if cmd.to_s.include?("git clone") && cmd =~ /git clone.*\s(\S+)\s+2>/
+                  target = Regexp.last_match(1)
+                  FileUtils.mkdir_p(target)
+                  FileUtils.mkdir_p(File.join(target, ".git"))
+                end
+                true # Mock successful git operations
+              end
+            end
+
+            # Mock Kernel#` (backtick) for git rev-parse and git show commands
+            original_backtick = Kernel.instance_method(:`)
+            Kernel.module_eval do
+              define_method(:`) do |cmd|
+                case cmd
+                when /git rev-parse/
+                  "mock123\n"
+                when /git show -s --format=%ci/
+                  "2025-11-21 15:00:00 +0900\n"
+                else
+                  ""
+                end
+              end
             end
 
             # Call set with --latest option (env_name becomes optional)
@@ -1193,7 +1217,14 @@ class CommandsEnvTest < PicotorokkoTestCase
           ensure
             Time.define_singleton_method(:now, original_now)
             Picotorokko::Env.define_singleton_method(:fetch_remote_commit, original_fetch)
-            Object.define_singleton_method(:system, original_clone)
+            # Restore Kernel#system
+            Kernel.module_eval do
+              define_method(:system, original_system)
+            end
+            # Restore Kernel#`
+            Kernel.module_eval do
+              define_method(:`, original_backtick)
+            end
           end
         end
       end
