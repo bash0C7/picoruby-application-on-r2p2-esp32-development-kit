@@ -214,9 +214,25 @@ module Picotorokko
           picoruby_checkout = "cd #{Shellwords.escape(picoruby_path)} && git checkout #{Shellwords.escape(picoruby_commit)}"
           raise "Checkout failed: picoruby to commit #{picoruby_commit}" unless system(picoruby_checkout)
 
+          # Stage submodule changes
+          git_add = "cd #{Shellwords.escape(env_path)} && git add components/picoruby-esp32"
+          raise "Failed to stage submodule changes" unless system(git_add)
+
+          # Amend commit with env-name
+          git_amend = "cd #{Shellwords.escape(env_path)} && " \
+                      "git commit --amend -m #{Shellwords.escape("ptrk env: #{env_name}")}"
+          raise "Failed to amend commit" unless system(git_amend)
+
+          # Disable push on all repos
+          disable_push = "git remote set-url --push origin no_push"
+          system("cd #{Shellwords.escape(env_path)} && #{disable_push}")
+          system("cd #{Shellwords.escape(esp32_path)} && #{disable_push}")
+          system("cd #{Shellwords.escape(picoruby_path)} && #{disable_push}")
+
           puts "  ✓ R2P2-ESP32 cloned and checked out to #{r2p2_commit}"
           puts "  ✓ picoruby-esp32 checked out to #{esp32_commit}"
           puts "  ✓ picoruby checked out to #{picoruby_commit}"
+          puts "  ✓ Push disabled on all repositories"
         end
 
         # Route source specification to appropriate handler (GitHub or local path)

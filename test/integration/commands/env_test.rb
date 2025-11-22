@@ -1437,6 +1437,19 @@ class CommandsEnvTest < PicotorokkoTestCase
             end
             assert_not_nil picoruby_checkout, "Should checkout nested picoruby to specified commit"
             assert_match(/ghi9012/, picoruby_checkout, "Should checkout picoruby to ghi9012")
+
+            # Verify git add for submodule changes
+            git_add = executed_commands.find { |c| c.include?("git add") && c.include?("picoruby-esp32") }
+            assert_not_nil git_add, "Should stage submodule changes"
+
+            # Verify git commit --amend with env-name
+            git_amend = executed_commands.find { |c| c.include?("git commit --amend") }
+            assert_not_nil git_amend, "Should amend commit with env-name"
+            assert_match(/20251121_180000/, git_amend, "Should include env_name in commit message")
+
+            # Verify disable push on all repos
+            disable_push_cmds = executed_commands.select { |c| c.include?("git remote set-url --push origin no_push") }
+            assert_equal 3, disable_push_cmds.size, "Should disable push on 3 repos (R2P2, esp32, picoruby)"
           ensure
             Time.define_singleton_method(:now, original_now)
             Picotorokko::Commands::Env.class_eval do
