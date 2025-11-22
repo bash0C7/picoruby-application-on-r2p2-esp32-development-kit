@@ -37,7 +37,7 @@ cd my-project
 ```
 
 This initializes a PicoRuby project with:
-- **Directory structure**: `storage/home/`, `patch/`, `ptrk_env/`
+- **Directory structure**: `storage/home/`, `patch/`, `.ptrk_env/`, `.ptrk_build/`
 - **Configuration files**: `.picoruby-env.yml`, `.gitignore`, `Gemfile`, `.rubocop.yml`, `Mrbgemfile`
 - **Documentation**: `README.md`, `CLAUDE.md` (comprehensive PicoRuby development guide)
 - **Sample code**: `storage/home/app.rb`
@@ -94,11 +94,11 @@ This creates:
 
 **Next: Configure your environment**
 
-After initialization, set your build environment:
+After initialization, fetch the latest repositories:
 
 ```bash
-ptrk env set production --commit abc1234
-git add ptrk_env/
+ptrk env set --latest
+ptrk env current 20251122_103000  # Set as current environment
 git commit -m "Add build environment configuration"
 git push origin main
 ```
@@ -143,14 +143,13 @@ my-project/
 ├── .github/workflows/                # CI/CD (if --with-ci)
 │   └── esp32-build.yml
 │
-├── ptrk_env/                         # Environment metadata (git-ignored)
+├── .ptrk_env/                        # Environment cache (git-ignored)
 │   └── .gitkeep
 │
-├── .cache/                           # Repository snapshots (git-ignored)
-├── build/                            # Build artifacts (git-ignored)
+├── .ptrk_build/                      # Build working directory (git-ignored)
 │
 ├── .picoruby-env.yml                 # Environment definitions (initially empty)
-├── .gitignore                        # Excludes .cache/, build/, ptrk_env/*/
+├── .gitignore                        # Excludes .ptrk_env/, .ptrk_build/
 ├── .rubocop.yml                      # PicoRuby-specific linting configuration
 ├── Gemfile                           # Includes picotorokko gem
 ├── Mrbgemfile                        # mrbgems dependencies and configuration
@@ -168,7 +167,7 @@ my-project/
 **`patch/`** — Customizations to R2P2-ESP32 and dependencies
 - Contains diffs of changes you make to framework code
 - Git-managed for reproducible builds
-- Apply to build environments with `ptrk env patch_apply`
+- Automatically applied during `ptrk device build`
 
 **`.github/workflows/`** — CI/CD configuration (optional, with `--with-ci`)
 - GitHub Actions workflow for automated builds
@@ -212,7 +211,7 @@ my-project/
 ptrk env set --latest
 ```
 
-This stores the newest commit metadata in `ptrk_env/.picoruby-env.yml`. Clone repositories and build firmware with `ptrk device build`.
+This clones the repositories to `.ptrk_env/{YYYYMMDD_HHMMSS}/` and stores metadata in `.picoruby-env.yml`. Build firmware with `ptrk device build`.
 
 Alternatively, define a specific version:
 
@@ -316,8 +315,8 @@ ptrk new my-project --path ~/my-projects/
 1. Check the Actions tab in your GitHub repository
 2. Click the failed workflow run for detailed logs
 3. Common causes:
-   - Environment not defined: Run `ptrk env set main --commit <hash>` and commit `ptrk_env/`
-   - Latest environment not set: Run `ptrk env set --latest` and commit `ptrk_env/`
+   - Environment not set: Run `ptrk env set --latest` to fetch repositories
+   - Current environment not set: Run `ptrk env current {env_name}` to set active environment
    - Patches not applying: Check `patch/` directory has correct structure
 
 ---
