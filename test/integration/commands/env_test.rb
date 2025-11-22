@@ -411,46 +411,13 @@ class CommandsEnvTest < PicotorokkoTestCase
     end
   end
 
-  # env latest コマンドのテスト
-  sub_test_case "env latest command" do
-    test "fetches latest commits and creates environment" do
-      omit "[TODO-CI-INTEGRATION]: Complex mocking of system() and git commands. " \
-           "Integration test requires full stub of git clone + git commands. " \
-           "ISSUE-7/8/9 unit tests cover clone_and_checkout_repo functionality."
-    end
-
-    test "handles fetch failure gracefully" do
-      Dir.mktmpdir do |tmpdir|
-        Dir.chdir(tmpdir) do
-          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
-
-          # Git操作をモック化（失敗させる）
-          stub_git_operations(fail_fetch: true) do |_stubs|
-            assert_raise(RuntimeError) do
-              capture_stdout do
-                Picotorokko::Commands::Env.start(["latest"])
-              end
-            end
-          end
-        end
-      end
-    end
-
-    test "handles clone failure gracefully" do
-      Dir.mktmpdir do |tmpdir|
-        Dir.chdir(tmpdir) do
-          FileUtils.rm_f(Picotorokko::Env::ENV_FILE)
-
-          # Git操作をモック化（cloneを失敗させる）
-          stub_git_operations(fail_clone: true) do |_stubs|
-            assert_raise(RuntimeError) do
-              capture_stdout do
-                Picotorokko::Commands::Env.start(["latest"])
-              end
-            end
-          end
-        end
-      end
+  # env latest コマンド削除の確認テスト
+  sub_test_case "env latest command removal" do
+    test "ptrk env latest is no longer available" do
+      # Thor should not recognize "latest" as a valid command
+      # Replaced by "ptrk env set --latest"
+      assert_false Picotorokko::Commands::Env.all_commands.key?("latest"),
+                   "The 'latest' command should be removed (replaced by 'ptrk env set --latest')"
     end
   end
 

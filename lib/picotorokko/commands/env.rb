@@ -446,28 +446,6 @@ module Picotorokko
         end
       end
 
-      # Fetch latest commit versions from GitHub and create environment definition
-      # @rbs () -> void
-      desc "latest", "Fetch latest commit versions and create environment definition"
-      def latest
-        puts "Fetching latest commits from GitHub..."
-        repos_info = fetch_latest_repos
-
-        # latest環境として保存
-        env_name = "latest"
-        puts "\nSaving as environment definition '#{env_name}' in .picoruby-env.yml..."
-
-        Picotorokko::Env.set_environment(
-          env_name,
-          repos_info["R2P2-ESP32"],
-          repos_info["picoruby-esp32"],
-          repos_info["picoruby"],
-          notes: "Auto-generated latest versions"
-        )
-
-        puts "✓ Environment definition '#{env_name}' created successfully in .picoruby-env.yml"
-      end
-
       # Fetch latest commit versions from all default repositories
       #
       # This method fetches the current HEAD commit SHA and timestamp from all
