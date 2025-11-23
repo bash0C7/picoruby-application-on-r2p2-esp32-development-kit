@@ -127,6 +127,69 @@ File.read(path, encoding: 'UTF-8')
 
 **Estimated effort**: Medium
 
+### [TODO-SCENARIO-3] Project lifecycle end-to-end scenario test
+
+**Objective**: Verify complete project lifecycle from creation to build.
+
+**Scenario Steps**:
+1. `ptrk new myapp` → Project structure created (Gemfile, storage/, mrbgems/, etc.)
+2. `ptrk env set --latest` → Environment cloned with submodules
+3. `ptrk env current {env}` → Environment selected, .rubocop.yml linked
+4. `ptrk device build` → Build directory setup, mrbgems/storage copied
+5. `ptrk device flash` → (ESP-IDF required, verify error message)
+6. `ptrk device monitor` → (ESP-IDF required, verify error message)
+
+**Tasks**:
+- [ ] Create scenario test file: `test/scenario/project_lifecycle_test.rb`
+- [ ] Implement test for each scenario step
+- [ ] TDD verification: All tests pass
+- [ ] COMMIT: "test: add project lifecycle scenario test"
+
+**Estimated effort**: Medium
+
+### [TODO-SCENARIO-4] Multiple environment management scenario test
+
+**Objective**: Verify multiple environment creation and switching.
+
+**Scenario Steps**:
+1. `ptrk env set --latest` → Create env1 (YYYYMMDD_HHMMSS)
+2. Sleep 1 second
+3. `ptrk env set --latest` → Create env2 (different timestamp)
+4. `ptrk env list` → Both environments displayed
+5. `ptrk env current {env1}` → Select env1
+6. `ptrk device build` → Build uses env1
+7. `ptrk env current {env2}` → Switch to env2
+8. `ptrk device build` → Build uses env2
+9. Verify `.ptrk_build/{env1}/` and `.ptrk_build/{env2}/` both exist
+
+**Tasks**:
+- [ ] Create scenario test file: `test/scenario/multi_env_test.rb`
+- [ ] Implement test for each scenario step
+- [ ] TDD verification: All tests pass
+- [ ] COMMIT: "test: add multiple environment management scenario test"
+
+**Estimated effort**: Medium
+
+### [TODO-SCENARIO-5] storage/home workflow scenario test
+
+**Objective**: Verify storage/home files are correctly copied to build.
+
+**Scenario Steps**:
+1. Create `storage/home/app.rb` with test content
+2. `ptrk device build` → Verify `.ptrk_build/{env}/R2P2-ESP32/storage/home/app.rb` exists
+3. Verify content matches source
+4. Update `storage/home/app.rb` content
+5. `ptrk device build` → Verify updated content in build directory
+6. Add `storage/home/lib/helper.rb` → Verify nested directory copied
+
+**Tasks**:
+- [ ] Create scenario test file: `test/scenario/storage_home_test.rb`
+- [ ] Implement test for each scenario step
+- [ ] TDD verification: All tests pass
+- [ ] COMMIT: "test: add storage/home workflow scenario test"
+
+**Estimated effort**: Low-Medium
+
 ---
 
 ## Implementation Notes
