@@ -43,16 +43,16 @@
 
 ### [TODO-QUALITY-3] Fix mrbgems generate template rendering error
 
-**Status**: ⏸️ CANNOT REPRODUCE — Error not reproducible as of 2025-11-23
+**Status**: ✅ COMPLETED (commit 9c627c6)
 
-**Issue**: `ptrk mrbgems generate` fails with template validation error.
+**Issue**: `ptrk mrbgems generate` fails with template validation error when using lowercase names.
 
-**Investigation Results**:
-- All existing tests pass (mrbgems_test.rb)
-- Direct command execution succeeds
-- Template files correctly mapped
+**Root Cause**: Template uses `TEMPLATE_CLASS_NAME` placeholder, but lowercase names like "mylib" produce `class mylib` which is invalid Ruby (class names must start with uppercase).
 
-**Note**: May have been fixed in previous commits or requires specific reproduction steps.
+**Solution Applied**: Convert `class_name` to PascalCase in `prepare_template_context`:
+- "mylib" → "Mylib"
+- "my_lib" → "MyLib"
+- "MyAwesomeLib" → "MyAwesomeLib" (preserved)
 
 ### [TODO-QUALITY-4] Fix patch_export git diff path handling
 
@@ -70,21 +70,13 @@
 
 ### [TODO-SCENARIO-1] mrbgems workflow scenario test
 
+**Status**: ✅ COMPLETED (commit 9c627c6)
+
 **Objective**: Verify mrbgems are correctly generated and included in builds.
 
-**Scenario Steps**:
-1. `ptrk new testapp` → Verify `mrbgems/app/` is generated
-2. `ptrk mrbgems generate mylib` → Verify `mrbgems/mylib/` is generated
-3. `ptrk device build` → Verify `.ptrk_build/{env}/R2P2-ESP32/mrbgems/` contains all mrbgems
-4. Multiple mrbgems → Verify both `app/` and `mylib/` are copied
-
-**Tasks**:
-- [ ] Create scenario test file: `test/scenario/mrbgems_workflow_test.rb`
-- [ ] Implement test for each scenario step
-- [ ] TDD verification: All tests pass
-- [ ] COMMIT: "test: add mrbgems workflow scenario test"
-
-**Estimated effort**: Medium
+**Implementation**:
+- Created `test/scenario/mrbgems_workflow_test.rb` with 5 scenario tests
+- Covers project creation, custom mrbgem generation, multiple mrbgems, error handling, and class name conversion
 
 ### [TODO-SCENARIO-2] patch workflow scenario test
 
