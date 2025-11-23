@@ -43,35 +43,26 @@
 
 ### [TODO-QUALITY-3] Fix mrbgems generate template rendering error
 
+**Status**: ⏸️ CANNOT REPRODUCE — Error not reproducible as of 2025-11-23
+
 **Issue**: `ptrk mrbgems generate` fails with template validation error.
 
-**Error**: `レンダリング後のコードが無効なRubyコードです (RuntimeError)`
+**Investigation Results**:
+- All existing tests pass (mrbgems_test.rb)
+- Direct command execution succeeds
+- Template files correctly mapped
 
-**Error Location**: `lib/picotorokko/template/ruby_engine.rb:55:in 'verify_output_validity!'`
-
-**Tasks**:
-- [ ] Investigate which template file causes invalid Ruby output
-- [ ] Fix template or validation logic
-- [ ] TDD verification: Ensure all existing tests pass
-- [ ] COMMIT: "fix: resolve mrbgems generate template rendering error"
-
-**Estimated effort**: Low-Medium
+**Note**: May have been fixed in previous commits or requires specific reproduction steps.
 
 ### [TODO-QUALITY-4] Fix patch_export git diff path handling
 
+**Status**: ✅ COMPLETED (commit 4605fab)
+
 **Issue**: `ptrk env patch_export` fails when processing submodule changes.
 
-**Error**: `fatal: ambiguous argument 'components/picoruby-esp32': unknown revision or path`
-
-**Error Location**: `lib/picotorokko/commands/env.rb:859:in 'export_repo_changes'`
-
-**Tasks**:
-- [ ] Fix git diff command to properly separate paths from revisions using `--`
-- [ ] Handle submodule paths correctly in export logic
-- [ ] TDD verification: Ensure all existing tests pass
-- [ ] COMMIT: "fix: handle git diff path arguments correctly in patch_export"
-
-**Estimated effort**: Low-Medium
+**Solution Applied**:
+- Added `--` separator to git diff command for proper path handling
+- Added .git directory existence check to skip non-repository directories
 
 ---
 
