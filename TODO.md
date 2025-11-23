@@ -110,23 +110,13 @@
 
 ### [TODO-SCENARIO-5] storage/home workflow scenario test
 
+**Status**: ✅ COMPLETED (commit 091de5d)
+
 **Objective**: Verify storage/home files are correctly copied to build.
 
-**Scenario Steps**:
-1. Create `storage/home/app.rb` with test content
-2. `ptrk device build` → Verify `.ptrk_build/{env}/R2P2-ESP32/storage/home/app.rb` exists
-3. Verify content matches source
-4. Update `storage/home/app.rb` content
-5. `ptrk device build` → Verify updated content in build directory
-6. Add `storage/home/lib/helper.rb` → Verify nested directory copied
-
-**Tasks**:
-- [ ] Create scenario test file: `test/scenario/storage_home_test.rb`
-- [ ] Implement test for each scenario step
-- [ ] TDD verification: All tests pass
-- [ ] COMMIT: "test: add storage/home workflow scenario test"
-
-**Estimated effort**: Low-Medium
+**Implementation**:
+- Created `test/scenario/storage_home_test.rb` with 5 scenario tests
+- Covers directory creation, file operations, nested directories, and binary file support
 
 ### [TODO-SCENARIO-6] Phase 5 end-to-end verification scenario test
 
